@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indicador da Imagem do Brasil no Exterior (IIBEx)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Indicador da Imagem do Brasil no Exterior (IIBEx)</h1>
+            <img src="assets/logofgv.png" alt="Logo FGV" class="logo-fgv">
+        </header>
+
+        <div class="controls-panel">
+            <div class="card filters-card">
+                <div class="filter-group">
+                    <label for="periodo">Período <span class="info-icon">?</span></label>
+                    <select id="periodo"><option>Selecione</option></select>
+                </div>
+                <div class="filter-group">
+                    <label for="ente-avaliador">Ente avaliador <span class="info-icon">?</span></label>
+                    <select id="ente-avaliador"><option>Selecione</option></select>
+                </div>
+                <div class="filter-group">
+                    <label for="ente-avaliacao">Ente em avaliação <span class="info-icon">?</span></label>
+                    <select id="ente-avaliacao"><option>Selecione</option></select>
+                </div>
+                <div class="filter-group">
+                    <label for="categorias">Categorias <span class="info-icon">?</span></label>
+                    <select id="categorias"><option>Todas</option></select>
+                </div>
+            </div>
+
+            <div class="card bar-chart-card">
+                <p>Notícias Brasil-Argentina em arquivo: <span id="total-noticias">3.628.982</span> <span class="info-icon">?</span></p>
+                <canvas id="barChart"></canvas>
+            </div>
+
+            <div class="card gauge-card">
+                <p>IIBEx atualizado a cada 30 minutos (desabilitado) <span class="info-icon">?</span></p>
+                <div class="gauge-display">
+                    <span class="gauge-value" id="gaugeValue">0</span>
+                    <div class="gauge-datetime">
+                        <span id="currentDate">--/--/--</span>
+                        <span id="currentTime">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card main-chart-card">
+            <canvas id="lineChart"></canvas>
+        </div>
+
+        <footer class="dashboard-footer">
+            <div class="footer-info">
+                <p>Elaborado pela Diretoria Internacional da Fundação Getulio Vargas</p>
+                <span>IIBEx 5.6</span>
+            </div>
+            <div class="footer-controls">
+                <button>Escala diferencial semântica</button>
+                
+                <button id="uploadButton">Link notas</button>
+                <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
+                
+                <button>Link análises</button>
+
+                <div class="input-group">
+                    <label for="intervalo">Intervalo de cálculo do IIBEx (h):</label>
+                    <input type="number" id="intervalo" value="12">
+                </div>
+                <div class="input-group">
+                    <input type="checkbox" id="dados">
+                    <label for="dados">Dados</label>
+                </div>
+                <div class="input-group">
+                    <input type="checkbox" id="nota4" checked>
+                    <label for="nota4">4</label>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script src="script.js"></script>
+
+</body>
+</html>
