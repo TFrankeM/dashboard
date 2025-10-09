@@ -75,9 +75,14 @@ document.addEventListener('DOMContentLoaded', function () {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        bottom: 20
+                    }
+                },
                 scales: {
                     y: { beginAtZero: true, grid: { display: false } },
-                    x: { grid: { display: false } }
+                    x: { grid: { display: true } }
                 },
                 plugins: { legend: { display: false } }
             }

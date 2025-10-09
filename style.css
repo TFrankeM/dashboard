@@ -72,32 +72,6 @@ body {
     cursor: pointer;
 }
 
-
-/* Estilos Padrão (Mobile First): Uma coluna, altura automática */
-.controls-panel {
-    display: grid;
-    grid-template-columns: 1fr; /* Uma coluna por padrão */
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-/* Estilos para Telas Maiores (a partir de 769px de largura) */
-@media (min-width: 769px) {
-    .controls-panel {
-        grid-template-columns: 1fr 1fr 1fr; /* Volta para 3 colunas */
-    }
-
-    .controls-panel > .card {
-        height: 250px; /* Aplica a altura fixa APENAS em telas grandes */
-    }
-}
-
-/* Card de Filtros */
-.filters-card {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
 .filter-group label {
     display: block;
     margin-bottom: 5px;
@@ -117,6 +91,8 @@ body {
 .bar-chart-card {
     display: flex;
     flex-direction: column;
+    position: relative;
+    min-width: 0;
 }
 #barChart {
     flex-grow: 1;
@@ -207,4 +183,133 @@ body {
     padding: 5px;
     border: 1px solid var(--fgv-blue);
     border-radius: 4px;
+}
+
+/* --- ESTILOS PADRÃO (MOBILE-FIRST) --- */
+
+/* Estilos Padrão (Mobile First): Uma coluna, altura automática */
+.controls-panel {
+    display: grid;
+    grid-template-columns: 1fr; /* Uma coluna por padrão */
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* Card de Filtros */
+.filters-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* --- AJUSTES PARA TELAS PEQUENAS --- */
+/* Estilos para telas estreitas (celulares) */
+@media (max-width: 768px) {
+    /* Reduz o título principal */
+    .dashboard-header h1 {
+        font-size: 18px;
+        text-align: center;
+    }
+
+    /* Centraliza o logo */
+    .dashboard-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    /* Faz os filtros ficarem em uma única coluna */
+    .filters-card {
+        grid-template-columns: 1fr; /* Muda o grid para apenas 1 coluna */
+    }
+
+    /* Impede o gráfico de barras de esticar */
+    .bar-chart-card {
+        height: 300px; /* Define uma altura máxima em telas pequenas */
+    }
+
+    /* Reduz o valor do medidor */
+    .gauge-value {
+        font-size: 48px;
+    }
+
+    /* Ajusta o texto da data/hora no medidor */
+    .gauge-datetime {
+        font-size: 14px;
+    }
+
+    /* Ajusta os botões e controles do rodapé */
+    .footer-controls {
+        justify-content: center;
+    }
+}
+
+/* --- AJUSTES PARA TELAS MÉDIAS --- */
+@media (max-width: 992px) {
+    /* Diminui o título principal */
+    .dashboard-header h1 {
+        font-size: 22px;
+    }
+
+    /* Diminui o valor gigante do medidor */
+    .gauge-value {
+        font-size: 60px;
+    }
+
+    /* Empilha o conteúdo do rodapé */
+    .dashboard-footer {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        text-align: center;
+    }
+}
+
+/* --- AJUSTES PARA TELAS GRANDES --- */
+@media (min-width: 769px) {
+    .controls-panel {
+        grid-template-columns: 1fr 1fr 1fr; /* Volta para 3 colunas */
+    }
+
+    .controls-panel > .card {
+        height: 250px; /* Aplica a altura fixa APENAS em telas grandes */
+    }
+
+    .filters-card {
+        grid-template-columns: 1fr 1fr; /* Filtros com 2 colunas em telas grandes */
+    }
+}
+
+
+/* --- AJUSTES FINOS PARA TELAS MUITO PEQUENAS --- */
+@media (max-width: 480px) {
+    /* Diminui o padding geral do dashboard para ganhar espaço */
+    .dashboard-container {
+        padding: 10px;
+    }
+
+    /* Reduz ainda mais o título */
+    .dashboard-header h1 {
+        font-size: 16px;
+    }
+
+    /* Reduz o valor do medidor para caber sem quebrar o layout */
+    .gauge-value {
+        font-size: 40px;
+    }
+
+    .gauge-datetime {
+        font-size: 12px;
+    }
+
+    /* Diminui o texto dos botões e controles do rodapé */
+    .footer-controls button,
+    .input-group label,
+    .input-group input[type="number"] {
+        font-size: 10px;
+        padding: 6px 8px;
+    }
+    
+    .input-group input[type="number"] {
+        width: 40px;
+    }
 }
