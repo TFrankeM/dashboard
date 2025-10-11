@@ -52,6 +52,16 @@
         </div>
 
         <div class="card main-chart-card">
+            <div class="chart-controls">
+                <div class="average-buttons">
+                    <button class="avg-btn" data-period="monthly">Mensal</button>
+                    <button class="avg-btn active" data-period="weekly">Semanal</button>
+                    <button class="avg-btn" data-period="daily">Diária</button>
+                    <button class="avg-btn" data-period="hourly">Horária</button>
+                    <button class="avg-btn" data-period="half_hourly">30 min</button>
+                </div>
+                <button id="resetZoomBtn" class="chart-action-btn">Resetar Zoom</button>
+            </div>
             <canvas id="lineChart"></canvas>
         </div>
 
@@ -62,11 +72,6 @@
             </div>
             <div class="footer-controls">
                 <button>Escala diferencial semântica</button>
-                
-                <button id="uploadButton">Link notas</button>
-                <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
-                
-                <button>Link análises</button>
 
                 <div class="input-group">
                     <label for="intervalo">Intervalo de cálculo do IIBEx (h):</label>
@@ -85,8 +90,12 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
+
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
     <script src="script.js"></script>
 
 </body>

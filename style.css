@@ -136,6 +136,49 @@ body {
     padding: 20px;
 }
 
+.chart-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.average-buttons {
+    display: flex;
+    gap: 5px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.avg-btn, .chart-action-btn {
+    background-color: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--fgv-blue);
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.chart-action-btn {
+    border: 1px solid var(--border-color);
+}
+
+.avg-btn.active {
+    background-color: var(--fgv-blue);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.avg-btn:not(.active):hover {
+    background-color: #d8dde2;
+}
+
 /* Rodapé */
 .dashboard-footer {
     display: flex;
