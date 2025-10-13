@@ -5,109 +5,208 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const lineChartCanvas = document.getElementById("lineChart");
     const barChartCanvas = document.getElementById("barChart");
-    const currentDateEl = document.getElementById("currentDate");
-    const currentTimeEl = document.getElementById("currentTime");
-    const gaugeValueEl = document.getElementById("gaugeValue");
+    const gaugeChartCanvas = document.getElementById("gaugeChart");
+    const gaugeValueText = document.getElementById("gaugeValueText");
     const totalNoticiasEl = document.getElementById("total-noticias");
     const resetZoomBtn = document.getElementById("resetZoomBtn");
     const averageButtonsContainer = document.querySelector(".average-buttons");
 
     let lineChartInstance;
     let barChartInstance;
+    let gaugeChartInstance;
     let fullDataset = [];
     let currentAveragePeriod = "weekly";
 
+    Chart.register(ChartZoom); // Registro do plugin de zoom
 
-    // --- RELÓGIO E DATA ---
-    function updateClock() {
-        const now = new Date();
-        const dateOptions = { day: '2-digit', month: '2-digit', year: '2-digit' };
-        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-        
-        currentDateEl.textContent = now.toLocaleDateString('pt-BR', dateOptions);
-        currentTimeEl.textContent = now.toLocaleTimeString('pt-BR', timeOptions);
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    // desenhar o ponteiro do gauge
+    const gaugeNeedle = {
+        id: 'gaugeNeedle',
+        afterDatasetDraw(chart, args, options) {
+            const { ctx, data } = chart;
+            ctx.save();
 
+            const needleValue = data.datasets[0].needleValue;
+            
+            const angle = Math.PI + (1 / 6 * (needleValue - 1) * Math.PI);
 
-    // --- AGREGAÇÃO DE DADOS ---
-    // ================================================================
-//      SUBSTITUA SUA FUNÇÃO aggregateData ANTIGA POR ESTA
-// ================================================================
+            const cx = chart.getDatasetMeta(0).data[0].x;
+            const cy = chart.getDatasetMeta(0).data[0].y;
+            
+            // Desenha o ponteiro
+            ctx.translate(cx, cy);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(0, -5);
+            ctx.lineTo(chart.chartArea.height - 20, 0);
+            ctx.lineTo(0, 5);
+            ctx.fillStyle = '#444';
+            ctx.fill();
+            ctx.rotate(-angle);
+            ctx.translate(-cx, -cy);
 
-function aggregateData(data, period) {
-    if (data.length === 0) return { labels: [], data: [] };
-
-    // --- Funções Auxiliares para substituir o date-fns ---
-
-    // Adiciona um zero à esquerda para números menores que 10 (ex: 5 -> "05")
-    const padZero = (num) => String(num).padStart(2, '0');
-
-    // Calcula o número da semana (ISO 8601 standard)
-    const getWeekNumber = (d) => {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        return weekNo;
+            // Desenha o pino central
+            ctx.beginPath();
+            ctx.arc(cx, cy, 10, 0, 2 * Math.PI);
+            ctx.fillStyle = '#444';
+            ctx.fill();
+            ctx.restore();
+        }
     };
-    
-    // Array para nomes de meses
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-    // --- Lógica de Agrupamento ---
+    function calculateLast30MinAverage(dataset) {
+        if (dataset.length === 0) return 0;
 
-    const groups = {};
+        // Pega a data mais recente do dataset
+        const lastDate = dataset[dataset.length - 1].date;
+        const thirtyMinutesBeforeLast = new Date(lastDate.getTime() - (30 * 60 * 1000));
 
-    data.forEach(row => {
-        const date = row.date;
-        let key;
+        // Filtra os dados que estão nos últimos 30 minutos do dataset
+        const recentData = dataset.filter(row => row.date >= thirtyMinutesBeforeLast && row.date <= lastDate);
 
-        // Recriando as chaves de agrupamento com JavaScript puro
-        if (period === 'monthly') {
-            key = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}`;
-        } else if (period === 'weekly') {
-            key = `${date.getFullYear()}-W${padZero(getWeekNumber(date))}`;
-        } else if (period === 'daily') {
-            key = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
-        } else if (period === 'hourly') {
-            key = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:00`;
-        } else if (period === 'half_hourly') {
-            const minutes = date.getMinutes() < 30 ? '00' : '30';
-            key = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${minutes}`;
-        }
+        if (recentData.length === 0) return 0;
 
-        if (key) {
-            if (!groups[key]) {
-                groups[key] = { sum: 0, count: 0, date: date };
-            }
-            groups[key].sum += row.grade;
-            groups[key].count++;
-        }
-    });
+        const sum = recentData.reduce((acc, row) => acc + row.grade, 0);
+        return sum / recentData.length;
+    }
 
-    const sortedKeys = Object.keys(groups).sort();
-    
-    // Recriando os labels para o gráfico
-    const labels = sortedKeys.map(key => {
-        const date = groups[key].date;
-        const yearShort = String(date.getFullYear()).slice(-2);
+    function renderGaugeChart(value) {
+        gaugeValueText.textContent = value.toFixed(1);
+
+        const ctx = gaugeChartCanvas.getContext('2d');
+        if (gaugeChartInstance) gaugeChartInstance.destroy();
         
-        if (period === 'monthly') {
-            return `${meses[date.getMonth()]}/${yearShort}`;
-        }
-        if (period === 'weekly') {
-            return `Sem ${getWeekNumber(date)}, ${meses[date.getMonth()]}/${yearShort}`;
-        }
-        // Para os outros casos, um formato mais completo
-        return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-    });
+        const gaugeSegmentDescriptions = [
+            'Extremamente Negativo (Nota: 1.0 - 1.5)',
+            'Muito Negativo (Nota: 1.51 - 2.50)',
+            'Pouco Negativo (Nota: 2.51 - 3.50)',
+            'Neutro (Nota: 3.51 - 4.49)',
+            'Pouco Positivo (Nota: 4.5 - 5.49)',
+            'Muito Positivo (Nota: 5.5 - 6.49)',
+            'Extremamente Positivo (Nota: 6.5 - 7.0)'
+        ];
 
-    const aggregatedData = sortedKeys.map(key => groups[key].sum / groups[key].count);
+        gaugeChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: gaugeSegmentDescriptions,
+                datasets: [{
+                    data: [0.5, 1, 1, 1, 1, 1, 0.5],
+                    needleValue: value, // Passa o valor para o plugin do ponteiro
+                    backgroundColor: [
+                        '#d7191c', // Vermelho forte
+                        '#fdae61', // Laranja
+                        '#ffffbf', // Amarelo
+                        '#f0f0f0', // Cinza (Neutro)
+                        '#abdda4', // Verde claro
+                        '#2b83ba', // Azul
+                        '#1a9641'  // Verde forte
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                rotation: -90,
+                circumference: 180,
+                cutout: '70%',
+                responsive: true,
+                layout: { padding: { bottom: 15 } },
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        callbacks: {
+                            // Customiza o texto que aparece no tooltip
+                            title: () => null,
+                            label: function(context) {
+                                return context.label;
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [gaugeNeedle] // Adiciona plugin
+        });
+    }
 
-    return { labels, data: aggregatedData };
-}
+    // Função para atualizar o gauge periodicamente
+    function updateGauge() {
+        if (fullDataset.length > 0) {
+            const avg = calculateLast30MinAverage(fullDataset);
+            renderGaugeChart(avg);
+        }
+    }
+
+
+    function aggregateData(data, period) {
+        if (data.length === 0) return { labels: [], data: [] };
+
+        // Adiciona um zero à esquerda para números menores que 10 (ex: 5 -> "05")
+        const padZero = (num) => String(num).padStart(2, '0');
+
+        // Calcula o número da semana (ISO 8601 standard)
+        const getWeekNumber = (d) => {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return weekNo;
+        };
+        
+        // Array para nomes de meses
+        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+        const groups = {};
+
+        data.forEach(row => {
+            const date = row.date;
+            let key;
+
+            // Recriando as chaves de agrupamento com JavaScript puro
+            if (period === 'monthly') {
+                key = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}`;
+            } else if (period === 'weekly') {
+                key = `${date.getFullYear()}-W${padZero(getWeekNumber(date))}`;
+            } else if (period === 'daily') {
+                key = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`;
+            } else if (period === 'hourly') {
+                key = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:00`;
+            } else if (period === 'half_hourly') {
+                const minutes = date.getMinutes() < 30 ? '00' : '30';
+                key = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${minutes}`;
+            }
+
+            if (key) {
+                if (!groups[key]) {
+                    groups[key] = { sum: 0, count: 0, date: date };
+                }
+                groups[key].sum += row.grade;
+                groups[key].count++;
+            }
+        });
+
+        const sortedKeys = Object.keys(groups).sort();
+        
+        // Recriando os labels para o gráfico
+        const labels = sortedKeys.map(key => {
+            const date = groups[key].date;
+            const yearShort = String(date.getFullYear()).slice(-2);
+            
+            if (period === 'monthly') {
+                return `${meses[date.getMonth()]}/${yearShort}`;
+            }
+            if (period === 'weekly') {
+                return `Sem ${getWeekNumber(date)}, ${meses[date.getMonth()]}/${yearShort}`;
+            }
+            // Para os outros casos, um formato mais completo
+            return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+        });
+
+        const aggregatedData = sortedKeys.map(key => groups[key].sum / groups[key].count);
+
+        return { labels, data: aggregatedData };
+    }
 
 
     // --- GRÁFICO DE BARRAS ---
@@ -209,17 +308,12 @@ function aggregateData(data, period) {
     function updateLineChart() {
         const { labels, data } = aggregateData(fullDataset, currentAveragePeriod);
         renderLineChart(labels, data);
-
-        // Atualiza o medidor com a média do último período
-        if (data.length > 0) {
-            const lastValue = data[data.length - 1];
-            gaugeValueEl.textContent = isNaN(lastValue) ? 'N/A' : lastValue.toFixed(0);
-        }
     }
 
     // --- INICIA O DASHBOARD ---
     async function initializeDashboard() {
         totalNoticiasEl.textContent = "Carregando...";
+        renderGaugeChart(0.0);
 
         // Papa Parse busca e processa o CSV
         Papa.parse(CSV_URL, {
@@ -238,6 +332,9 @@ function aggregateData(data, period) {
 
                 processAndDisplayBarChartData(fullDataset);
                 updateLineChart();
+                updateGauge(); // Primeira atualização
+
+                setInterval(updateGauge, 60*1000);
             },
             error: function(error) {
                 console.error("Erro ao carregar ou processar o arquivo CSV:", error);
@@ -283,7 +380,5 @@ function aggregateData(data, period) {
         updateLineChart();
     });
 
-    // Registra o plugin de zoom globalmente para o Chart.js
-    Chart.register(ChartZoom);
     initializeDashboard();
 });

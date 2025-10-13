@@ -38,16 +38,16 @@
                 <p>Notícias Brasil-Argentina em arquivo: <span id="total-noticias">3.628.982</span> <span class="info-icon">?</span></p>
                 <canvas id="barChart"></canvas>
             </div>
-
+            
             <div class="card gauge-card">
-                <p>IIBEx atualizado a cada 30 minutos (desabilitado) <span class="info-icon">?</span></p>
-                <div class="gauge-display">
-                    <span class="gauge-value" id="gaugeValue">0</span>
-                    <div class="gauge-datetime">
-                        <span id="currentDate">--/--/--</span>
-                        <span id="currentTime">--:--:--</span>
-                    </div>
+                <p>Índice medio da imagem na última meia hora <span class="info-icon">?</span></p>
+                <div class="gauge-container">
+                    <canvas id="gaugeChart"></canvas>
+                    <div id="gaugeValueText" class="gauge-value-text">0.0</div> 
                 </div>
+                <p id="gaugeUpdateTime" class="gauge-update-time">
+                    Atualizado a cada 30 minuto
+                </p>
             </div>
         </div>
 
@@ -60,7 +60,7 @@
                     <button class="avg-btn" data-period="hourly">Horária</button>
                     <button class="avg-btn" data-period="half_hourly">30 min</button>
                 </div>
-                <button id="resetZoomBtn" class="chart-action-btn">Resetar Zoom</button>
+                <button id="resetZoomBtn" class="chart-action-btn">Resetar Configuração</button>
             </div>
             <canvas id="lineChart"></canvas>
         </div>
