@@ -28,7 +28,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const needleValue = data.datasets[0].needleValue;
             
-            const angle = Math.PI + (1 / 6 * (needleValue - 1) * Math.PI);
+            // arco começa em 150 graus e tem 240 graus de comprimento
+            const startAngle = 150 * (Math.PI / 180);               // 150 graus em radianos
+            const sweepAngle = 240 * (Math.PI / 180);               // 240 graus em radianos
+            const valueFraction = (needleValue - 1) / (7 - 1);      // Percentual do valor na escala 1-7
+            const angle = startAngle + (valueFraction * sweepAngle);
 
             const cx = chart.getDatasetMeta(0).data[0].x;
             const cy = chart.getDatasetMeta(0).data[0].y;
@@ -38,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ctx.rotate(angle);
             ctx.beginPath();
             ctx.moveTo(0, -5);
-            ctx.lineTo(chart.chartArea.height - 20, 0);
+            ctx.lineTo((chart.chartArea.height / 2) + 10, 0); 
             ctx.lineTo(0, 5);
             ctx.fillStyle = '#444';
             ctx.fill();
@@ -55,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     function calculateLast30MinAverage(dataset) {
-        if (dataset.length === 0) return 0;
+        if (dataset.length === 0) return 4;
 
         // Pega a data mais recente do dataset
         const lastDate = dataset[dataset.length - 1].date;
@@ -64,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Filtra os dados que estão nos últimos 30 minutos do dataset
         const recentData = dataset.filter(row => row.date >= thirtyMinutesBeforeLast && row.date <= lastDate);
 
-        if (recentData.length === 0) return 0;
+        if (recentData.length === 0) return 4;
 
         const sum = recentData.reduce((acc, row) => acc + row.grade, 0);
         return sum / recentData.length;
@@ -102,13 +106,22 @@ document.addEventListener('DOMContentLoaded', function () {
                         '#2b83ba', // Azul
                         '#1a9641'  // Verde forte
                     ],
+                    hoverBackgroundColor: [
+                        '#b91619', 
+                        '#e6984b', 
+                        '#eaea9e', 
+                        '#c7c7c7', 
+                        '#93c98d', 
+                        '#2570a1',
+                        '#167d35'
+                    ],
                     borderWidth: 1
                 }]
             },
             options: {
-                rotation: -90,
-                circumference: 180,
-                cutout: '70%',
+                rotation: -120,
+                circumference: 240,
+                cutout: '65%',
                 responsive: true,
                 layout: { padding: { bottom: 15 } },
                 maintainAspectRatio: false,

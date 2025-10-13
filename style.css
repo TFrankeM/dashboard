@@ -101,38 +101,40 @@ body {
 
 /* Card do Medidor */
 .gauge-card {
-    justify-content: flex-start; /* Alinha o <p> ao topo */
-    padding-bottom: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Alinha o conteúdo ao topo */
 }
 
 .gauge-container {
-    position: relative; /* para sobrepor elementos */
+    position: relative; 
     width: 100%;
-    height: 100%;
+    height: 85%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
 #gaugeChart {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    max-width: 100%;
 }
 
 .gauge-value-text {
-    font-size: 60px;
+    font-size: 50px;
     font-weight: 700;
     color: var(--fgv-blue);
+    
+    margin-top: -40px; 
+    text-align: center;
 }
 
 .gauge-card .gauge-update-time {
     font-size: 10px;
     text-align: right;
     color: #888;
-    margin: 0;
+    margin-top: auto; /* Empurra para o final do card */
+    padding: 0 15px 10px 15px; /* Adiciona espaçamento interno */
 }
 
 
@@ -201,38 +203,7 @@ body {
     color: var(--fgv-blue);
     font-size: 12px;
 }
-.footer-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-.footer-controls button {
-    background-color: transparent;
-    border: 1px solid var(--fgv-blue);
-    color: var(--fgv-blue);
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-}
-.footer-controls button:hover {
-    background-color: var(--fgv-blue);
-    color: white;
-}
-.input-group {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    color: var(--fgv-blue);
-}
-.input-group input[type="number"] {
-    width: 50px;
-    padding: 5px;
-    border: 1px solid var(--fgv-blue);
-    border-radius: 4px;
-}
+
 
 /* --- ESTILOS PADRÃO (MOBILE-FIRST) --- */
 
@@ -251,6 +222,7 @@ body {
     gap: 15px;
 }
 
+
 /* --- AJUSTES PARA TELAS PEQUENAS --- */
 /* Estilos para telas estreitas (celulares) */
 @media (max-width: 768px) {
@@ -268,12 +240,16 @@ body {
 
     /* Faz os filtros ficarem em uma única coluna */
     .filters-card {
-        grid-template-columns: 1fr; /* Muda o grid para apenas 1 coluna */
+        grid-template-columns: 1fr; /* grid para apenas 1 coluna */
     }
 
     /* Impede o gráfico de barras de esticar */
     .bar-chart-card {
-        height: 300px; /* Define uma altura máxima em telas pequenas */
+        height: 300px; /* altura máxima em telas pequenas */
+    }
+
+    .gauge-card {
+        height: 300px; /* altura máxima em telas pequenas */
     }
 
     /* Reduz o valor do medidor */
@@ -320,7 +296,7 @@ body {
     }
 
     .controls-panel > .card {
-        height: 250px; /* Aplica a altura fixa APENAS em telas grandes */
+        height: 250px; /* altura fixa APENAS em telas grandes */
     }
 
     .filters-card {
