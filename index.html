@@ -17,25 +17,25 @@
         <div class="controls-panel">
             <div class="card filters-card">
                 <div class="filter-group">
-                    <label for="periodo">Período <span class="info-icon">?</span></label>
-                    <select id="periodo"><option>Selecione</option></select>
+                    <label for="period">Período <span class="info-icon">?</span></label>
+                    <select id="period"></select>
                 </div>
                 <div class="filter-group">
-                    <label for="ente-avaliador">Ente avaliador <span class="info-icon">?</span></label>
-                    <select id="ente-avaliador"><option>Selecione</option></select>
+                    <label for="evaluator">Ente avaliador <span class="info-icon">?</span></label>
+                    <select id="evaluator"></select>
                 </div>
                 <div class="filter-group">
-                    <label for="ente-avaliacao">Ente em avaliação <span class="info-icon">?</span></label>
-                    <select id="ente-avaliacao"><option>Selecione</option></select>
+                    <label for="evaluated">Ente em avaliação <span class="info-icon">?</span></label>
+                    <select id="evaluated"></select>
                 </div>
                 <div class="filter-group">
-                    <label for="categorias">Categorias <span class="info-icon">?</span></label>
-                    <select id="categorias"><option>Todas</option></select>
+                    <label for="category">Categorias <span class="info-icon">?</span></label>
+                    <select id="category" multiple></select>
                 </div>
             </div>
 
             <div class="card bar-chart-card">
-                <p>Notícias Brasil-Argentina em arquivo: <span id="total-noticias">Carregando...</span> <span class="info-icon">?</span></p>
+                <p>Notícias de <span id="title-evaluator"></span> sobre <span id="title-evaluated"></span>: <span id="total-noticias">Carregando...</span> <span class="info-icon">?</span></p>
                 <canvas id="barChart"></canvas>
             </div>
             
@@ -68,14 +68,16 @@
         <footer class="dashboard-footer">
             <div class="footer-info">
                 <p>Elaborado pela Diretoria Internacional da Fundação Getulio Vargas</p>
-                <span>IIBEx 2.6</span>
+                <span>IIBEx 2.7</span>
             </div>
         </footer>
     </div>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>

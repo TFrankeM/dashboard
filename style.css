@@ -87,6 +87,62 @@ body {
     background-color: white;
 }
 
+/* Category choice box with the same size as other filters */
+/* The library Choices.js is used. 
+    .filter-group increases specificity and ensures the used styles override the defaults injected by Choices.js
+    !important to each rule because Choices’ CSS uses inline or high-specificity rules. 
+    Without it, the dashboard CSS was being ignored.
+*/
+.filter-group .choices {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.filter-group .choices__inner {
+  border: 1px solid var(--fgv-blue) !important;
+  border-radius: 4px !important;
+  background-color: white !important;
+  box-sizing: border-box !important;
+  padding: 7px 8px !important;
+  min-height: 38px !important;
+  box-shadow: none !important;
+}
+
+.filter-group .choices__list--multiple {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.filter-group .choices__list--multiple .choices__item {
+  background-color: var(--fgv-blue) !important;
+  color: white !important;
+  border: none !important;
+  font-size: 13px !important;
+  border-radius: 3px !important;
+  margin-right: 4px !important;
+}
+
+.filter-group .choices__input {
+  margin: 0 !important;
+  padding: 4px !important;
+}
+
+.filter-group .choices__list--dropdown {
+  border: 1px solid var(--fgv-blue) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+}
+
+.filter-group .choices.collapsed .choices__inner {
+  max-height: 38px !important;
+  overflow: hidden !important;
+}
+
+.filter-group .choices__placeholder {
+  color: var(--text-color) !important;
+  opacity: 0.8 !important;
+}
+
 /* Card do Gráfico de Barras */
 .bar-chart-card {
     display: flex;
