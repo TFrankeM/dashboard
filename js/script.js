@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "Desastres, acidentes e emergências", 
         "Economia, negócios e finanças", 
         "Educação", 
-        "Esporte", 
+        "Esportes", 
         "Estilo de vida e lazer", 
         "Interesse humano", 
         "Meio ambiente", 
