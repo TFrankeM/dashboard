@@ -179,7 +179,8 @@ export function drawLineChart(canvasElement, labels, datasets) {
         pointRadius: 3,
         pointHoverRadius: 6,    // aumenta o ponto ao passar o mouse
         tension: 0.3,           // suaviza linha
-        fill: false
+        fill: false,
+        spanGaps: true
     }));
 
     lineInstance = new Chart(ctx, {
