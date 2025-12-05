@@ -158,6 +158,23 @@ body {
   color: var(--text-color) !important;
   opacity: 0.8 !important;
 }
+/* Aviso de limite de seleção do Choices.js */
+.filter-group .choices__notice {
+    background-color: #fee2e2 !important; /* Vermelho claro fundo */
+    color: #991b1b !important; /* Vermelho escuro texto */
+    border: 1px solid #fca5a5;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 
 /* Card do Gráfico de Barras */
 .bar-chart-card {

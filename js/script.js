@@ -112,7 +112,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 removeItemButton: true,
                 searchEnabled: true,
                 placeholderValue: "Selecione...",
-                itemSelectText: ""
+                itemSelectText: "",
+                shouldSort: true,
+                editItems: true,
+                maxItemCount: 5,
+                maxItemText: "",
+                // maxItemText: (maxItemCount) => {
+                //     return `O máximo de ${maxItemCount} categorias selecionadas foi atingido.`;
+                // }
             });
             choices.setChoiceByValue(currentFilters.category);
 
@@ -260,15 +267,8 @@ document.addEventListener("DOMContentLoaded", function () {
         currentFilters.reviewedEntity = reviewedEntitySelect.value;
         
         const selectedCategories = Array.from(categorySelect.selectedOptions).map(o => o.value);
-        
-        // Limit simultaneous categories to 5
-        if (selectedCategories.length > 5) {
-            alert("Por favor, selecione no máximo 5 categorias para melhor visualização.");
-            return; 
-        }
 
         currentFilters.category = selectedCategories.length > 0 ? selectedCategories : ["Todas"];
-        
         updateDashboard();
     }
     
