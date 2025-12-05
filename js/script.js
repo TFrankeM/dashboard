@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
         { label: "Últimas 24 horas", value: "Last24h"}, 
         { label: "Últimos 7 dias", value: "Last7d"}, 
         { label: "Últimos 30 dias", value: "Last30d"}, 
+        { label: "Últimos 120 dias", value: "Last120d"}, 
         { label: "Últimos 180 dias", value: "Last180d"}, 
         { label: "Últimos 365 dias ", value: "Last365d"}
     ];

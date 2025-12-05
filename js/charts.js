@@ -195,6 +195,9 @@ export function drawLineChart(canvasElement, labels, datasets) {
                 mode: "index",
                 intersect: false,
             },
+            layout: {
+                padding: { bottom: 30, left: 10, right: 10 } 
+            },
             scales: {
                 y: { 
                     min: 1, 

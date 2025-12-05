@@ -229,8 +229,11 @@ body {
 
 /* Card do Gráfico Principal */
 .main-chart-card {
-    height: 450px;
+    height: 500px;
     padding: 20px;
+    margin-bottom: 40px; /* Espaço para o footer não colar */
+    display: flex;
+    flex-direction: column;
 }
 
 .chart-controls {
@@ -278,23 +281,57 @@ body {
 
 /* Rodapé */
 .dashboard-footer {
+    width: 100%;
+    margin-top: auto; /* Empurra para o final se estiver em container flex */
+    padding-top: 2rem;
+    padding-bottom: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.footer-content {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    margin-top: 20px;
-    background-color: var(--light-gray-bg);
-    padding: 10px 20px;
-    border-radius: 8px;
-    flex-wrap: wrap;
+    text-align: center;
+    gap: 4px;
 }
-.footer-info p, .footer-info span {
-    margin: 2px 0;
-    color: var(--fgv-blue);
-    font-size: 12px;
+
+/* Destaque Principal: DINT */
+.copyright-text {
+    font-size: 0.875rem; /* 14px */
+    color: #334155;      /* Slate 700 */
+    font-weight: 500;
+}
+
+.dint-link {
+    color: #1e3a8a;      /* Azul FGV forte */
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.dint-link:hover {
+    color: #2563eb;      /* Azul mais claro no hover */
+    text-decoration: underline;
+}
+
+/* Secundário: FGV */
+.fgv-text {
+    font-size: 0.75rem;  /* 12px */
+    color: #64748b;      /* Slate 500 (mais claro/discreto) */
+    margin: 0;
+}
+
+/* Versão */
+.version-text {
+    font-size: 0.7rem;
+    color: #94a3b8;      /* Slate 400 (ainda mais discreto) */
+    font-family: monospace;
+    margin-top: 4px;
 }
 
 
-/* --- ESTILOS PADRÃO (MOBILE-FIRST) --- */
+/* MOBILE-FIRST */
 
 /* Estilos Padrão (Mobile First): Uma coluna, altura automática */
 .controls-panel {
@@ -312,7 +349,7 @@ body {
 }
 
 
-/* --- AJUSTES PARA TELAS PEQUENAS --- */
+/* TELAS PEQUENAS  */
 /* Estilos para telas estreitas (celulares) */
 @media (max-width: 768px) {
     /* Reduz o título principal */
@@ -357,7 +394,7 @@ body {
     }
 }
 
-/* --- AJUSTES PARA TELAS MÉDIAS --- */
+/* TELAS MÉDIAS */
 @media (max-width: 992px) {
     /* Diminui o título principal */
     .dashboard-header h1 {
@@ -378,7 +415,7 @@ body {
     }
 }
 
-/* --- AJUSTES PARA TELAS GRANDES --- */
+/* TELAS GRANDES */
 @media (min-width: 769px) {
     .controls-panel {
         grid-template-columns: 1fr 1fr 1fr; /* Volta para 3 colunas */
@@ -394,7 +431,7 @@ body {
 }
 
 
-/* --- AJUSTES FINOS PARA TELAS MUITO PEQUENAS --- */
+/* TELAS MUITO PEQUENAS */
 @media (max-width: 480px) {
     /* Diminui o padding geral do dashboard para ganhar espaço */
     .dashboard-container {
