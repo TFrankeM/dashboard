@@ -59,17 +59,33 @@ body {
 }
 
 .info-icon {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    line-height: 16px;
+    display: inline-flex;  /* essas 3 linhas alinham ? no centro do circulo*/
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    background-color: #e2e8f0;  /* cor de fundo do círculo */
     border: 1px solid var(--fgv-blue);
-    border-radius: 50%;
+    border-radius: 50%;     /* arredondamento das bordas */
     text-align: center;
-    font-size: 10px;
+    font-size: 10px;;
     font-weight: bold;
-    color: var(--fgv-blue);
+    color: #64748b; /* cor da ? */
     cursor: pointer;
+    margin-left: 6px;
+    transition: all 0.2s ease;
+}
+
+.info-icon:hover {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.tippy-box {
+    background-color: #1e293b;
+    color: white;
+    font-size: 0.85rem;
+    border-radius: 6px;
 }
 
 .filter-group label {

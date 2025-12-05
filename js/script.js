@@ -73,6 +73,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const titlereviewerEl = document.getElementById("title-reviewer");
     const titlereviewedEntityEl = document.getElementById("title-reviewedEntity");
 
+    if (typeof tippy !== "undefined") {
+        tippy(".info-icon", {
+            placement: "top",
+            animation: "shift-away",
+            theme: "dark",
+            delay: [100, 100],
+            arrow: true,
+            arrowType: "round",
+            size: "small",
+            trigger: "mouseenter focus click",
+            maxWidth: 250,
+            interactive: true
+        });
+    }
+
     // UI INITIALIZATION
     function initializeUI() {
         periodSelect.innerHTML = "";

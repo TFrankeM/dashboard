@@ -17,30 +17,42 @@
         <div class="controls-panel">
             <div class="card filters-card">
                 <div class="filter-group">
-                    <label for="period">Período <span class="info-icon">?</span></label>
+                    <label for="period">Período 
+                        <span class="info-icon" data-tippy-content="Define o intervalo de tempo histórico considerado para os gráficos de linha e barra.">?</span>
+                    </label>
                     <select id="period"></select>
                 </div>
                 <div class="filter-group">
-                    <label for="reviewer">Ente avaliador <span class="info-icon">?</span></label>
+                    <label for="reviewer">Ente avaliador 
+                        <span class="info-icon" data-tippy-content="O país ou entidade de onde se originam as notícias (quem está emitindo a opinião).">?</span>
+                    </label>
                     <select id="reviewer"></select>
                 </div>
                 <div class="filter-group">
-                    <label for="reviewedEntity">Ente em avaliação <span class="info-icon">?</span></label>
+                    <label for="reviewedEntity">Ente em avaliação 
+                        <span class="info-icon" data-tippy-content="O país ou entidade que é o objeto da notícia (sobre quem se fala).">?</span>
+                    </label>
                     <select id="reviewedEntity"></select>
                 </div>
                 <div class="filter-group">
-                    <label for="category">Categorias <span class="info-icon">?</span></label>
+                    <label for="category">Categorias 
+                        <span class="info-icon" data-tippy-content="Filtra os tópicos das notícias. Você pode selecionar até 5 temas simultaneamente.">?</span>
+                    </label>
                     <select id="category" multiple></select>
                 </div>
             </div>
 
             <div class="card bar-chart-card">
-                <p>Notícias de <span id="title-reviewer"></span> sobre <span id="title-reviewedEntity"></span>: <span id="total-noticias">Carregando...</span> <span class="info-icon">?</span></p>
+                <p>Notícias de <span id="title-reviewer"></span> sobre <span id="title-reviewedEntity"></span>: <span id="total-noticias">Carregando...</span> 
+                    <span class="info-icon" data-tippy-content="Contagem total de notícias encontradas no banco de dados aplicando os filtros selecionados.">?</span>
+                </p>
                 <canvas id="barChart"></canvas>
             </div>
             
             <div class="card gauge-card">
-                <p>Índice medio da imagem na última meia hora <span class="info-icon">?</span></p>
+                <p>Índice medio da imagem na última meia hora 
+                    <span class="info-icon" data-tippy-content="Média do sentimento das notícias coletadas nos últimos 30 minutos que atendem aos filtros selecionados. Varia de 1 (Muito Negativo) a 7 (Muito Positivo).">?</span>
+                </p>
                 <div class="gauge-container">
                     <canvas id="gaugeChart"></canvas>
                     <div id="gaugeValueText" class="gauge-value-text">0.0</div> 
@@ -52,6 +64,10 @@
         </div>
 
         <div class="card main-chart-card">
+            <!-- <p>
+                Sentimento médio das notícias ao longo do tempo
+                <span class="info-icon" data-tippy-content="Gráfico de linha que mostra a evolução do sentimento médio das notícias ao longo do tempo, de acordo com os filtros selecionados.">?</span>
+            </p> -->
             <div class="chart-controls">
                 <div class="average-buttons">
                     <button class="avg-btn" data-period="monthly">Mensal</button>
@@ -76,11 +92,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <script type="module"src="./js/script.js" defer></script>
 
