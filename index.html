@@ -29,8 +29,8 @@
     <!-- Menu lateral de navegação -->
     <nav class="side-nav">
         <a href="#top" class="nav-dot active" data-label="Filtros"></a>
-        <a href="#metrics" class="nav-dot" data-label="Métricas Principais"></a>
-        <a href="#evolution" class="nav-dot" data-label="Evolução Temporal"></a>
+        <a href="#metrics" class="nav-dot" data-label="Métricas principais"></a>
+        <a href="#evolution" class="nav-dot" data-label="Evolução temporal"></a>
     </nav>
 
     <div class="dashboard-wrapper">
@@ -42,7 +42,7 @@
                     <i data-lucide="bar-chart-2" class="brand-icon"></i>
                     <div>
                         <h1>Indicador da Imagem do Brasil no Exterior (IIBEx)</h1>
-                        <span class="subtitle">Monitoramento Estratégico de Mídia</span>
+                        <span class="subtitle">Monitoramento estratégico de imagem</span>
                     </div>
                 </div>
                 <img src="assets/logofgv.png" alt="Logo FGV" class="logo-fgv">
@@ -53,47 +53,47 @@
         <section class="sticky-filters" id="filters-container">
             <div class="filters-header">
                 <h2>
-                    <i data-lucide="sliders-horizontal" class="icon-sm"></i> Configuração da Análise
+                    <i data-lucide="sliders-horizontal" class="icon-sm"></i> Filtros
                 </h2>
                 
                 <!-- Toggle Dinâmico -->
                 <div class="toggle-container">
-                    <span id="mode-label" class="toggle-label">Histórico 2025</span>
+                    <span id="mode-label" class="toggle-label">2025</span>
 
                     <label class="switch">
                         <input type="checkbox" id="dynamic-mode">
                         <span class="slider round"></span>
                     </label>
 
-                    <span class="info-icon" data-tippy-content="Modo Estático: Analisa dados consolidados de 2025. Modo Dinâmico: Atualiza em tempo real a cada 30 min.">?</span>
+                    <span class="info-icon" data-tippy-content="Modo Estático: Analisa dados de 2025. Modo Dinâmico: Atualiza a cada 30 min.">?</span>
                 </div>
             </div>
             
             <div class="filters-grid">
                 <div class="filter-group">
-                    <label for="reviewer">Ente Avaliador 
-                        <span class="info-icon" data-tippy-content="O país ou entidade de onde se originam as notícias (quem está emitindo a opinião).">?</span>
+                    <label for="reviewer">Ente avaliador 
+                        <span class="info-icon" data-tippy-content="O país ou entidade que avalia a imagem  do ente em avaliação.">?</span>
                     </label>
                     <select id="reviewer"></select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="reviewedEntity">Ente em Avaliação 
-                        <span class="info-icon" data-tippy-content="O país ou entidade que é o objeto da notícia (sobre quem se fala).">?</span>
+                    <label for="reviewedEntity">Ente em avaliação 
+                        <span class="info-icon" data-tippy-content="O país ou entidade que é o objeto da avaliação do ente avaliador.">?</span>
                     </label>
                     <select id="reviewedEntity"></select>
                 </div>
 
                 <div class="filter-group">
                     <label for="period">Período 
-                        <span class="info-icon" data-tippy-content="Define o intervalo de tempo histórico considerado para os gráficos de linha e barra.">?</span>
+                        <span class="info-icon" data-tippy-content="Define o intervalo de tempo no IIBEx.">?</span>
                     </label>
                     <select id="period"></select>
                 </div>
                 
                 <div class="filter-group">
                     <label for="category">Categorias 
-                        <span class="info-icon" data-tippy-content="Filtra os tópicos das notícias. É possível selecionar até 5 temas simultaneamente.">?</span>
+                        <span class="info-icon" data-tippy-content="Filtra as categorias avaliadas. É possível selecionar até cinco categorias simultaneamente.">?</span>
                     </label>
                     <select id="category" multiple></select>
                 </div>
@@ -182,11 +182,12 @@
         <footer class="dashboard-footer">
             <div class="footer-content">
                 <p>
-                    &copy; 2025 <a href="https://dint.fgv.br/" target="_blank">Diretoria Internacional (DINT)</a>
+                    &copy; 2025 <a href="https://dint.fgv.br/" target="_blank">Diretoria Internacional da Fundação Getulio Vargas</a>
                 </p>
-                <p class="sub-footer">Fundação Getulio Vargas • IIBEx 4.0 • Em Desenvolvimento</p>
+                <p class="sub-footer">FGV Diretoria Internacional • IIBEx 4.0 • Em Desenvolvimento</p>
             </div>
         </footer>
     </div>
 </body>
+
 </html>
