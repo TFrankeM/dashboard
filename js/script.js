@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if(toggleBtn && labelTxt) {
         toggleBtn.addEventListener("change", (e) => {
             if(e.target.checked) {
-                labelTxt.textContent = "Tempo Real (Dinâmico)";
+                labelTxt.textContent = "Em tempo real";
                 labelTxt.style.color = "#34d399";
                 labelTxt.style.fontWeight = "700";
                 
@@ -375,4 +375,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
     initializeUI();
     updateDashboard();
+
 });
