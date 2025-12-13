@@ -102,20 +102,12 @@
 
         <!-- Resumo executivo -->
         <main class="main-content" id="metrics">
-            <!-- Container esquerda: gauge -->
-            <div class="card metric-card">
-                <div class="card-header">
-                    <h3>IIBEx</h3>
-                    <i data-lucide="gauge" class="card-icon"></i>
-                </div>
-                <div class="card-body centered">
-                    <div class="gauge-wrapper">
-                        <canvas id="gaugeChart"></canvas>
-                        <div id="gaugeValueText" class="gauge-value-text">0.0</div>
-                    </div>
-                    <p class="gauge-footer">
-                        <i data-lucide="clock" class="icon-xs"></i> Última atualização: 30 min
-                    </p>
+            <!-- Container esquerda: Placeholder para futuro insight sobre categoria -->
+            <div class="card metric-card placeholder-card">
+                <div class="placeholder-content">
+                    <i data-lucide="hammer" class="placeholder-icon"></i>
+                    <h3>Em Desenvolvimento</h3>
+                    <p>Novos indicadores em breve</p>
                 </div>
             </div>
             
@@ -139,12 +131,20 @@
                 </div>
             </div>
 
-            <!-- Container direita: Placeholder para futuro insight sobre categoria -->
-            <div class="card metric-card placeholder-card">
-                <div class="placeholder-content">
-                    <i data-lucide="hammer" class="placeholder-icon"></i>
-                    <h3>Em Desenvolvimento</h3>
-                    <p>Novos indicadores em breve</p>
+            <!-- Container direita: gauge -->
+            <div class="card metric-card">
+                <div class="card-header">
+                    <h3>IIBEx</h3>
+                    <i data-lucide="gauge" class="card-icon"></i>
+                </div>
+                <div class="card-body centered">
+                    <div class="gauge-wrapper">
+                        <canvas id="gaugeChart"></canvas>
+                        <div id="gaugeValueText" class="gauge-value-text">0.0</div>
+                    </div>
+                    <p class="gauge-footer">
+                        <i data-lucide="clock" class="icon-xs"></i> Última atualização: 30 min
+                    </p>
                 </div>
             </div>
         </main>
@@ -191,4 +191,5 @@
 </body>
 
 </html>
+
 
