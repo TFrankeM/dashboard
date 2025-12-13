@@ -203,7 +203,7 @@ export function drawLineChart(canvasElement, labels, datasets) {
                 y: { 
                     min: 1, 
                     max: 7,
-                    title: { display: true, text: "Avaliação (nota)" }
+                    title: { display: true, text: "FGV IIBEx" }
                 },
                 x: { 
                     grid: { display: false } 
