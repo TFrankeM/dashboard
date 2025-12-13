@@ -3,6 +3,71 @@ import { drawGaugeChart, drawBarChart, drawLineChart, resetLineChartZoom } from 
 
 document.addEventListener("DOMContentLoaded", function () {
     
+    //// Inicialização de UI ////
+
+    if (typeof lucide !== "undefined") {
+        lucide.createIcons();
+    }
+
+    // Scroll: compactar header; atualizar menu lateral
+    const filterSection = document.getElementById("filters-container");
+    const navDots = document.querySelectorAll(".nav-dot");
+    const sections = document.querySelectorAll("header, section, main");
+
+    window.addEventListener("scroll", () => {
+        const scrollY = window.scrollY;
+
+        // 1. Compactar Filtros
+        if (filterSection) {
+            if (scrollY > 150) {
+                filterSection.classList.add("compact");
+            } else if (scrollY < 50) {
+                filterSection.classList.remove("compact");
+            }
+        }
+
+        // Atualizar menu lateral
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (scrollY >= (sectionTop - 200)) {
+                current = section.getAttribute("id");
+            }
+        });
+
+        navDots.forEach(dot => {
+            dot.classList.remove('active');
+            if (dot.getAttribute('href').includes(current)) {
+                dot.classList.add('active');
+            }
+        });
+    });
+
+    // Toggle
+    const toggleBtn = document.getElementById("dynamic-mode");
+    const labelTxt = document.getElementById("mode-label");
+
+    if(toggleBtn && labelTxt) {
+        toggleBtn.addEventListener("change", (e) => {
+            if(e.target.checked) {
+                labelTxt.textContent = "Tempo Real (Dinâmico)";
+                labelTxt.style.color = "#34d399";
+                labelTxt.style.fontWeight = "700";
+                
+                // tarefa da semana que vem
+
+            } else {
+                labelTxt.textContent = "Histórico 2025";
+                labelTxt.style.color = "white";
+                labelTxt.style.fontWeight = "500";
+
+                // tarefa da semana que vem
+            }
+        });
+    }
+
+    //// Config padrão ////
+
     // SINGLE SOURCE OF TRUTH
     const DEFAULT_CONFIG = {
         period: "Last365d",

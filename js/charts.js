@@ -146,7 +146,7 @@ export function drawBarChart(canvasElement, labels, data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: {bottom: 15} },
+            // layout: { padding: {bottom: 5} },
             scales: {
                 y: { beginAtZero: true, grid: { display: false } },
                 x: { grid: { display: true } }

@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Indicador da Imagem do Brasil no Exterior (IIBEx)</title>
+    <title>IIBEx | Sala de Situação </title>
 
     <!-- FavIcon -->
     <link rel="icon" href="assets/favicon.png" type="image/png">
+    
+    <!-- Bib externas -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
@@ -16,38 +18,79 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <link rel="stylesheet" href="style.css">
     <script type="module"src="./js/script.js" defer></script>
-
 </head>
 <body>
 
-    <div class="dashboard-container">
-        <header class="dashboard-header">
-            <h1>Indicador da Imagem do Brasil no Exterior (IIBEx)</h1>
-            <img src="assets/logofgv.png" alt="Logo FGV" class="logo-fgv">
-        </header>
+    <!-- Menu lateral de navegação -->
+    <nav class="side-nav">
+        <a href="#top" class="nav-dot active" data-label="Filtros"></a>
+        <a href="#metrics" class="nav-dot" data-label="Métricas Principais"></a>
+        <a href="#evolution" class="nav-dot" data-label="Evolução Temporal"></a>
+    </nav>
 
-        <div class="controls-panel">
-            <div class="card filters-card">
+    <div class="dashboard-wrapper">
+        
+        <!-- Faixa de marca -->
+        <header class="brand-header" id="top">
+            <div class="header-content">
+                <div class="brand-title">
+                    <i data-lucide="bar-chart-2" class="brand-icon"></i>
+                    <div>
+                        <h1>Indicador da Imagem do Brasil no Exterior (IIBEx)</h1>
+                        <span class="subtitle">Monitoramento Estratégico de Mídia</span>
+                    </div>
+                </div>
+                <img src="assets/logofgv.png" alt="Logo FGV" class="logo-fgv">
+            </div>
+        </header>
+        
+        <!-- Barra de filtros -->
+        <section class="sticky-filters" id="filters-container">
+            <div class="filters-header">
+                <h2>
+                    <i data-lucide="sliders-horizontal" class="icon-sm"></i> Configuração da Análise
+                </h2>
+                
+                <!-- Toggle Dinâmico -->
+                <div class="toggle-container">
+                    <span id="mode-label" class="toggle-label">Histórico 2025</span>
+
+                    <label class="switch">
+                        <input type="checkbox" id="dynamic-mode">
+                        <span class="slider round"></span>
+                    </label>
+
+                    <span class="info-icon" data-tippy-content="Modo Estático: Analisa dados consolidados de 2025. Modo Dinâmico: Atualiza em tempo real a cada 30 min.">?</span>
+                </div>
+            </div>
+            
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="reviewer">Ente Avaliador 
+                        <span class="info-icon" data-tippy-content="O país ou entidade de onde se originam as notícias (quem está emitindo a opinião).">?</span>
+                    </label>
+                    <select id="reviewer"></select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="reviewedEntity">Ente em Avaliação 
+                        <span class="info-icon" data-tippy-content="O país ou entidade que é o objeto da notícia (sobre quem se fala).">?</span>
+                    </label>
+                    <select id="reviewedEntity"></select>
+                </div>
+
                 <div class="filter-group">
                     <label for="period">Período 
                         <span class="info-icon" data-tippy-content="Define o intervalo de tempo histórico considerado para os gráficos de linha e barra.">?</span>
                     </label>
                     <select id="period"></select>
                 </div>
-                <div class="filter-group">
-                    <label for="reviewer">Ente avaliador 
-                        <span class="info-icon" data-tippy-content="O país ou entidade de onde se originam as notícias (quem está emitindo a opinião).">?</span>
-                    </label>
-                    <select id="reviewer"></select>
-                </div>
-                <div class="filter-group">
-                    <label for="reviewedEntity">Ente em avaliação 
-                        <span class="info-icon" data-tippy-content="O país ou entidade que é o objeto da notícia (sobre quem se fala).">?</span>
-                    </label>
-                    <select id="reviewedEntity"></select>
-                </div>
+                
                 <div class="filter-group">
                     <label for="category">Categorias 
                         <span class="info-icon" data-tippy-content="Filtra os tópicos das notícias. É possível selecionar até 5 temas simultaneamente.">?</span>
@@ -55,53 +98,93 @@
                     <select id="category" multiple></select>
                 </div>
             </div>
+        </section>
 
-            <div class="card bar-chart-card">
-                <p>Notícias de <span id="title-reviewer"></span> sobre <span id="title-reviewedEntity"></span>: <span id="total-noticias">Carregando...</span> 
-                    <span class="info-icon" data-tippy-content="Contagem total de notícias encontradas no banco de dados aplicando os filtros selecionados.">?</span>
-                </p>
-                <canvas id="barChart"></canvas>
+        <!-- Resumo executivo -->
+        <main class="main-content" id="metrics">
+            <!-- Container esquerda: gauge -->
+            <div class="card metric-card">
+                <div class="card-header">
+                    <h3>Índice de Sentimento</h3>
+                    <i data-lucide="gauge" class="card-icon"></i>
+                </div>
+                <div class="card-body centered">
+                    <div class="gauge-wrapper">
+                        <canvas id="gaugeChart"></canvas>
+                        <div id="gaugeValueText" class="gauge-value-text">0.0</div>
+                    </div>
+                    <p class="gauge-footer">
+                        <i data-lucide="clock" class="icon-xs"></i> Última atualização: 30 min
+                    </p>
+                </div>
             </div>
             
-            <div class="card gauge-card">
-                <p>Índice medio da imagem na última meia hora 
-                    <span class="info-icon" data-tippy-content="Média do sentimento das notícias coletadas nos últimos 30 minutos que atendem aos filtros selecionados. Varia de 1 (Muito Negativo) a 7 (Muito Positivo).">?</span>
-                </p>
-                <div class="gauge-container">
-                    <canvas id="gaugeChart"></canvas>
-                    <div id="gaugeValueText" class="gauge-value-text">0.0</div> 
+            <!-- Container centro: volume de notícias-->
+            <div class="card metric-card">
+                <div class="card-header">
+                    <div>
+                        <h3>Volume de Notícias</h3>
+                        <p class="card-desc volume">Flutuação de quantidade de notícias</p>
+                    </div>    
+                    <i data-lucide="bar-chart" class="card-icon"></i>
                 </div>
-                <p id="gaugeUpdateTime" class="gauge-update-time">
-                    Atualizado a cada 30 minutos
-                </p>
+                <div class="card-body">
+                    <p class="metric-subtitle">
+                        <span id="title-reviewer">--</span> sobre <span id="title-reviewedEntity">--</span>: 
+                        <strong id="total-noticias">--</strong>
+                    </p>
+                    <div class="canvas-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="card main-chart-card">
-            <!-- <p>
-                Sentimento médio das notícias ao longo do tempo
-                <span class="info-icon" data-tippy-content="Gráfico de linha que mostra a evolução do sentimento médio das notícias ao longo do tempo, de acordo com os filtros selecionados.">?</span>
-            </p> -->
-            <div class="chart-controls">
-                <div class="average-buttons">
-                    <button class="avg-btn" data-period="monthly">Mensal</button>
-                    <button class="avg-btn active" data-period="weekly">Semanal</button>
-                    <button class="avg-btn" data-period="daily">Diária</button>
-                    <button class="avg-btn" data-period="hourly">Horária</button>
-                    <button class="avg-btn" data-period="half_hourly">30 min</button>
+            <!-- Container direita: Placeholder para futuro insight sobre categoria -->
+            <div class="card metric-card placeholder-card">
+                <div class="placeholder-content">
+                    <i data-lucide="hammer" class="placeholder-icon"></i>
+                    <h3>Em Desenvolvimento</h3>
+                    <p>Novos indicadores em breve</p>
                 </div>
-                <button id="resetZoomBtn" class="chart-action-btn">Resetar Configuração</button>
             </div>
-            <canvas id="lineChart"></canvas>
-        </div>
+        </main>
+        
+        <!-- Container evolução temporal -->
+        <section class="evolution-section" id="evolution">
+            <div class="card full-width-card">
+                <div class="card-header-row">
+                    <div>
+                        <h3>Evolução Temporal do Sentimento</h3>
+                        <p class="card-desc">
+                            Tendência histórica do sentimento médio das notícias, conforme os filtros aplicados.
+                        </p>
+                    </div>
+                    <div class="chart-controls">
+                        <div class="average-buttons">
+                            <button class="avg-btn" data-period="monthly">Mensal</button>
+                            <button class="avg-btn active" data-period="weekly">Semanal</button>
+                            <button class="avg-btn" data-period="daily">Diária</button>
+                            <button class="avg-btn" data-period="hourly">Horária</button>
+                            <button class="avg-btn" data-period="half_hourly">30 min</button>
+                        </div>
+                        <button id="resetZoomBtn" class="reset-btn">
+                            <i data-lucide="rotate-ccw" class="icon-xs"></i> Resetar zoom e agregação
+                        </button>
+                    </div>
+                </div>
+                <div class="line-chart-container">    
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+        </section>
+
 
         <footer class="dashboard-footer">
             <div class="footer-content">
-                <p class="copyright-text">
-                    &copy; 2025 <a href="https://dint.fgv.br/" target="_blank" rel="noopener noreferrer" class="font-bold text-blue-900 hover:text-blue-700 transition-colors">Diretoria Internacional (DINT)</a>
+                <p>
+                    &copy; 2025 <a href="https://dint.fgv.br/" target="_blank">Diretoria Internacional (DINT)</a>
                 </p>
-                <p class="fgv-text">Fundação Getulio Vargas</p>
-                <span class="version-text">IIBEx 3.0 (Em desenvolvimento) </span>
+                <p class="sub-footer">Fundação Getulio Vargas • IIBEx 4.0 • Em Desenvolvimento</p>
             </div>
         </footer>
     </div>

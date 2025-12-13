@@ -2,60 +2,329 @@
 
 :root {
     --fgv-blue: #003a79;
-    --light-gray-bg: #f8f9fa;
-    --border-color: #dee2e6;
-    --text-color: #495057;
+    --fgv-blue-dark: #002855;
+    --fgv-gold: #bfa15f;
+    --bg-light: #f3f4f6;
+    --white: #ffffff;
+     --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 body {
     font-family: 'Roboto', Arial, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-primary);
     margin: 0;
-    background-color: #e9ecef;
-    color: var(--text-color);
+    overflow-x: hidden;
 }
 
-.dashboard-container {
-    max-width: 1400px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+.dashboard-wrapper {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-bottom: 40px;
 }
 
-/* Header */
-.dashboard-header {
+/* Menu lateral de navegação */
+.side-nav {
+    position: fixed;
+    right: 20px;
+    top: 50%;                       /* Posiciona no meio da tela */
+    transform: translateY(-50%);    /* Centraliza verticalmente */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 1000;                  /* Garante que fique acima de outros elementos */
+}
+
+.nav-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--fgv-blue);
+    background-color: transparent;
+    transition: all 0.3s ease;
+    position: relative;             /* Para q elementos filhos (tooltip) sejam posicionados relativamente a ele */
+}
+
+.nav-dot.active, .nav-dot:hover {
+    background-color: var(--fgv-blue);
+    transform: scale(1.2);           /* Aumenta ponto ao ativar/passar mouse */
+}
+
+/* Tooltip do Menu Lateral */
+.nav-dot::before {
+    content: attr(data-label);
+    position: absolute;
+    right: 150%;                     /* Posiciona à esquerda do ponto */
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--fgv-blue);     /* Fundo escuro */
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;                      /* Inicialmente invisível */    
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.nav-dot:hover::before {
+    opacity: 1;                      /* Torna visível ao passar o mouse */
+}
+
+/* Header | titulo da IIBEx e foto FGV*/
+.brand-header {
+    background-color: var(--white);
+    padding: 20px 40px;             /* margem cima/baixo. esquerda/direita */
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid var(--fgv-blue);
-    padding-bottom: 15px;
-    margin-bottom: 20px;
 }
 
-.dashboard-header h1 {
+.brand-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.brand-icon {
+    width: 32px;
+    height: 32px;
     color: var(--fgv-blue);
-    font-size: 28px;
+}
+
+.brand-title h1 {
+    font-size: 22px;
+    color: var(--fgv-blue);
     margin: 0;
+    font-weight: 700;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .logo-fgv {
-    max-height: 50px;
+    height: 45px;
 }
 
-/* Cards Genéricos */
-.card {
-    background-color: var(--light-gray-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 15px;
-    box-sizing: border-box;
+/* Filtros */
+.sticky-filters {
+    position: sticky;
+    top: 0;
+    background-color: var(--fgv-blue);
+    color: white;
+    padding: 20px 40px;
+    box-shadow: var(--shadow-sm);
+    z-index: 500;                   /* acima do conteúdo, mas abaixo do menu lateral */
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--fgv-blue-dark);
 }
 
-.card p {
-    margin-top: 0;
+.sticky-filters.compact {
+    padding: 10px 40px;
+    background-color: rgba(0, 58, 121, 0.95);
+    backdrop-filter: blur(5px);
+}
+
+.sticky-filters.compact .filters-header,
+.sticky-filters.compact label {
+    display: none;
+}
+
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.filters-header h2 {
+    font-size: 18px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Toggle switch */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    /* Animação de escala */
+    transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.switch:hover {
+    transform: scale(1.2);
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Fundo do checkbox */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255,255,255,0.3); /* (Desligado em 2025) */
+    transition: 0.4s;
+    border-radius: 24px;
+}
+
+/* Bolinha do checkbox*/
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+/* Se checkbox estiver marcado (input:checked), mude cor de fundo do slider */
+input:checked + .slider {
+    background-color: #10b981;      /* Cor quando ligado (Dinâmico) */
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.toggle-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: white;
+    min-width: 110px;                 /* Evita pulo no layout quando texto muda */
+    text-align: right;
+    transition: color 0.3s ease;
+}
+
+/* grid dos filtros */
+.filters-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 4fr;
+    gap: 20px;
+    align-items: end;
+}
+
+.filter-group label {
+    display: flex;
+    align-items: center;
     font-size: 14px;
-    color: var(--fgv-blue);
+    font-weight: 700;
+    color: white;
+    margin-bottom: 6px;
+    text-transform: none;
+}
+
+.filter-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--fgv-blue);
+    border-radius: 4px;
+    background-color: white;
+}
+
+/* Category choice box with the same size as other filters */
+/* The library Choices.js is used. 
+    .filter-group increases specificity and ensures the used styles override the defaults injected by Choices.js
+    !important to each rule because Choices’ CSS uses inline or high-specificity rules. 
+    Without it, the dashboard CSS was being ignored.
+*/
+.filter-group .choices {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0 !important;
+}
+
+.filter-group .choices__inner {
+    border: 1px solid var(--fgv-blue) !important;
+    border-radius: 4px !important;
+    background-color: white !important;
+    box-sizing: border-box !important;
+    padding: 7px 8px !important;
+    min-height: 38px !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    color: var(--fgv-blue) !important;
+}
+
+.filter-group .choices__list--dropdown .choices__item {
+    color: var(--fgv-blue) !important; /* Azul FGV para contraste com fundo branco */
+    font-size: 13px !important;
+}
+
+.filter-group .choices__list--multiple {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.filter-group .choices__list--multiple .choices__item {
+    background-color: var(--fgv-blue) !important;
+    border: 1px solid var(--fgv-blue) !important;
+    color: white !important;
+    border: none !important;
+    font-size: 13px !important;
+    border-radius: 3px !important;
+    margin-right: 4px !important;
+}
+
+.filter-group .choices__input {
+    margin: 0 !important;
+    padding: 4px !important;
+}
+
+.filter-group .choices__list--dropdown {
+    border: 1px solid var(--fgv-blue) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    margin-top: 2px !important;
+}
+
+.filter-group .choices.collapsed .choices__inner {
+    max-height: 38px !important;
+    overflow: hidden !important;
+}
+
+.sticky-filters.compact .choices__inner {
+    min-height: 32px !important;
+    font-size: 12px !important;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .info-icon {
@@ -77,164 +346,202 @@ body {
 }
 
 .info-icon:hover {
-    background-color: #3b82f6;
-    color: white;
+    background-color: var(--fgv-gold);
+    color: var(--fgv-blue);
+    border-color: var(--fgv-gold);
 }
 
 .tippy-box {
-    background-color: #1e293b;
+    background-color: var(--fgv-blue-dark);
     color: white;
     font-size: 0.85rem;
     border-radius: 6px;
 }
 
-.filter-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 14px;
-    color: var(--fgv-blue);
-    font-weight: 700;
-}
-.filter-group select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid var(--fgv-blue);
-    border-radius: 4px;
-    background-color: white;
+
+/* Resumo executivo */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    padding: 30px 40px;
 }
 
-/* Category choice box with the same size as other filters */
-/* The library Choices.js is used. 
-    .filter-group increases specificity and ensures the used styles override the defaults injected by Choices.js
-    !important to each rule because Choices’ CSS uses inline or high-specificity rules. 
-    Without it, the dashboard CSS was being ignored.
-*/
-.filter-group .choices {
-  width: 100% !important;
-  box-sizing: border-box !important;
+.card {
+    background-color: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    box-sizing: border-box;
 }
 
-.filter-group .choices__inner {
-  border: 1px solid var(--fgv-blue) !important;
-  border-radius: 4px !important;
-  background-color: white !important;
-  box-sizing: border-box !important;
-  padding: 7px 8px !important;
-  min-height: 38px !important;
-  box-shadow: none !important;
-}
-
-.filter-group .choices__list--multiple {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.filter-group .choices__list--multiple .choices__item {
-  background-color: var(--fgv-blue) !important;
-  color: white !important;
-  border: none !important;
-  font-size: 13px !important;
-  border-radius: 3px !important;
-  margin-right: 4px !important;
-}
-
-.filter-group .choices__input {
-  margin: 0 !important;
-  padding: 4px !important;
-}
-
-.filter-group .choices__list--dropdown {
-  border: 1px solid var(--fgv-blue) !important;
-  border-radius: 4px !important;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
-}
-
-.filter-group .choices.collapsed .choices__inner {
-  max-height: 38px !important;
-  overflow: hidden !important;
-}
-
-.filter-group .choices__placeholder {
-  color: var(--text-color) !important;
-  opacity: 0.8 !important;
-}
-/* Aviso de limite de seleção do Choices.js */
-.filter-group .choices__notice {
-    background-color: #fee2e2 !important; /* Vermelho claro fundo */
-    color: #991b1b !important; /* Vermelho escuro texto */
-    border: 1px solid #fca5a5;
-    border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-
-/* Card do Gráfico de Barras */
-.bar-chart-card {
+.metric-card {
+    height:320px;
     display: flex;
     flex-direction: column;
-    position: relative;
-    min-width: 0;
-}
-#barChart {
-    flex-grow: 1;
 }
 
-
-/* Card do Medidor */
-.gauge-card {
+.card-header {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start; /* Alinha o conteúdo ao topo */
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
 }
 
-.gauge-container {
+.card-header h3 { 
+    font-size: 16px; 
+    font-weight: 700; 
+    color: var(--fgv-blue); 
+    margin: 0; 
+}
+
+.card-icon { 
+    width: 20px; 
+    height: 20px; 
+    color: var(--text-secondary); 
+}
+
+.card-body { 
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+}
+
+/* Gauge */
+.card-body.centered { 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.gauge-wrapper {
     position: relative; 
     width: 100%;
-    height: 85%;
+    height: 80%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
 #gaugeChart {
     max-width: 100%;
+    max-height: 100%;
 }
 
+/* O texto fica centralizado na base do arco */
 .gauge-value-text {
-    font-size: 50px;
+    position: absolute;
+    bottom: 0; /* Ajuste fino para colar na base do arco */
+    left: 0; 
+    right: 0;
+    font-size: 3rem;
     font-weight: 700;
     color: var(--fgv-blue);
-    
-    margin-top: -40px; 
     text-align: center;
+    pointer-events: none;
+    line-height: 1;
 }
 
-.gauge-card .gauge-update-time {
-    font-size: 10px;
+.gauge-footer {
+    width: 100%;
+    font-size: 11px;
+    color: #9ca3af;
     text-align: right;
-    color: #888;
-    margin-top: auto; /* Empurra para o final do card */
-    padding: 0 15px 10px 15px; /* Adiciona espaçamento interno */
-}
-
-
-/* Card do Gráfico Principal */
-.main-chart-card {
-    height: 500px;
-    padding: 20px;
-    margin-bottom: 40px; /* Espaço para o footer não colar */
+    padding-top: 20px;
+    margin-top: auto; 
+    flex-shrink: 0;
+    /* icone*/
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
 }
+
+.icon-xs {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2px;
+}
+
+/* Volume de notícias */
+.metric-subtitle { 
+    font-size: 13px; 
+    color: var(--text-secondary); 
+    /* margin-bottom: 10px;  */
+}
+
+.canvas-container { 
+    flex-grow: 1; 
+    position: relative; 
+    width: 100%; 
+    height: 100%;
+}
+
+.volume {
+    margin-bottom: 0;
+}
+
+/* Card placeholder */
+.placeholder-card { 
+    background-color: #f9fafb; 
+    border: 1px dashed #d1d5db; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.placeholder-content { 
+    text-align: center; 
+    color: #9ca3af; 
+}
+
+.placeholder-icon { 
+    width: 60px; 
+    height: 60px; 
+    margin-bottom: 10px; 
+    opacity: 0.5; 
+}
+
+/* Gráfico de linhas: tendência histórica */
+.evolution-section {
+    padding: 0 40px;
+}
+
+.full-width-card {
+    padding: 20px;
+    min-height: 500px;
+}
+
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card-header-row h3 {
+    color: var(--fgv-blue);
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.card-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.line-chart-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+}
+
+
 
 .chart-controls {
     display: flex;
@@ -245,7 +552,7 @@ body {
     gap: 10px;
 }
 
-.average-buttons {
+.average-buttons, .reset-btn {
     display: flex;
     gap: 5px;
     background-color: #e9ecef;
@@ -253,7 +560,7 @@ body {
     padding: 4px;
 }
 
-.avg-btn, .chart-action-btn {
+.avg-btn, .reset-btn {
     background-color: transparent;
     border: none;
     padding: 6px 12px;
@@ -263,10 +570,6 @@ body {
     font-weight: 700;
     color: var(--fgv-blue);
     transition: background-color 0.2s, color 0.2s;
-}
-
-.chart-action-btn {
-    border: 1px solid var(--border-color);
 }
 
 .avg-btn.active {
@@ -279,188 +582,38 @@ body {
     background-color: #d8dde2;
 }
 
-/* Rodapé */
-.dashboard-footer {
-    width: 100%;
-    margin-top: auto; /* Empurra para o final se estiver em container flex */
-    padding-top: 2rem;
-    padding-bottom: 1.5rem;
-    border-top: 1px solid #e2e8f0;
-}
-
-.footer-content {
+.reset-btn {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    gap: 4px;
-}
-
-/* Destaque Principal: DINT */
-.copyright-text {
-    font-size: 0.875rem; /* 14px */
-    color: #334155;      /* Slate 700 */
-    font-weight: 500;
-}
-
-.dint-link {
-    color: #1e3a8a;      /* Azul FGV forte */
-    font-weight: 700;
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-.dint-link:hover {
-    color: #2563eb;      /* Azul mais claro no hover */
-    text-decoration: underline;
-}
-
-/* Secundário: FGV */
-.fgv-text {
-    font-size: 0.75rem;  /* 12px */
-    color: #64748b;      /* Slate 500 (mais claro/discreto) */
-    margin: 0;
-}
-
-/* Versão */
-.version-text {
-    font-size: 0.7rem;
-    color: #94a3b8;      /* Slate 400 (ainda mais discreto) */
-    font-family: monospace;
-    margin-top: 4px;
+    gap: 5px;
+    border: 1px solid var(--border-color);
 }
 
 
-/* MOBILE-FIRST */
-
-/* Estilos Padrão (Mobile First): Uma coluna, altura automática */
-.controls-panel {
-    display: grid;
-    grid-template-columns: 1fr; /* Uma coluna por padrão */
-    gap: 20px;
-    margin-bottom: 20px;
+/* Rodapé */
+.dashboard-footer { 
+    text-align: center; 
+    padding: 40px 0; 
+    margin-top: 40px; 
+    border-top: 1px solid var(--border-color); 
 }
 
-/* Card de Filtros */
-.filters-card {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+.footer-content a { 
+    color: var(--fgv-blue); 
+    text-decoration: none; 
+    font-weight: 700; 
 }
 
-
-/* TELAS PEQUENAS  */
-/* Estilos para telas estreitas (celulares) */
-@media (max-width: 768px) {
-    /* Reduz o título principal */
-    .dashboard-header h1 {
-        font-size: 18px;
-        text-align: center;
-    }
-
-    /* Centraliza o logo */
-    .dashboard-header {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    /* Faz os filtros ficarem em uma única coluna */
-    .filters-card {
-        grid-template-columns: 1fr; /* grid para apenas 1 coluna */
-    }
-
-    /* Impede o gráfico de barras de esticar */
-    .bar-chart-card {
-        height: 300px; /* altura máxima em telas pequenas */
-    }
-
-    .gauge-card {
-        height: 300px; /* altura máxima em telas pequenas */
-    }
-
-    /* Reduz o valor do medidor */
-    .gauge-value {
-        font-size: 48px;
-    }
-
-    /* Ajusta o texto da data/hora no medidor */
-    .gauge-datetime {
-        font-size: 14px;
-    }
-
-    /* Ajusta os botões e controles do rodapé */
-    .footer-controls {
-        justify-content: center;
-    }
-}
-
-/* TELAS MÉDIAS */
-@media (max-width: 992px) {
-    /* Diminui o título principal */
-    .dashboard-header h1 {
-        font-size: 22px;
-    }
-
-    /* Diminui o valor gigante do medidor */
-    .gauge-value {
-        font-size: 60px;
-    }
-
-    /* Empilha o conteúdo do rodapé */
-    .dashboard-footer {
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-        text-align: center;
-    }
-}
-
-/* TELAS GRANDES */
-@media (min-width: 769px) {
-    .controls-panel {
-        grid-template-columns: 1fr 1fr 1fr; /* Volta para 3 colunas */
-    }
-
-    .controls-panel > .card {
-        height: 250px; /* altura fixa APENAS em telas grandes */
-    }
-
-    .filters-card {
-        grid-template-columns: 1fr 1fr; /* Filtros com 2 colunas em telas grandes */
-    }
+.sub-footer { 
+    font-size: 12px; 
+    color: #9ca3af; 
+    margin-top: 5px; 
 }
 
 
-/* TELAS MUITO PEQUENAS */
-@media (max-width: 480px) {
-    /* Diminui o padding geral do dashboard para ganhar espaço */
-    .dashboard-container {
-        padding: 10px;
-    }
-
-    /* Reduz ainda mais o título */
-    .dashboard-header h1 {
-        font-size: 16px;
-    }
-
-    /* Reduz o valor do medidor para caber sem quebrar o layout */
-    .gauge-value {
-        font-size: 40px;
-    }
-
-    .gauge-datetime {
-        font-size: 12px;
-    }
-
-    /* Diminui o texto dos botões e controles do rodapé */
-    .footer-controls button,
-    .input-group label,
-    .input-group input[type="number"] {
-        font-size: 10px;
-        padding: 6px 8px;
-    }
-    
-    .input-group input[type="number"] {
-        width: 40px;
-    }
+@media (max-width: 1024px) {
+    .filters-grid { grid-template-columns: 1fr 1fr; }
+    .category-group { grid-column: span 2; }
+    .main-content { grid-template-columns: 1fr; }
+    .side-nav { display: none; }
 }
