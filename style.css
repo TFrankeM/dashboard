@@ -1,20 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+@font-face {
+    font-family: "Gotham";
+    src: url("assets/fonts/gotham_family/Gotham-Book.otf") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap; 
+}
 
+@font-face {
+    font-family: "Gotham";
+    src: url("assets/fonts/gotham_family/GOTHAM-BOLD.TTF") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap; 
+}
+
+/* paleta de cores oficial da fgv */
 :root {
+    /* Primárias (Azuis) */
+    --fgv-blue-navy: #002D4D;   /* Azul Marinho */
+    --fgv-blue-dark: #003A79;   /* Azul Escuro (Principal) */
+    --fgv-blue-med:  #0C63AA;   /* Azul Médio */
+    --fgv-blue-light:#008BC9;   /* Azul Claro */
+    --fgv-blue-sky:  #73BFE8;   /* Azul Celeste */
+
+    /* Secundárias (Cinzas) */
+    --fgv-gray-dark:  #5C5B5F;
+    --fgv-gray-med:   #88868B;
+    --fgv-gray-light: #AFAEB4;
+    --fgv-gray-pale:  #D7D9DD;
+    --fgv-white:      #FFFFFF;
+
+    /* Auxiliares (Suporte Funcional) */
+    --fgv-aux-yellow:  #F0BF78; /* Alerta/Neutro */
+    --fgv-aux-green:   #2B8671; /* Positivo */
+    --fgv-aux-red:     #7F1343; /* Negativo */
+    --fgv-aux-gold:    #BDA132; /* Destaque */
+
+    /* utilidades */
+    --bg-light: #D7D9DD;    /* fundo cinza claro para a página */
+    --bg-page: #f3f4f6;     /* fundo ainda mais claro como opção */
+    --text-primary: var(--fgv-gray-dark);
+    --text-secondary: var(--fgv-gray-med);
+    --border-card: var(--fgv-gray-pale);
+    --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+
     --fgv-blue: #003A79;
     --fgv-blue-dark: #002D4D;
     --fgv-gold: #D7D9DD;
-    --bg-light: #D7D9DD;
     --white: #ffffff;
-     --text-primary: #88868B;
+    /* --text-primary: #88868B; */
     --text-secondary: #88868B;
     --border-color: #ffffff;
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
+
 body {
-    font-family: 'Roboto', Arial, sans-serif;
+    font-family: "Gotham", "Arial", sans-serif;
     background-color: var(--bg-light);
     color: var(--text-primary);
     margin: 0;
@@ -22,7 +66,7 @@ body {
 }
 
 .dashboard-wrapper {
-    max-width: 1600px;
+    max-width: 1920px;
     margin: 0 auto;
     padding-bottom: 40px;
 }
@@ -78,9 +122,9 @@ body {
 
 /* Header | titulo da IIBEx e foto FGV*/
 .brand-header {
-    background-color: var(--white);
+    background-color: var(--fgv-white);
     padding: 20px 40px;             /* margem cima/baixo. esquerda/direita */
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--fgv-gray-pale);
 }
 
 .header-content {
@@ -328,18 +372,18 @@ input:checked + .slider:before {
 }
 
 .info-icon {
-    display: inline-flex;  /* essas 3 linhas alinham ? no centro do circulo*/
+    display: inline-flex;  /* essas 3 linhas alinham no centro do circulo*/
     align-items: center;
     justify-content: center;
     width: 14px;
     height: 14px;
-    background-color: #e2e8f0;  /* cor de fundo do círculo */
+    background-color: #e2e8f0;      /* cor de fundo do círculo */
     border: 1px solid var(--fgv-blue);
-    border-radius: 50%;     /* arredondamento das bordas */
+    border-radius: 50%;               /* arredondamento das bordas */
     text-align: center;
     font-size: 10px;;
     font-weight: bold;
-    color: #64748b; /* cor da ? */
+    color: #64748b;                 /* cor da ? */
     cursor: pointer;
     margin-left: 6px;
     transition: all 0.2s ease;
@@ -356,8 +400,9 @@ input:checked + .slider:before {
     color: white;
     font-size: 0.85rem;
     border-radius: 6px;
+    text-align: center;
+    padding: 6px 10px;
 }
-
 
 /* Resumo executivo */
 .main-content {
@@ -388,6 +433,12 @@ input:checked + .slider:before {
     margin-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 10px;
+}
+
+.card-header-title-group {
+    display: flex;
+    align-items: center;
+    
 }
 
 .card-header h3 { 

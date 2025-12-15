@@ -9,7 +9,7 @@ function buildCommonFilters(query, params) {
 
   if (reviewer) {
     params.push(reviewer);
-    conditions.push(`geography = $${params.length}`);
+    conditions.push(`evaluator_entity = $${params.length}`);
   }
 
   if (reviewedEntity) {

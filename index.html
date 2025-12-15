@@ -58,7 +58,7 @@
                 
                 <!-- Toggle Dinâmico -->
                 <div class="toggle-container">
-                    <span id="mode-label" class="toggle-label">Modo estático</span>
+                    <span id="mode-label" class="toggle-label">Modo estático: 2025</span>
 
                     <label class="switch">
                         <input type="checkbox" id="dynamic-mode">
@@ -114,9 +114,12 @@
             <!-- Container centro: volume de notícias-->
             <div class="card metric-card">
                 <div class="card-header">
-                    <div>
-                        <h3>Notícias</h3>
-                        <p class="card-desc volume">Notícias processadas para o FGV IIBEx</p>
+                    <div>    
+                        <div class="card-header-title-group">
+                            <h3>Volume de notícias</h3>
+                            <span class="info-icon" data-tippy-content="Contagem total de notícias encontradas no banco de dados com os filtros atuais.">?</span>
+                        </div>
+                        <p class="card-desc volume">Flutuação de quantidade de reportagens</p>
                     </div>    
                     <i data-lucide="bar-chart" class="card-icon"></i>
                 </div>
@@ -134,7 +137,10 @@
             <!-- Container direita: gauge -->
             <div class="card metric-card">
                 <div class="card-header">
-                    <h3>FGV IIBEx para os últimos 30 minutos</h3>
+                    <div class="card-header-title-group">
+                        <h3>FGV IIBEx</h3>
+                        <span class="info-icon" data-tippy-content="Média do sentimento das notícias dos últimos 30 minutos <br> (escala 1-7).">?</span>
+                    </div>
                     <i data-lucide="gauge" class="card-icon"></i>
                 </div>
                 <div class="card-body centered">

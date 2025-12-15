@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
         lucide.createIcons();
     }
 
-    // Scroll: compactar header; atualizar menu lateral
+    // Scroll: compact header; update side menu
     const filterSection = document.getElementById("filters-container");
     const navDots = document.querySelectorAll(".nav-dot");
     const sections = document.querySelectorAll("header, section, main");
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("scroll", () => {
         const scrollY = window.scrollY;
 
-        // 1. Compactar Filtros
+        // Compact Filters
         if (filterSection) {
             if (scrollY > 150) {
                 filterSection.classList.add("compact");
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
-        // Atualizar menu lateral
+        // Update side menu
         let current = '';
         sections.forEach(section => {
             const sectionTop = section.offsetTop;
@@ -50,23 +50,23 @@ document.addEventListener("DOMContentLoaded", function () {
     if(toggleBtn && labelTxt) {
         toggleBtn.addEventListener("change", (e) => {
             if(e.target.checked) {
-                labelTxt.textContent = "Modo dinâmico";
+                labelTxt.textContent = "Tempo real (dinâmico)";
                 labelTxt.style.color = "#73BFE8";
                 labelTxt.style.fontWeight = "700";
                 
                 // tarefa da semana que vem - capricha, hein?
 
             } else {
-                labelTxt.textContent = "Modo estático";
+                labelTxt.textContent = "Modo estático: 2025";
                 labelTxt.style.color = "white";
-                labelTxt.style.fontWeight = "500";
+                labelTxt.style.fontWeight = "700";
 
                 // tarefa da semana que vem
             }
         });
     }
 
-    //// Config padrão ////
+    //// Default config ////
 
     // SINGLE SOURCE OF TRUTH
     const DEFAULT_CONFIG = {
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
         aggregation: "weekly"
     };
 
-    // Dados estáticos para os dropdowns
+    // Static data for dropdowns
     const periodsList = [
         { label: "Todo o período", value: "All"},
         { label: "Últimas 24 horas", value: "Last24h"}, 
@@ -150,7 +150,8 @@ document.addEventListener("DOMContentLoaded", function () {
             size: "small",
             trigger: "mouseenter focus click",
             maxWidth: 250,
-            interactive: true
+            interactive: true,
+            allowHTML: true,
         });
     }
 
