@@ -50,14 +50,14 @@ document.addEventListener("DOMContentLoaded", function () {
     if(toggleBtn && labelTxt) {
         toggleBtn.addEventListener("change", (e) => {
             if(e.target.checked) {
-                labelTxt.textContent = "Em tempo real";
-                labelTxt.style.color = "#34d399";
+                labelTxt.textContent = "Modo dinâmico";
+                labelTxt.style.color = "#668040";
                 labelTxt.style.fontWeight = "700";
                 
                 // tarefa da semana que vem
 
             } else {
-                labelTxt.textContent = "Histórico 2025";
+                labelTxt.textContent = "Modo estático";
                 labelTxt.style.color = "white";
                 labelTxt.style.fontWeight = "500";
 
@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "Desastres, acidentes e emergências", 
         "Economia, negócios e finanças", 
         "Educação", 
-        "Esportes", 
+        "Esporte", 
         "Estilo de vida e lazer", 
         "Interesse humano", 
         "Meio ambiente", 
@@ -320,7 +320,7 @@ document.addEventListener("DOMContentLoaded", function () {
             processAndUpdateLineChart(lineData);
 
         } catch (err) {
-            console.error("Erro crítico no Dashboard:", err);
+            console.error("Erro crítico no dashboard:", err);
             totalNoticiasEl.textContent = "Erro";
         }
     }
@@ -377,3 +377,4 @@ document.addEventListener("DOMContentLoaded", function () {
     updateDashboard();
 
 });
+
