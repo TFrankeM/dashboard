@@ -1,13 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 :root {
-    --fgv-blue: #008BC9;
+    --fgv-blue: #003A79;
     --fgv-blue-dark: #003A79;
     --fgv-gold: #bfa15f;
     --bg-light: #f3f4f6;
     --white: #ffffff;
-     --text-primary: #1f2937;
-    --text-secondary: #6b7280;
+     --text-primary: #BDA132;
+    --text-secondary: #F0BF78;
     --border-color: #e5e7eb;
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -214,7 +214,7 @@ body {
 
 /* Se checkbox estiver marcado (input:checked), mude cor de fundo do slider */
 input:checked + .slider {
-    background-color: #10b981;      /* Cor quando ligado (Dinâmico) */
+    background-color: #782082;      /* Cor quando ligado (Dinâmico) */
 }
 
 input:checked + .slider:before {
@@ -618,3 +618,4 @@ input:checked + .slider:before {
     .side-nav { display: none; }
 
 }
+
