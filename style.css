@@ -4,7 +4,7 @@
     --fgv-blue: #003A79;
     --fgv-blue-dark: #003A79;
     --fgv-gold: #BDA132;
-    --bg-light: #f3f4f6;
+    --bg-light: #F0BF78;
     --white: #ffffff;
      --text-primary: #BDA132;
     --text-secondary: #F0BF78;
@@ -618,5 +618,6 @@ input:checked + .slider:before {
     .side-nav { display: none; }
 
 }
+
 
 
