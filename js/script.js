@@ -89,6 +89,7 @@ document.addEventListener("DOMContentLoaded", function () {
     ];
     
     const categoriesList = [
+        "Todas", 
         "Artes, cultura, entretenimento e mídia", 
         "Ciência e tecnologia", 
         "Conflito, guerra e paz", 
@@ -105,7 +106,6 @@ document.addEventListener("DOMContentLoaded", function () {
         "Religião e crenças", 
         "Saúde", 
         "Sociedade", 
-        "Todas", 
         "Trabalho" 
     ];
 
@@ -377,6 +377,7 @@ document.addEventListener("DOMContentLoaded", function () {
     updateDashboard();
 
 });
+
 
 
 
