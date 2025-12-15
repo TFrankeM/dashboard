@@ -3,7 +3,7 @@
 :root {
     --fgv-blue: #003A79;
     --fgv-blue-dark: #003A79;
-    --fgv-gold: #bfa15f;
+    --fgv-gold: #BDA132;
     --bg-light: #f3f4f6;
     --white: #ffffff;
      --text-primary: #BDA132;
@@ -618,4 +618,5 @@ input:checked + .slider:before {
     .side-nav { display: none; }
 
 }
+
 
