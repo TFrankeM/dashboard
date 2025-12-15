@@ -51,10 +51,10 @@ document.addEventListener("DOMContentLoaded", function () {
         toggleBtn.addEventListener("change", (e) => {
             if(e.target.checked) {
                 labelTxt.textContent = "Modo dinâmico";
-                labelTxt.style.color = "#78487F";
+                labelTxt.style.color = "#73BFE8";
                 labelTxt.style.fontWeight = "700";
                 
-                // tarefa da semana que vem
+                // tarefa da semana que vem - capricha, hein?
 
             } else {
                 labelTxt.textContent = "Modo estático";
@@ -377,5 +377,6 @@ document.addEventListener("DOMContentLoaded", function () {
     updateDashboard();
 
 });
+
 
 
