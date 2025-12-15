@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 :root {
-    --fgv-blue: #003a79;
-    --fgv-blue-dark: #002855;
+    --fgv-blue: #008BC9;
+    --fgv-blue-dark: #003A79;
     --fgv-gold: #bfa15f;
     --bg-light: #f3f4f6;
     --white: #ffffff;
@@ -616,4 +616,5 @@ input:checked + .slider:before {
     .category-group { grid-column: span 2; }
     .main-content { grid-template-columns: 1fr; }
     .side-nav { display: none; }
+
 }
