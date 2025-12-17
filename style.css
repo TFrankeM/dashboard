@@ -46,7 +46,6 @@
 
 
     --fgv-blue: #003A79;
-    --fgv-blue-dark: #002D4D;
     --fgv-gold: #D7D9DD;
     --white: #ffffff;
     /* --text-primary: #88868B; */
@@ -75,27 +74,33 @@ body {
 .side-nav {
     position: fixed;
     right: 20px;
-    top: 50%;                       /* Posiciona no meio da tela */
-    transform: translateY(-50%);    /* Centraliza verticalmente */
+    top: 50%;                        /* Posiciona no meio da tela */
+    transform: translateY(-50%);     /* Centraliza verticalmente */
     display: flex;
     flex-direction: column;
     gap: 15px;
-    z-index: 1000;                  /* Garante que fique acima de outros elementos */
+    z-index: 1000;                   /* Garante que fique acima de outros elementos */
 }
 
 .nav-dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    border: 2px solid var(--fgv-blue);
+    border: 2px solid var(--fgv-blue-light);
     background-color: transparent;
     transition: all 0.3s ease;
-    position: relative;             /* Para q elementos filhos (tooltip) sejam posicionados relativamente a ele */
+    position: relative;              /* Para q elementos filhos (tooltip) sejam posicionados relativamente a ele */
 }
 
-.nav-dot.active, .nav-dot:hover {
-    background-color: var(--fgv-blue);
-    transform: scale(1.2);           /* Aumenta ponto ao ativar/passar mouse */
+.nav-dot:hover {
+    background-color: var(--fgv-blue-light);
+    transform: scale(1.1);           /* Aumenta ponto ao ativar/passar mouse */
+}
+
+.nav-dot.active {
+    background: var(--fgv-blue-dark);
+    background-color: var(--fgv-blue-dark);
+    transform: scale(1.3);           /* Aumenta ponto ao ativar/passar mouse */
 }
 
 /* Tooltip do Menu Lateral */
@@ -105,7 +110,7 @@ body {
     right: 150%;                     /* Posiciona à esquerda do ponto */
     top: 50%;
     transform: translateY(-50%);
-    background-color: var(--fgv-blue);     /* Fundo escuro */
+    background-color: var(--fgv-blue-dark);     /* Fundo escuro */
     color: white;
     padding: 6px 10px;
     border-radius: 4px;
@@ -114,6 +119,7 @@ body {
     opacity: 0;                      /* Inicialmente invisível */    
     pointer-events: none;
     transition: opacity 0.3s ease;
+    font-family: "Gotham", "Arial", sans-serif;
 }
 
 .nav-dot:hover::before {
@@ -131,28 +137,32 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
 }
 
 .brand-title {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
 }
 
 .brand-icon {
     width: 32px;
     height: 32px;
-    color: var(--fgv-blue);
+    color: var(--fgv-blue-dark);
 }
 
 .brand-title h1 {
+    font-family: 'Gotham', 'Arial', sans-serif;
     font-size: 22px;
-    color: var(--fgv-blue);
+    color: var(--fgv-blue-dark);
     margin: 0;
     font-weight: 700;
+    /* text-transform: uppercase;  */   /* blahhh */
 }
 
 .subtitle {
+    font-family: 'Gotham';
     font-size: 13px;
     color: var(--text-secondary);
     text-transform: uppercase;
@@ -160,31 +170,36 @@ body {
 }
 
 .logo-fgv {
-    height: 40px;
+    height: 60px;
 }
 
 /* Filtros */
 .sticky-filters {
     position: sticky;
     top: 0;
-    background-color: var(--fgv-blue);
+    background-color: var(--fgv-blue-dark);
     color: white;
     padding: 20px 40px;
     box-shadow: var(--shadow-sm);
     z-index: 500;                   /* acima do conteúdo, mas abaixo do menu lateral */
     transition: all 0.3s ease;
-    border-bottom: 1px solid var(--fgv-blue-dark);
+    border-bottom: 1px solid var(--fgv-blue-light);
 }
 
 .sticky-filters.compact {
     padding: 10px 40px;
-    background-color: rgba(0, 58, 121, 0.95);
+    background-color: var(--fgv-blue-dark);
     backdrop-filter: blur(5px);
 }
 
 .sticky-filters.compact .filters-header,
 .sticky-filters.compact label {
     display: none;
+}
+
+.sticky-filters.compact .choices__inner {
+    min-height: 32px !important;
+    font-size: 12px !important;
 }
 
 .filters-header {
@@ -202,6 +217,7 @@ body {
     gap: 8px;
     margin: 0;
     font-weight: 500;
+    font-family: "Gotham", sans-serif;
 }
 
 /* Toggle switch */
@@ -238,9 +254,10 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255,255,255,0.3); /* (Desligado em 2025) */
     transition: 0.4s;
     border-radius: 24px;
+    background-color: rgba(255,255,255,0.2); /* (Desligado em 2025) */
+    border: 1px solid rgba(255,255,255,0.4);
 }
 
 /* Bolinha do checkbox*/
@@ -258,7 +275,9 @@ body {
 
 /* Se checkbox estiver marcado (input:checked), mude cor de fundo do slider */
 input:checked + .slider {
-    background-color: #782082;      /* Cor quando ligado (Dinâmico) */
+    background-color: var(--fgv-aux-green);     /* Cor quando ligado (Dinâmico) */
+    border-color: #164339;
+    /* background-color: #782082; */
 }
 
 input:checked + .slider:before {
@@ -266,10 +285,11 @@ input:checked + .slider:before {
 }
 
 .toggle-label {
+    font-family: "Arial", sans-serif;
     font-size: 16px;
-    font-weight: 500;
-    color: white;
-    min-width: 110px;                 /* Evita pulo no layout quando texto muda */
+    font-weight: 700;
+    color: var(--fgv-white);
+    min-width: 120px;                 /* Evita pulo no layout quando texto muda */
     text-align: right;
     transition: color 0.3s ease;
 }
@@ -285,48 +305,42 @@ input:checked + .slider:before {
 .filter-group label {
     display: flex;
     align-items: center;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 560;
     color: white;
     margin-bottom: 6px;
     text-transform: none;
+    font-family: "Gotham", "Arial", sans-serif;
 }
 
-.filter-group select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid var(--fgv-blue);
-    border-radius: 4px;
-    background-color: white;
-}
+/* Category choice box and other Selects with the same style */
 
-/* Category choice box with the same size as other filters */
-/* The library Choices.js is used. 
-    .filter-group increases specificity and ensures the used styles override the defaults injected by Choices.js
-    !important to each rule because Choices’ CSS uses inline or high-specificity rules. 
-    Without it, the dashboard CSS was being ignored.
-*/
 .filter-group .choices {
     width: 100% !important;
     box-sizing: border-box !important;
     margin-bottom: 0 !important;
 }
 
+.filter-group select, 
 .filter-group .choices__inner {
-    border: 1px solid var(--fgv-blue) !important;
+    border: 1px solid rgba(255,255,255,0.3)  !important;
     border-radius: 4px !important;
     background-color: white !important;
     box-sizing: border-box !important;
     padding: 7px 8px !important;
     min-height: 38px !important;
     box-shadow: none !important;
-    font-size: 13px !important;
-    color: var(--fgv-blue) !important;
+    font-size: 15px !important;
+    color: var(--fgv-gray-dark) !important;
+    width: 100% !important;
+    font-family: "Gotham", Arial, sans-serif !important;
 }
 
-.filter-group .choices__list--dropdown .choices__item {
-    color: var(--fgv-blue) !important; /* Azul FGV para contraste com fundo branco */
-    font-size: 13px !important;
+/* itens do dropdown */
+.filter-group, .choices__list--dropdown .choices__item {
+    color: var(--fgv-gray-dark) !important;
+    font-size: 15px !important;    
+    font-family: "Gotham", Arial, sans-serif !important;
 }
 
 .filter-group .choices__list--multiple {
@@ -334,21 +348,25 @@ input:checked + .slider:before {
     padding: 0 !important;
 }
 
+/* Itens/categorias selecionadas */
 .filter-group .choices__list--multiple .choices__item {
     background-color: var(--fgv-blue) !important;
     border: 1px solid var(--fgv-blue) !important;
     color: white !important;
     border: none !important;
-    font-size: 13px !important;
+    font-size: 15px !important;
     border-radius: 3px !important;
     margin-right: 4px !important;
 }
 
+.filter-group select, 
 .filter-group .choices__input {
     margin: 0 !important;
     padding: 4px !important;
 }
 
+/* Dropdown aberto */
+.filter-group select .choices__list--dropdown, 
 .filter-group .choices__list--dropdown {
     border: 1px solid var(--fgv-blue) !important;
     border-radius: 4px !important;
@@ -480,6 +498,7 @@ input:checked + .slider:before {
 #gaugeChart {
     max-width: 100%;
     max-height: 100%;
+    z-index: 10;
 }
 
 /* O texto fica centralizado na base do arco */

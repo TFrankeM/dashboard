@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
         toggleBtn.addEventListener("change", (e) => {
             if(e.target.checked) {
                 labelTxt.textContent = "Modo dinâmico: em tempo real";
-                labelTxt.style.color = "#73BFE8";
+                labelTxt.style.color = "#2B8671";
                 labelTxt.style.fontWeight = "700";
                 
                 // tarefa da semana que vem - capricha, hein?
@@ -110,11 +110,13 @@ document.addEventListener("DOMContentLoaded", function () {
     ];
 
     const reviewersList = [
-        { label: "Argentina", value: "Argentina" }
+        { label: "Argentina", value: "Argentina" },
+        { label: "Paraguay", value: "Paraguay" }
     ];
 
     const reviewedEntityList = [
-        { label: "Brasil", value: "Brasil" }
+        { label: "Brasil", value: "Brasil" },
+        { label: "Paraguay", value: "Paraguay" }
     ];
 
     // Currents filters applied
