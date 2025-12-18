@@ -478,6 +478,3 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeUI();
     setTimeout(updateDashboard, 100);
 });
-
-
->>>>>>> a31805939a501ac55e60dee102564f7ef12da5d3
