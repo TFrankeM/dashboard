@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateToggleVisual(isDynamic) {
         if (labelTxt) {
             if(isDynamic) {
-                labelTxt.textContent = "Modo dinâmico: em tempo real";
+                labelTxt.textContent = "Modo dinâmico: atualização em tempo real";
                 labelTxt.style.color = "#73BFE8";
                 labelTxt.style.fontWeight = "700";
             } else {
@@ -102,16 +102,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // Static data for dropdowns
     const PERIODS_CONFIG = {
         static: [
-            { label: "2025: ano completo", value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
-            { label: "2025: 1º semestre", value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
-            { label: "2025: 2º semestre", value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
-            { label: "2025: 1º trimestre", value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
-            { label: "2025: 2º trimestre", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
-            { label: "2025: 3º trimestre", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
-            { label: "2025: 4º trimestre", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" }
+            { label: "2025", value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
+            { label: "1º semestre de 2025", value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
+            { label: "2º semestre de 2025", value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
+            { label: "1º trimestre de 2025", value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
+            { label: "2º trimestre de 2025", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
+            { label: "3º trimestre de 2025", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
+            { label: "4º trimestre de 2025", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" }
         ],
         dynamic: [
-            { label: "Últimas 24 horas", value: "Last24h" },
             { label: "Últimos 7 dias", value: "Last7d" },
             { label: "Últimos 30 dias", value: "Last30d" },
             { label: "Últimos 120 dias", value: "Last120d" },
@@ -478,3 +477,4 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeUI();
     setTimeout(updateDashboard, 100);
 });
+
