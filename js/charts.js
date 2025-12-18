@@ -60,13 +60,13 @@ export function drawGaugeChart(canvasElement, value) {
     if (gaugeInstance) gaugeInstance.destroy();
     
     const gaugeSegmentDescriptions = [
-        "Extremamente Negativo (Nota: 1.0 - 1.5)",
-        "Muito Negativo (Nota: 1.51 - 2.50)",
-        "Pouco Negativo (Nota: 2.51 - 3.50)",
-        "Neutro (Nota: 3.51 - 4.49)",
-        "Pouco Positivo (Nota: 4.5 - 5.49)",
-        "Muito Positivo (Nota: 5.5 - 6.49)",
-        "Extremamente Positivo (Nota: 6.5 - 7.0)"
+        "Imagem extremamente negativa (1.0 a 1.5)",
+        "Imagem muito negativa (1.51 a 2.5)",
+        "Imagem levemente negativa (2,51 a 3.5)",
+        "Imagem neutra (3.51 - 4.49)",
+        "Imagem levemente positiva (4.5 - 5.49)",
+        "Imagem positiva (5.5 a 6.49)",
+        "Imagem extremamente positiva (6.5 a 7.0)"
     ];
 
     const backgroundColor = [
@@ -137,7 +137,7 @@ export function drawBarChart(canvasElement, labels, data) {
         data: {
             labels: labels,
             datasets: [{
-                label: "Volume de Notícias",
+                label: "Quantidade de notícias",
                 data: data,
                 backgroundColor: "#003a79",
                 borderRadius: 4
