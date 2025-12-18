@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (labelTxt) {
             if(isDynamic) {
                 labelTxt.textContent = "Modo dinâmico: em tempo real";
-                labelTxt.style.color = "#2B8671";
+                labelTxt.style.color = "#73BFE8";
                 labelTxt.style.fontWeight = "700";
             } else {
                 labelTxt.textContent = "Modo estático: 2025";
@@ -479,3 +479,5 @@ document.addEventListener("DOMContentLoaded", function () {
     setTimeout(updateDashboard, 100);
 });
 
+
+>>>>>>> a31805939a501ac55e60dee102564f7ef12da5d3
