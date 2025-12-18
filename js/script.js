@@ -102,13 +102,13 @@ document.addEventListener("DOMContentLoaded", function () {
     // Static data for dropdowns
     const PERIODS_CONFIG = {
         static: [
-            { label: "2025: Ano Completo", value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
-            { label: "2025: 1º Semestre", value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
-            { label: "2025: 2º Semestre", value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
-            { label: "2025: 1º Trimestre", value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
-            { label: "2025: 2º Trimestre", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
-            { label: "2025: 3º Trimestre", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
-            { label: "2025: 4º Trimestre", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" }
+            { label: "2025: ano completo", value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
+            { label: "2025: 1º semestre", value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
+            { label: "2025: 2º semestre", value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
+            { label: "2025: 1º trimestre", value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
+            { label: "2025: 2º trimestre", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
+            { label: "2025: 3º trimestre", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
+            { label: "2025: 4º trimestre", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" }
         ],
         dynamic: [
             { label: "Últimas 24 horas", value: "Last24h" },
@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const singleOpts = {
             searchEnabled: false,
             itemSelectText: "",
-            shouldSort: true,
+            shouldSort: false,
             position: "bottom"
         };
 

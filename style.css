@@ -32,7 +32,7 @@
 
     /* Auxiliares (Suporte Funcional) */
     --fgv-aux-yellow:  #F0BF78; /* Alerta/Neutro */
-    --fgv-aux-green:   #2B8671; /* Positivo */
+    --fgv-aux-blue:   #73BFE8; /* Positivo */
     --fgv-aux-red:     #7F1343; /* Negativo */
     --fgv-aux-gold:    #BDA132; /* Destaque */
 
@@ -275,7 +275,7 @@ body {
 
 /* Se checkbox estiver marcado (input:checked), mude cor de fundo do slider */
 input:checked + .slider {
-    background-color: var(--fgv-aux-green);     /* Cor quando ligado (Dinâmico) */
+    background-color: var(--fgv-aux-blue);     /* Cor quando ligado (Dinâmico) */
     border-color: #164339;
     /* background-color: #782082; */
 }
