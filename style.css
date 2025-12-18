@@ -130,7 +130,7 @@ body {
 .brand-header {
     background-color: var(--fgv-white);
     padding: 20px 40px;             /* margem cima/baixo. esquerda/direita */
-    border-bottom: 1px solid var(--fgv-gray-pale);
+    border-bottom: 1px solid var(--fgv-blue-dark);
 }
 
 .header-content {
@@ -377,11 +377,13 @@ input:checked + .slider:before {
 .filter-group .choices.collapsed .choices__inner {
     max-height: 38px !important;
     overflow: hidden !important;
+    font-family: "Gotham", Arial, sans-serif !important;
 }
 
 .sticky-filters.compact .choices__inner {
     min-height: 32px !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
+    font-family: "Gotham", Arial, sans-serif !important;
 }
 
 @keyframes fadeIn {
