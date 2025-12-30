@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>  
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FGV IIMEX | Detalhes das notícias</title>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="stylesheet" href="details.css">
+    <script type="module" src="./js/details.js" defer></script>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-top">
+            <div>
+                <h1 id="page-title">Detalhamento de notícias</h1>
+                <p id="filter-summary">Carregando filtros...</p>
+            </div>
+            <button onclick="window.close()" class="btn btn-outline">
+                <i data-lucide="x"></i> Fechar
+            </button>
+        </div>
+
+        <div class="controls">
+            <!-- menu seleção visualização de colunas -->
+            <div class="dropdown">
+                <div class="dropdown">
+                    <button class="btn btn-outline">
+                        <i data-lucide="columns"></i> Colunas Visíveis
+                    </button>
+                    <div class="dropdown-content" id="column-selector">
+                        <!-- checkboxes geradas pelo javascript -->
+                    </div>
+                </div>
+            </div>
+            <!-- # noticias visualizadas na página -->
+            <div class="limit-control">
+                <span>Exibir:</span>
+                <select id="limit-select">
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="500">500</option>
+                    <option value="1000">1000</option>
+                </select>
+                <span>notícias</span>
+            </div>
+
+            <button id="refresh-btn" class="btn btn-primary">
+                <i data-lucide="refresh-cw"></i> Atualizar
+            </button>
+        </div>
+    </header>
+
+    <div class="table-container">
+        <table id="news-table">
+            <thead>
+                <tr id="table-header">
+                    <!-- Headers gerados via JS -->
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <tr><td colspan="10" class="state-message">Carregando dados...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    
+</body>
+</html>

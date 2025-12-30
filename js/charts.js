@@ -156,7 +156,7 @@ export function drawBarChart(canvasElement, labels, data) {
     });
 }
 
-export function drawLineChart(canvasElement, labels, datasets) {
+export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
     const ctx = canvasElement.getContext("2d");
     if (lineInstance) lineInstance.destroy();
     
@@ -207,6 +207,15 @@ export function drawLineChart(canvasElement, labels, datasets) {
                 },
                 x: { 
                     grid: { display: false } 
+                }
+            },
+            onClick: (e) => {
+                const points = lineInstance.getElementsAtEventForMode(e, "nearest", { intersect: true }, true);
+                if (points.length && onPointClicked) {
+                    const firstPoint = points[0];
+                    const index = firstPoint.index;
+                    const dateClicked = lineInstance.data.labels[index];
+                    onPointClicked(dateClicked, e);
                 }
             },
             plugins: { 

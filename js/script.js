@@ -1,5 +1,5 @@
-import { fetchLineChartData, fetchBarChartData, fetchGaugeData } from './api_adapter.js';
-import { drawGaugeChart, drawBarChart, drawLineChart, resetLineChartZoom } from './charts.js';
+import { fetchLineChartData, fetchBarChartData, fetchGaugeData } from "./api_adapter.js";
+import { drawGaugeChart, drawBarChart, drawLineChart, resetLineChartZoom } from "./charts.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // Update side menu
-        let current = '';
+        let current = "";
         sections.forEach(section => {
             const sectionTop = section.offsetTop;
             if (scrollY >= (sectionTop - 100)) {
@@ -51,9 +51,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         navDots.forEach(dot => {
-            dot.classList.remove('active');
-            if (dot.getAttribute('href').includes(current)) {
-                dot.classList.add('active');
+            dot.classList.remove("active");
+            if (dot.getAttribute("href").includes(current)) {
+                dot.classList.add("active");
             }
         });
     });
@@ -304,7 +304,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         apiData.forEach(row => {
             const date = new Date(row.time_period);
-            // Extrai apenas o ano para o label
+            // Extract the year for the label
             labels.push(date.getUTCFullYear("pt=BR"));
             
             const count = parseInt(row.news_count, 10);
@@ -315,6 +315,53 @@ document.addEventListener("DOMContentLoaded", function () {
         drawBarChart(barChartCanvas, labels, values);
         totalNoticiasEl.textContent = total.toLocaleString('pt-BR');
     }
+
+
+    // Confirmation pop-up window for news roll down logic
+    const confirmPopup = document.getElementById("chart-popup");
+    let currentClickedDate = null;
+    // Close popup when clicking outside line chart or popup
+    document.addEventListener("click", (e) => {
+        if (e.target.closest("#lineChart") && !e.target.closest("#chart-popup")) {
+            confirmPopup.classList.add("hidden");
+        }
+    });
+
+    document.getElementById("popup-cancel").addEventListener("click", () => {
+        confirmPopup.classList.add("hidden");
+    });
+
+    document.getElementById("popup-confirm").addEventListener("click", () => {
+        if (!currentClickedDate) {
+            return;
+        }
+        // url for new handlePeriodChange
+        const params = new URLSearchParams();
+        params.append("date", currentClickedDate.date);
+        params.append("aggregation", appState.aggregation);
+        params.append("reviewer", appState.reviewer);
+        params.append("reviewedEntity", appState.reviewedEntity);
+
+        if(appState.category) {
+            appState.category.forEach(c => params.append("category", c));
+        }
+
+        window.open(`details.html?${params.toString()}`, "_blank");
+        confirmPopup.classList.add("hidden");
+    });
+
+
+    const handlePointClick = (dateStr, event) => {
+        currentClickedDate = { date: dateStr};
+
+        const x = event.native.clientX;
+        const y = event.native.clientY;
+        confirmPopup.style.left = `${x}px`;
+        confirmPopup.style.top = `${y-60}px`;
+
+        confirmPopup.classList.remove("hidden");
+    };
+
 
     function processAndUpdateLineChart(apiData) {
         if (!apiData || apiData.length === 0) {
@@ -343,13 +390,13 @@ document.addEventListener("DOMContentLoaded", function () {
             // Backend returns "Todas" as category for all-inclusive
             const catRows = apiData.filter(row => row.category === catName);
 
-            // Fast access for date -> value
+            // Fast access for date -> average grade
             const dataMap = new Map();
             catRows.forEach(row => {
                 dataMap.set(row.time_period, parseFloat(row.average_grade));
             });
 
-            // Alinha com o Eixo X Mestre
+            // Align average grades with
             const alignedData = sortedDates.map(date => dataMap.get(date) || null);
 
             return {
@@ -357,11 +404,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 data: alignedData
             };
         });
-
-        const handlePointClick = (dateStr) => {
-            // TODO: Implementar modal de notícias
-            console.log("Clique na data:", dateStr);
-        };
 
         drawLineChart(lineChartCanvas, formattedLabels, datasets, handlePointClick);
     }
@@ -401,7 +443,6 @@ document.addEventListener("DOMContentLoaded", function () {
             updateGaugeDisplay(gaugeVal);
             processAndUpdateBarChart(barData);
             processAndUpdateLineChart(lineData);
-
         } catch (err) {
             console.error("Erro dashboard:", err);
             totalNoticiasEl.textContent = "Erro";
@@ -445,21 +486,6 @@ document.addEventListener("DOMContentLoaded", function () {
         updateDashboard();
     });
 
-    // Aggregation Buttons (Day/Week/Month)
-    // averageButtonsContainer.addEventListener("click", (e) => {
-    //     if (e.target.classList.contains("avg-btn")) {
-    //         // Remove active class from all buttons
-    //         document.querySelectorAll(".avg-btn").forEach(b => 
-    //             b.classList.remove("active", "bg-white", "shadow-sm", "font-medium")
-    //         );
-    //         // Add to clicked button
-    //         e.target.classList.add("active", "bg-white", "shadow-sm", "font-medium");
-            
-    //         appState.aggregation = e.target.dataset.period;
-    //         updateDashboard();
-    //     }
-    // });
-
     resetZoomBtn.addEventListener("click", () => {
         resetLineChartZoom();
         
@@ -477,5 +503,4 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeUI();
     setTimeout(updateDashboard, 100);
 });
-
 

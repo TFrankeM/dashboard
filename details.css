@@ -1,0 +1,230 @@
+/* details.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: #f8fafc; 
+    color: #1e293b; 
+    margin: 0;
+}
+
+/* header */
+.header { 
+    background: white; 
+    border-bottom: 1px solid #e2e8f0; 
+    padding: 1rem 2rem; 
+    position: sticky; 
+    top: 0; 
+    z-index: 50; 
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#page-title {
+    font-size: 1.25rem; 
+    font-weight: 700;   
+    color: #003A79;
+    margin: 0;
+}
+
+#filter-summary {
+    font-size: 0.875rem;
+    color: #64748b;     
+    margin: 4px 0 0 0;
+}
+
+.controls { 
+    display: flex; 
+    gap: 1rem; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    margin-top: 1rem; 
+}
+
+/* configurações */
+.btn { 
+    padding: 8px 16px; 
+    border-radius: 6px; 
+    font-weight: 600; 
+    font-size: 0.9rem; 
+    cursor: pointer; 
+    transition: 0.2s; 
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ícones dentro de botões */
+.btn i, 
+.btn svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2px;
+}
+
+.btn-primary { 
+    background: #003A79; 
+    color: white; 
+}
+
+.btn-primary:hover {
+    background-color: #002855;
+}
+
+.btn-outline { 
+    border: 1px solid #e2e8f0; 
+    background: white; 
+    color: #475569; 
+}
+
+.btn-outline:hover {
+    background-color: #f1f5f9;
+}
+
+/* num noticias exibidas na janela */
+.limit-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem; 
+}
+
+#limit-select {
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 4px;
+    font-family: inherit;
+    color: #1e293b;
+}
+
+/* .dropdown */
+.dropdown { 
+    position: relative; 
+    display: inline-block; 
+}
+
+.dropdown-content {
+    display: none; 
+    position: absolute; 
+    background-color: white;
+    min-width: 200px; 
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    padding: 10px; 
+    z-index: 100; 
+    border-radius: 6px; 
+    border: 1px solid #e2e8f0;
+}
+
+.dropdown:hover .dropdown-content { 
+    display: block; 
+}
+
+.col-option { 
+    display: flex; 
+    align-items: center; 
+    gap: 0.5rem; 
+    margin-bottom: 5px; 
+    cursor: pointer; 
+    font-size: 0.875rem; 
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.col-option:hover {
+    background-color: #f8fafc;
+}
+
+/* tabela */
+.table-container { 
+    padding: 2rem; 
+    overflow-x: auto; 
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    background: white; 
+    border-radius: 8px; 
+    overflow: hidden; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+}
+
+th { 
+    background: #003A79; 
+    color: white; 
+    padding: 12px; 
+    text-align: left; 
+    font-size: 0.85rem; 
+    white-space: nowrap; 
+}
+
+td { 
+    padding: 12px; 
+    border-bottom: 1px solid #f1f5f9; 
+    font-size: 0.85rem; 
+    vertical-align: top; 
+}
+
+tr:hover { 
+    background-color: #f8fafc; 
+}
+
+/* classes semânticas pra estados/tipos de dados */
+.state-message {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+    font-style: italic;
+}
+
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    color: #ef4444;
+    font-weight: 500;
+}
+
+.data-number {
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.grade-negative { color: #ef4444; }
+.grade-positive { color: #10b981; }
+
+/* célula expansível */
+.expandable {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.expandable.expanded {
+    white-space: normal;
+    max-width: none;
+    background-color: #fffbeb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    position: relative; 
+    z-index: 10;
+}
+
+/* links */
+.table-link {
+    color: #2563eb;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.table-link:hover {
+    text-decoration: underline;
+}
