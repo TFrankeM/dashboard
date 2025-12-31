@@ -294,25 +294,25 @@ document.addEventListener("DOMContentLoaded", function () {
         let descColor = "#94a3b8";
 
         if (finalValue <= 1.50) { 
-            descText = "Imagem Extremamente Negativa"; 
+            descText = "Extremamente negativa"; 
             descColor = "#b91c1c";
         } else if (finalValue <= 2.50) { 
-            descText = "Imagem Muito Negativa"; 
+            descText = "Muito negativa"; 
             descColor = "#ef4444";
         } else if (finalValue <= 3.50) { 
-            descText = "Imagem Levemente Negativa"; 
+            descText = "Levemente negativa"; 
             descColor = "#fdae61";
         } else if (finalValue <= 4.49) { 
-            descText = "Imagem Neutra"; 
+            descText = "Neutra"; 
             descColor = "#64748b";
         } else if (finalValue <= 5.49) { 
-            descText = "Imagem Levemente Positiva"; 
+            descText = "Levemente positiva"; 
             descColor = "#84cc16";
         } else if (finalValue <= 6.49) { 
-            descText = "Imagem Positiva"; 
+            descText = "Muito positiva"; 
             descColor = "#22c55e";
         } else { 
-            descText = "Imagem Extremamente Positiva"; 
+            descText = "Extremamente positiva"; 
             descColor = "#15803d";
         }
 

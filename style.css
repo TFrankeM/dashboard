@@ -494,6 +494,7 @@ input:checked + .slider:before {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding-bottom: 10px; 
     overflow: hidden;
 }
 
@@ -503,10 +504,10 @@ input:checked + .slider:before {
     z-index: 10;
 }
 
-/* O texto fica centralizado na base do arco */
+/* texto centralizado na base do arco */
 .gauge-value-text {
     position: absolute;
-    bottom: 0; /* Ajuste fino para colar na base do arco */
+    bottom: 20px; 
     left: 0; 
     right: 0;
     font-size: 3rem;
@@ -517,12 +518,27 @@ input:checked + .slider:before {
     line-height: 1;
 }
 
+/* descrição da nota */
+.gauge-description {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: "Arial", sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    /* text-transform: uppercase;
+    letter-spacing: 0.5px; */
+    pointer-events: none;
+}
+
 .gauge-footer {
     width: 100%;
     font-size: 11px;
     color: #9ca3af;
     text-align: right;
-    padding-top: 20px;
+    padding-top: 15px;
     margin-top: auto; 
     flex-shrink: 0;
     /* icone*/
