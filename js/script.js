@@ -165,6 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const barChartCanvas = document.getElementById("barChart");
     const gaugeChartCanvas = document.getElementById("gaugeChart");
     const gaugeValueText = document.getElementById("gaugeValueText");
+    const gaugeDescription = document.getElementById("gaugeDescription")
     const totalNoticiasEl = document.getElementById("total-noticias");
     
     const periodSelect = document.getElementById("period");
@@ -288,6 +289,39 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateGaugeDisplay(value) {
         const finalValue = value !== undefined && value !== null ? parseFloat(value) : 4.00;
         gaugeValueText.textContent = finalValue.toFixed(2);
+
+        let descText = "Sem dados";
+        let descColor = "#94a3b8";
+
+        if (finalValue <= 1.50) { 
+            descText = "Imagem Extremamente Negativa"; 
+            descColor = "#b91c1c";
+        } else if (finalValue <= 2.50) { 
+            descText = "Imagem Muito Negativa"; 
+            descColor = "#ef4444";
+        } else if (finalValue <= 3.50) { 
+            descText = "Imagem Levemente Negativa"; 
+            descColor = "#fdae61";
+        } else if (finalValue <= 4.49) { 
+            descText = "Imagem Neutra"; 
+            descColor = "#64748b";
+        } else if (finalValue <= 5.49) { 
+            descText = "Imagem Levemente Positiva"; 
+            descColor = "#84cc16";
+        } else if (finalValue <= 6.49) { 
+            descText = "Imagem Positiva"; 
+            descColor = "#22c55e";
+        } else { 
+            descText = "Imagem Extremamente Positiva"; 
+            descColor = "#15803d";
+        }
+
+        const gaugeDescriptionEl = document.getElementById("gaugeDescription");
+        if (gaugeDescriptionEl) {
+            gaugeDescriptionEl.textContent = descText;
+            gaugeDescriptionEl.style.color = descColor;
+        }
+
         drawGaugeChart(gaugeChartCanvas, finalValue);
     }
 

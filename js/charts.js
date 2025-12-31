@@ -70,23 +70,25 @@ export function drawGaugeChart(canvasElement, value) {
     ];
 
     const backgroundColor = [
-                        "#d7191c",
-                        "#fdae61",
-                        "#ffffbf",
-                        "#f0f0f0",
-                        "#abdda4",
-                        "#2b83ba",
-                        "#1a9641"
+        "#b91c1c",
+        "#ef4444",
+        // "#f97316", 
+        "#fdae61",
+        "#cbd5e1", 
+        "#84cc16", 
+        "#22c55e", 
+        "#15803d"  
     ];
 
     const hoverBackgroundColor = [
-                        "#b91619", 
-                        "#e6984b", 
-                        "#eaea9e", 
-                        "#c7c7c7", 
-                        "#93c98d", 
-                        "#2570a1",
-                        "#167d35"
+        "#991b1b", 
+        "#dc2626", 
+        // "#ea580c", 
+        "#e6984b", 
+        "#94a3b8", 
+        "#65a30d", 
+        "#16a34a",
+        "#14532d"
     ];
     
     gaugeInstance = new Chart(ctx, {
