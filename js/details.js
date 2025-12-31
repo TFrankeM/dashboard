@@ -1,6 +1,5 @@
 const API_ENDPOINT = '/api/data';
 
-// Definição das Colunas e seus Rótulos
 const COLUMNS = [
     { key: 'date', label: 'Data', type: 'date' },
     { key: 'source', label: 'Fonte' },
@@ -14,7 +13,6 @@ const COLUMNS = [
     { key: 'language', label: 'Idioma' }
 ];
 
-// Estado inicial das colunas (true = visível)
 let visibleColumns = {
     date: true, source: true, grade: true, category: true, 
     headline: true, analysis: true, summary: false, 
@@ -22,40 +20,35 @@ let visibleColumns = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Pega Filtros da URL
     const urlParams = new URLSearchParams(window.location.search);
     const filterSummary = document.getElementById('filter-summary');
     const pageTitle = document.getElementById('page-title');
-    
-    // Obtém e formata a data
+    console.log('URL Params:', Array.from(urlParams.entries()));
     const rawDate = urlParams.get('date');
+    console.log('Raw Date:', rawDate);
     let dateFormatted = '-';
     
     if (rawDate) {
-        // Tenta criar data. Se for UTC string, converte para local string (DD/MM/AAAA)
+        // Se for UTC string, converte para local string (DD/MM/AAAA)
         const dateObj = new Date(rawDate);
+        console.log('Date Object:', dateObj);
         if (!isNaN(dateObj)) {
             dateFormatted = dateObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         }
     }
-
-    // ATUALIZAÇÃO DO TÍTULO CONFORME SOLICITADO
+    console.log('Formatted Date:', dateFormatted);
     if (pageTitle && rawDate) {
         pageTitle.textContent = `Detalhamento das notícias que compõem a nota de ${dateFormatted}`;
     }
     
-    // Atualiza o subtítulo com os outros filtros
     const reviewer = urlParams.get('reviewer') || 'Todos';
     const agg = urlParams.get('aggregation') || 'Diária';
     filterSummary.textContent = `Avaliador: ${reviewer} | Agregação original: ${agg}`;
 
-    // 2. Renderiza Seletor de Colunas
     renderColumnSelector();
 
-    // 3. Busca Dados
     fetchData(urlParams);
 
-    // Listeners
     document.getElementById('refresh-btn').addEventListener('click', () => fetchData(urlParams));
     document.getElementById('limit-select').addEventListener('change', () => fetchData(urlParams));
 });
@@ -74,7 +67,6 @@ function renderColumnSelector() {
         checkbox.addEventListener('change', (e) => {
             visibleColumns[col.key] = e.target.checked;
             renderTableHeaders();
-            // Re-renderiza o corpo (usando cache se disponível)
             const currentData = window.cachedData || [];
             renderTableBody(currentData);
         });
@@ -89,12 +81,9 @@ async function fetchData(urlParams) {
     const tbody = document.getElementById('table-body');
     tbody.innerHTML = '<tr><td colspan="100%" class="text-center p-4">Carregando...</td></tr>';
     
-    // Adiciona widget=details e limite
     urlParams.set('widget', 'details');
     urlParams.set('limit', document.getElementById('limit-select').value);
     
-    // Se tiver múltiplas categorias na URL, o URLSearchParams já lida (append)
-    // Mas para o adapter "manual", precisamos garantir a string correta
     const queryString = urlParams.toString().replace(/\+/g, '%20');
 
     try {
@@ -102,7 +91,7 @@ async function fetchData(urlParams) {
         if (!response.ok) throw new Error('Erro na API');
         
         const data = await response.json();
-        window.cachedData = data; // Cache para toggle de colunas
+        window.cachedData = data;
         
         renderTableHeaders();
         renderTableBody(data);

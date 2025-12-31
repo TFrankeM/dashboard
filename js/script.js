@@ -317,12 +317,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
+    //// POP-UP
     // Confirmation pop-up window for news roll down logic
     const confirmPopup = document.getElementById("chart-popup");
     let currentClickedDate = null;
+    const datePopup = document.getElementById("popup-date")
     // Close popup when clicking outside line chart or popup
     document.addEventListener("click", (e) => {
-        if (e.target.closest("#lineChart") && !e.target.closest("#chart-popup")) {
+        if (!e.target.closest("#chart-popup")) {
             confirmPopup.classList.add("hidden");
         }
     });
@@ -331,13 +333,24 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmPopup.classList.add("hidden");
     });
 
+    // when 'ver detalhes' is clicked, open details.html with filters applied
     document.getElementById("popup-confirm").addEventListener("click", () => {
         if (!currentClickedDate) {
             return;
         }
+
+        // convert dd/mm/aaaa to mm/dd/aaaa for URL
+        let dateISO = currentClickedDate.date;;
+        if (dateISO && dateISO.includes("/")) {
+            const parts = dateISO.split("/");
+            if (parts.length === 3) {
+                dateISO = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+        }
+
         // url for new handlePeriodChange
         const params = new URLSearchParams();
-        params.append("date", currentClickedDate.date);
+        params.append("date", dateISO);
         params.append("aggregation", appState.aggregation);
         params.append("reviewer", appState.reviewer);
         params.append("reviewedEntity", appState.reviewedEntity);
@@ -352,12 +365,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     const handlePointClick = (dateStr, event) => {
+        if (dateStr) {
+            datePopup.textContent = dateStr;
+        };
+
         currentClickedDate = { date: dateStr};
 
         const x = event.native.clientX;
         const y = event.native.clientY;
         confirmPopup.style.left = `${x}px`;
-        confirmPopup.style.top = `${y-60}px`;
+        confirmPopup.style.top = `${y-90}px`;
 
         confirmPopup.classList.remove("hidden");
     };

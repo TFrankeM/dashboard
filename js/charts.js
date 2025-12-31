@@ -215,6 +215,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                     const firstPoint = points[0];
                     const index = firstPoint.index;
                     const dateClicked = lineInstance.data.labels[index];
+                    console.log("Ponto clicado:", dateClicked);
                     onPointClicked(dateClicked, e);
                 }
             },
