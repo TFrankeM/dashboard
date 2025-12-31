@@ -1,70 +1,76 @@
-const API_ENDPOINT = '/api/data';
+const API_ENDPOINT = "/api/data";
 
 const COLUMNS = [
-    { key: 'date', label: 'Data', type: 'date' },
-    { key: 'source', label: 'Fonte' },
-    { key: 'grade', label: 'Nota', type: 'number' },
-    { key: 'category', label: 'Categoria' },
-    { key: 'headline', label: 'Manchete', expandable: true },
-    { key: 'analysis', label: 'Análise', expandable: true },
-    { key: 'summary', label: 'Resumo', expandable: true },
-    { key: 'article_text', label: 'Texto Completo', expandable: true },
-    { key: 'url', label: 'Link', type: 'link' },
-    { key: 'language', label: 'Idioma' }
+    { key: "date", label: "Data", type: "date" },
+    { key: "source", label: "Fonte" },
+    { key: "grade", label: "Nota", type: "number" },
+    { key: "category", label: "Categoria" },
+    { key: "headline", label: "Manchete", expandable: true },
+    { key: "analysis", label: "Análise", expandable: true },
+    { key: "summary", label: "Resumo", expandable: true },
+    { key: "article_text", label: "Texto completo", expandable: true },
+    { key: "url", label: "Link", type: "link" },
+    { key: "language", label: "Idioma" }
 ];
 
 let visibleColumns = {
-    date: true, source: true, grade: true, category: true, 
-    headline: true, analysis: true, summary: false, 
-    article_text: false, url: true, language: false
+    date: true, 
+    source: true, 
+    grade: true, 
+    category: true, 
+    headline: true, 
+    analysis: true, 
+    summary: false, 
+    article_text: false, 
+    url: true, 
+    language: false
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const filterSummary = document.getElementById('filter-summary');
-    const pageTitle = document.getElementById('page-title');
-    console.log('URL Params:', Array.from(urlParams.entries()));
-    const rawDate = urlParams.get('date');
-    console.log('Raw Date:', rawDate);
-    let dateFormatted = '-';
+    const filterSummary = document.getElementById("filter-summary");
+    const dateSpan = document.getElementById("date-span");
+
+    const rawDate = urlParams.get("date");
+    let dateFormatted = "-";
     
     if (rawDate) {
-        // Se for UTC string, converte para local string (DD/MM/AAAA)
+        // If it's UTC string, convert to local string (DD/MM/YYYY)
         const dateObj = new Date(rawDate);
-        console.log('Date Object:', dateObj);
         if (!isNaN(dateObj)) {
-            dateFormatted = dateObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+            dateFormatted = dateObj.toLocaleDateString("pt-BR", { timeZone: "UTC" });
         }
     }
-    console.log('Formatted Date:', dateFormatted);
-    if (pageTitle && rawDate) {
-        pageTitle.textContent = `Detalhamento das notícias que compõem a nota de ${dateFormatted}`;
+    console.log("Formatted Date:", dateFormatted);
+    if (dateSpan && rawDate) {
+        dateSpan.textContent = dateFormatted;
     }
     
-    const reviewer = urlParams.get('reviewer') || 'Todos';
-    const agg = urlParams.get('aggregation') || 'Diária';
-    filterSummary.textContent = `Avaliador: ${reviewer} | Agregação original: ${agg}`;
-
+    const reviewer = urlParams.get("reviewer") || "Não especificado";
+    const reviwedEntity = urlParams.get("reviewedEntity") || "Não especificado";
+    const agg = urlParams.get("aggregation") || "Diária";
+    filterSummary.textContent = `Avaliador: ${reviewer} | Avaliado: ${reviwedEntity}`;
+    
     renderColumnSelector();
 
     fetchData(urlParams);
 
-    document.getElementById('refresh-btn').addEventListener('click', () => fetchData(urlParams));
-    document.getElementById('limit-select').addEventListener('change', () => fetchData(urlParams));
+    document.getElementById("refresh-btn").addEventListener("click", () => fetchData(urlParams));
+    document.getElementById("limit-select").addEventListener("change", () => fetchData(urlParams));
 });
 
 function renderColumnSelector() {
-    const container = document.getElementById('column-selector');
+    const container = document.getElementById("column-selector");
     container.innerHTML = '';
     
     COLUMNS.forEach(col => {
         const label = document.createElement('label');
         label.className = 'col-option flex items-center gap-2 text-sm p-1 hover:bg-slate-50 rounded';
         
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
+        const checkbox = document.createElement("input");      // Checkbox for each column
+        checkbox.type = "checkbox";
         checkbox.checked = visibleColumns[col.key];
-        checkbox.addEventListener('change', (e) => {
+        checkbox.addEventListener("change", (e) => {
             visibleColumns[col.key] = e.target.checked;
             renderTableHeaders();
             const currentData = window.cachedData || [];
@@ -92,7 +98,8 @@ async function fetchData(urlParams) {
         
         const data = await response.json();
         window.cachedData = data;
-        
+        console.log("Query String:", queryString);
+        console.log("Fetched Data:", data);
         renderTableHeaders();
         renderTableBody(data);
         
