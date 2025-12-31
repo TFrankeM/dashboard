@@ -98,12 +98,15 @@ async function getBarChartData(request) {
 // NEWS DETAILS LIST
 async function getNewsList(request) {
     const params = [];
-    const { targetDate, aggregation, limit } = request.query;
+    console.log("Request Query:", request.query);
+    const { date, aggregation, limit } = request.query;
+    console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
+    const queryForFilters = { ...request.query };
+    delete queryForFilters.period; 
     
-    const conditions = buildCommonFilters(request.query, params);
+    const conditions = buildCommonFilters(queryForFilters, params);
 
-    // Filtro Específico da Data Clicada
-    if (targetDate && aggregation) {
+    if (date && aggregation) {
         let dateTrunc = 'day';
         switch (aggregation) {
             case 'monthly': dateTrunc = 'month'; break;
@@ -114,8 +117,14 @@ async function getNewsList(request) {
             default: dateTrunc = 'day';
         }
 
-        params.push(targetDate);
-        conditions.push(`DATE_TRUNC('${dateTrunc}', date) = DATE_TRUNC('${dateTrunc}', $${params.length}::timestamp with time zone)`);
+        params.push(date);
+        
+        // ::date para forçar o banco a olhar apenas o dia (YYYY-MM-DD)
+        if (dateTrunc === 'day') {
+            conditions.push(`date::date = $${params.length}::date`);
+        } else {
+            conditions.push(`DATE_TRUNC('${dateTrunc}', date) = DATE_TRUNC('${dateTrunc}', $${params.length}::timestamp)`);
+        }
     }
 
     const limitClause = limit ? `LIMIT ${parseInt(limit)}` : 'LIMIT 50';
@@ -135,9 +144,11 @@ async function getNewsList(request) {
             analysis
         FROM noticias
         ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
-        ORDER BY grade DESC, date DESC
+        ORDER BY date DESC, grade DESC
         ${limitClause};
     `;
+
+    console.log("Query Details:", query, params);
 
     const { rows } = await sql.query(query, params);
     return rows;
