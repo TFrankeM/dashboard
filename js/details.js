@@ -2,23 +2,20 @@ const API_ENDPOINT = "/api/data";
 
 const COLUMNS = [
     { key: "date", label: "Data", type: "date" },
-    { key: "source", label: "Fonte" },
-    { key: "grade", label: "Nota", type: "number" },
-    { key: "category", label: "Categoria" },
     { key: "headline", label: "Manchete", expandable: true },
+    { key: "source", label: "Fonte" },
+    { key: "category", label: "Categoria" },
     { key: "analysis", label: "Análise", expandable: true },
-    { key: "summary", label: "Resumo", expandable: true },
-    { key: "article_text", label: "Texto completo", expandable: true },
-    { key: "url", label: "Link", type: "link" },
-    { key: "language", label: "Idioma" }
+    { key: "grade", label: "IIMEx", type: "number" },
+    { key: "url", label: "Link", type: "Veja" },
 ];
 
 let visibleColumns = {
     date: true, 
+    headline: true, 
     source: true, 
     grade: true, 
     category: true, 
-    headline: true, 
     analysis: true, 
     summary: false, 
     article_text: false, 
@@ -35,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let dateFormatted = "-";
     
     if (rawDate) {
-        // If it's UTC string, convert to local string (DD/MM/YYYY)
+        // If it's UTC string, convert to local string (DD/MM/YY)
         const dateObj = new Date(rawDate);
         if (!isNaN(dateObj)) {
             dateFormatted = dateObj.toLocaleDateString("pt-BR", { timeZone: "UTC" });
@@ -49,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const reviewer = urlParams.get("reviewer") || "Não especificado";
     const reviwedEntity = urlParams.get("reviewedEntity") || "Não especificado";
     const agg = urlParams.get("aggregation") || "Diária";
-    filterSummary.textContent = `Avaliador: ${reviewer} | Avaliado: ${reviwedEntity}`;
+    filterSummary.textContent = `Ente avaliador: ${reviewer} | Ente em avaliação: ${reviwedEntity}`;
     
     renderColumnSelector();
 
