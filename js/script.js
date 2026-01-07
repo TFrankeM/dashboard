@@ -103,12 +103,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const PERIODS_CONFIG = {
         static: [
             { label: "2025", value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
-            { label: "1º semestre de 2025", value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
-            { label: "2º semestre de 2025", value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
-            { label: "1º trimestre de 2025", value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
-            { label: "2º trimestre de 2025", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
-            { label: "3º trimestre de 2025", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
-            { label: "4º trimestre de 2025", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" }
+            { label: "Semestre 1 de 2025", value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
+            { label: "Semestre 2 de 2025", value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
+            { label: "Trimestre 1 de 2025", value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
+            { label: "Trimestre 2 de 2025", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
+            { label: "Trimestre 3 de 2025", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
+            { label: "Trimestre 4 de 2025", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" }
         ],
         dynamic: [
             { label: "Últimos 7 dias", value: "Last7d" },
@@ -554,4 +554,5 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeUI();
     setTimeout(updateDashboard, 100);
 });
+
 
