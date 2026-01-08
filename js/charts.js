@@ -6,13 +6,13 @@ let gaugeInstance = null;
 let barInstance = null;
 let lineInstance = null;
 
-// plugins globais
+// Global plugins
 if (typeof Chart !== 'undefined' && typeof ChartZoom !== 'undefined') {
     Chart.register(ChartZoom);
 }
 
 
-// Plugin para desenhar o ponteiro do Gauge (Velocímetro)
+// Plugin to draw the Gauge needle (Velocímetro)
 const gaugeNeedlePlugin = {
     id: "gaugeNeedle",
     afterDatasetDraw(chart, args, options) {
@@ -20,24 +20,24 @@ const gaugeNeedlePlugin = {
         ctx.save();
         const needleValue = data.datasets[0].needleValue;
         
-        // arco de 150 a 390 graus
+        // arc from 150 to 390 degrees
         const startAngle = 150 * (Math.PI / 180);
         const sweepAngle = 240 * (Math.PI / 180);
         
-        // Limita o valor entre 1 e 7
+        // Limits the value between 1 and 7
         const safeValue = Math.max(1, Math.min(7, needleValue));
         const valueFraction = (safeValue - 1) / (7 - 1);
         const angle = startAngle + (valueFraction * sweepAngle);
 
-        // Centro do gráfico
+        // Center of the chart
         const cx = chart.getDatasetMeta(0).data[0].x;
         const cy = chart.getDatasetMeta(0).data[0].y;
         
-        // ponteiro
+        // needle
         ctx.translate(cx, cy);
         ctx.rotate(angle);
         ctx.beginPath();
-        ctx.moveTo(0, -5); // largura base ponteiro
+        ctx.moveTo(0, -5); // needle base width
         ctx.lineTo((chart.chartArea.height / 2) + 10, 0);
         ctx.lineTo(0, 5);
         ctx.fillStyle = "#444";
@@ -45,7 +45,7 @@ const gaugeNeedlePlugin = {
         ctx.rotate(-angle);
         ctx.translate(-cx, -cy);
 
-        // pino central
+        // central pin
         ctx.beginPath();
         ctx.arc(cx, cy, 10, 0, 2 * Math.PI);
         ctx.fillStyle = "#444";
@@ -54,6 +54,42 @@ const gaugeNeedlePlugin = {
     }
 };
 
+const gaugeLabelsPlugin = {
+    id: "gaugeLabels",
+    afterDatasetDraw(chart) {
+        const { ctx, data } = chart;
+        ctx.save();
+
+        ctx.font = "bold 30px sans-serif";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const innerRadius = chart.getDatasetMeta(0).data[0].innerRadius;
+        const outerRadius = chart.getDatasetMeta(0).data[0].outerRadius;
+        const radius = (innerRadius + outerRadius) / 2; // half of the way between the center and the edge
+
+        for (let i = 0; i < data.datasets[0].data.length; i++) {
+            const meta = chart.getDatasetMeta(0).data[i];
+            
+            // average angle of the current slice
+            const startAngle = meta.startAngle;
+            const endAngle = meta.endAngle;
+            const angle = startAngle + (endAngle - startAngle) / 2;
+
+            // Calculate the X Y position of the center of the slice
+            const x = meta.x + Math.cos(angle) * radius;
+            const y = meta.y + Math.sin(angle) * radius;
+
+            // section number (from 1 to 7)
+            const labelText = (i + 1).toString(); 
+
+            ctx.fillText(labelText, x, y);
+        }
+
+        ctx.restore();
+    }
+};
 
 export function drawGaugeChart(canvasElement, value) {
     const ctx = canvasElement.getContext('2d');
@@ -70,25 +106,11 @@ export function drawGaugeChart(canvasElement, value) {
     ];
 
     const backgroundColor = [
-        "#b91c1c",
-        "#ef4444",
-        // "#f97316", 
-        "#fdae61",
-        "#cbd5e1", 
-        "#84cc16", 
-        "#22c55e", 
-        "#15803d"  
+        "#b91c1c", "#ef4444", /*"#f97316",*/ "#fdae61", "#cbd5e1", "#84cc16", "#22c55e", "#15803d"  
     ];
 
     const hoverBackgroundColor = [
-        "#991b1b", 
-        "#dc2626", 
-        // "#ea580c", 
-        "#e6984b", 
-        "#94a3b8", 
-        "#65a30d", 
-        "#16a34a",
-        "#14532d"
+        "#991b1b", "#dc2626", /*"#ea580c",*/ "#e6984b", "#94a3b8", "#65a30d", "#16a34a", "#14532d"
     ];
     
     gaugeInstance = new Chart(ctx, {
@@ -111,7 +133,7 @@ export function drawGaugeChart(canvasElement, value) {
             cutout: "65%", // arco
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { bottom: 10 } },
+            layout: { padding: { top: 15, bottom: 10 } },
             plugins: {
                 legend: { display: false },
                 tooltip: { 
@@ -126,7 +148,7 @@ export function drawGaugeChart(canvasElement, value) {
                 }
             }
         },
-        plugins: [gaugeNeedlePlugin]
+        plugins: [gaugeNeedlePlugin, gaugeLabelsPlugin]
     });
 }
 
