@@ -4,13 +4,16 @@
 
 const API_ENDPOINT = "/api/data";
 
-/* Builds the URL with Parameters*/
+/* Builds the URL with parameters*/
 function buildApiUrl(filters, widgetType) {
     const url_params = new URLSearchParams();
     url_params.append("widget", widgetType);
 
     if (filters.period) {
         url_params.append("period", filters.period);
+    } else if (filters.startDate && filters.endDate) {
+        url_params.append("start_date", filters.startDate);
+        url_params.append("end_date", filters.endDate);
     };
 
     if (filters.reviewer) {
@@ -31,6 +34,15 @@ function buildApiUrl(filters, widgetType) {
         } else {
             url_params.append("category", filters.category);
         }
+    };
+
+    // Filters for details section
+    if (filters.limit) {
+        url_params.append("limit", filters.limit);
+    };
+
+    if (filters.date) {
+        url_params.append("date", filters.date);
     };
 
     return url_params;

@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { label: "Trimestre 4 de 2025", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" }
         ],
         dynamic: [
-            { label: "Últimos 7 dias", value: "Last7d" },
+            // { label: "Últimos 7 dias", value: "Last7d" },
             { label: "Últimos 30 dias", value: "Last30d" },
             { label: "Últimos 120 dias", value: "Last120d" },
             { label: "Últimos 180 dias", value: "Last180d" },
@@ -470,9 +470,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (appState.isDynamic) {
             apiFilters.period = appState.periodValue;
+            apiFilters.startDate = null;
+            apiFilters.endDate = null;
         } else {
             apiFilters.startDate = appState.customStartDate;
             apiFilters.endDate = appState.customEndDate;
+            apiFilters.period = null;
         }
 
         if (titleReviewerEl) {

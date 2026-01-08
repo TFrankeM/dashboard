@@ -4,7 +4,7 @@ import { sql } from "@vercel/postgres";
 
 // Basic WHERE clause used by all charts
 function buildCommonFilters(query, params) {
-  const { reviewer, reviewedEntity, category, period } = query;
+  const { reviewer, reviewed_entity, category, period, start_date, end_date } = query;
   const conditions = [];
 
   if (reviewer) {
@@ -12,8 +12,8 @@ function buildCommonFilters(query, params) {
     conditions.push(`evaluator_entity = $${params.length}`);
   }
 
-  if (reviewedEntity) {
-    params.push(reviewedEntity);
+  if (reviewed_entity) {
+    params.push(reviewed_entity);
     conditions.push(`evaluated_entity = $${params.length}`);
   }
 
@@ -24,14 +24,13 @@ function buildCommonFilters(query, params) {
       conditions.push(`category = ANY($${params.length})`);
     }
   }
-  
-  // Period filter is applied for LINE and BAR charts
-  // The Gauge has its own time logic
-  if (period && period !== "All") {
+
+  // Dynamic time mode
+  if (period && period.startsWith("Last")) {
     let interval;
-    if (period === "Last24h") interval = "24 hours";
-    else if (period === "Last7d") interval = "7 days";
-    else if (period === "Last30d") interval = "30 days";
+    // if (period === "Last24h") interval = "24 hours";
+    // else if (period === "Last7d") interval = "7 days";
+    if (period === "Last30d") interval = "30 days";
     else if (period === "Last120d") interval = "120 days";
     else if (period === "Last180d") interval = "180 days";
     else if (period === "Last365d") interval = "365 days";
@@ -40,6 +39,14 @@ function buildCommonFilters(query, params) {
       conditions.push(`date >= NOW() - INTERVAL '${interval}'`);
     }
   }
+  // Fixed date range mode
+  else if (start_date && end_date) {
+    params.push(start_date);
+    conditions.push(`date >= $${params.length}`);
+    params.push(end_date);
+    conditions.push(`date <= $${params.length}`);
+  }
+
   return conditions;
 }
 
@@ -48,26 +55,45 @@ function buildCommonFilters(query, params) {
 async function getGaugeData(request) {
   const params = [];
   
-  // Gauge uses category/reviewer filters, but ignores the period
-  // Removes 'period' from the query before passing to the filter builder
-  const gaugeQuery = { ...request.query, period: null }; 
+  const gaugeQuery = { ...request.query }; 
+
+  //console.log("Gauge Query:", gaugeQuery);
   const conditions = buildCommonFilters(gaugeQuery, params);
+  //console.log("Gauge Conditions:", conditions, params);
+  // if no start and end date provided => dynamic mode => recent day logic
+  const isStaticMode = gaugeQuery.start_date && gaugeQuery.end_date;
+  let timeCondition = "";
+  //console.log("isStaticMode:", isStaticMode);
+  if (!isStaticMode) {
+      const whereClauseBase = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
+      timeCondition = `
+        AND DATE_TRUNC('day', date) = (
+          SELECT DATE_TRUNC('day', MAX(date))
+          FROM noticias
+          ${whereClauseBase}
+        )
+      `;
+      // calculate IIMEX for 30 minutes window
+      /*
+      timeCondition = `
+        AND date >= (
+            SELECT MAX(date) 
+            FROM noticias 
+            ${whereClauseBase}
+        ) - INTERVAL '30 minutes'
+      `;
+      */
+  };
 
-  // Searches for the AVERAGE GRADE of news within the last 30 minutes
-  // before the most recent date found in the database
-  
-  const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
-
-  // Query com Subquery para pegar o "Max Date"
+  const whereClause = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "WHERE 1=1";
   const query = `
-    WITH MaxDate AS (
-      SELECT MAX(date) as max_ts FROM noticias ${whereClause}
-    )
     SELECT AVG(grade) as average_grade
     FROM noticias
-    ${whereClause ? whereClause + ' AND ' : 'WHERE '}
-    date >= (SELECT max_ts FROM MaxDate) - INTERVAL '30 minutes';
+    ${whereClause}
+    ${timeCondition};
   `;
+
+  //console.log("Query Details:", query, params);
 
   const { rows } = await sql.query(query, params);
   return rows;
@@ -77,8 +103,8 @@ async function getGaugeData(request) {
 // BAR CHART
 async function getBarChartData(request) {
   const params = [];
-  const conditions = buildCommonFilters(request.query, params);
 
+  const conditions = buildCommonFilters(request.query, params);
   // Bar chart groups by YEAR
   const query = `
     SELECT 
@@ -98,9 +124,9 @@ async function getBarChartData(request) {
 // NEWS DETAILS LIST
 async function getNewsList(request) {
     const params = [];
-    console.log("Request Query:", request.query);
+    //console.log("Request Query:", request.query);
     const { date, aggregation, limit } = request.query;
-    console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
+    //console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
     const queryForFilters = { ...request.query };
     delete queryForFilters.period; 
     
@@ -148,7 +174,7 @@ async function getNewsList(request) {
         ${limitClause};
     `;
 
-    console.log("Query Details:", query, params);
+    //console.log("Query Details:", query, params);
 
     const { rows } = await sql.query(query, params);
     return rows;
