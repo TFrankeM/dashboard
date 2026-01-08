@@ -36,7 +36,8 @@ function buildCommonFilters(query, params) {
     else if (period === "Last365d") interval = "365 days";
 
     if (interval) {
-      conditions.push(`date >= NOW() - INTERVAL '${interval}'`);
+      params.push(interval);
+      conditions.push(`date >= NOW() - CAST($${params.length} AS INTERVAL)`);
     }
   }
   // Fixed date range mode

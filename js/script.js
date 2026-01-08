@@ -58,35 +58,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Toggle
-    const toggleBtn = document.getElementById("dynamic-mode");
-    const labelTxt = document.getElementById("mode-label");
-
-    function updateToggleVisual(isDynamic) {
-        if (labelTxt) {
-            if(isDynamic) {
-                labelTxt.textContent = "Modo dinâmico: atualização em tempo real";
-                labelTxt.style.color = "#008BC9";
-                labelTxt.style.fontWeight = "700";
-            } else {
-                labelTxt.textContent = "Modo estático: 2025";
-                labelTxt.style.color = "white";
-                labelTxt.style.fontWeight = "700";
-            }
-        }
-        if (toggleBtn) {
-            toggleBtn.checked = isDynamic;
-        }
-    }
-
-    if (toggleBtn) {
-        /* Add listeners that calls update whenever the toggle is changed */
-        toggleBtn.addEventListener("change", () => {
-            const isDynamic = toggleBtn.checked;
-            updateToggleVisual(isDynamic);
-        });
-    }
-
     //// Default config ////
 
     // SINGLE SOURCE OF TRUTH
@@ -172,7 +143,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const reviewerSelect = document.getElementById("reviewer");
     const reviewedEntitySelect = document.getElementById("reviewedEntity");
     const categorySelect = document.getElementById("category");
+
     const dynamicToggle = document.getElementById("dynamic-mode");
+    const toggleLabel = document.getElementById("model-label");
 
     const resetZoomBtn = document.getElementById("resetZoomBtn");
     // const averageButtonsContainer = document.querySelector(".average-buttons");
@@ -255,6 +228,24 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
+    function updateToggleVisual(isDynamic) {
+        if (toggleLabel) {
+            if(isDynamic) {
+                toggleLabel.textContent = "Modo dinâmico: atualização em tempo real";
+                toggleLabel.style.color = "#008BC9";
+                toggleLabel.style.fontWeight = "700";
+            } else {
+                toggleLabel.textContent = "Modo estático: 2025";
+                toggleLabel.style.color = "white";
+                toggleLabel.style.fontWeight = "700";
+            }
+        }
+        if (dynamicToggle) {
+            dynamicToggle.checked = isDynamic;
+            //dynamicToggle.disabled = true;
+        }
+    }
+
     function handlePeriodChange(value) {
         appState.periodValue = value;
         // If dynamic, no custom dates
@@ -273,14 +264,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updatePeriodDropdown(isDynamic) {
+        if (!choicesPeriod) return;
+        
         const options = isDynamic ? PERIODS_CONFIG.dynamic : PERIODS_CONFIG.static;
-        choicesPeriod.clearChoices();
+        choicesPeriod.clearStore(); // Clear all options
         choicesPeriod.setChoices(options, "value", "label", true);
         
+        // Set first option as default selected
         const defaultOption = options[0];
-        
-        // if initializing and have a compatible default value, use it
-        // Otherwise, reset to the first in the list
         choicesPeriod.setChoiceByValue(defaultOption.value);
         handlePeriodChange(defaultOption.value);
     }
@@ -432,8 +423,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const formattedLabels = sortedDates.map(dateStr => {
             const date = new Date(dateStr);
             
-            // dd/mm/aaaa
-            return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+            return date.toLocaleDateString("pt-BR", { 
+                day: "2-digit",
+                month: "2-digit",
+                year: "2-digit",
+                timeZone: "UTC" });
         });
 
         // Prepare datasets per selected category
@@ -503,13 +497,16 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     
+    // LISTENERS 
 
+    // Dynamic toggle listener
     if (dynamicToggle) {
         dynamicToggle.addEventListener("change", (e) => {
             appState.isDynamic = e.target.checked;
             updateToggleVisual(appState.isDynamic);
             updatePeriodDropdown(appState.isDynamic);
-            
+            updateDashboard();
+
             if (appState.isDynamic) {
                 pollingInterval = setInterval(updateDashboard, 600000); // 10  min
             } else {

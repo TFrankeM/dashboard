@@ -178,8 +178,8 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
         borderColor: LINE_COLORS[index % LINE_COLORS.length],
         backgroundColor: LINE_COLORS[index % LINE_COLORS.length].replace("1)", "0.1)"),
         borderWidth: 2,
-        pointRadius: 3,
-        pointHoverRadius: 6,    // aumenta o ponto ao passar o mouse
+        pointRadius: 0,
+        pointHoverRadius: 2,    // aumenta o ponto ao passar o mouse
         tension: 0.3,           // suaviza linha
         fill: false,
         spanGaps: true
@@ -208,7 +208,14 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                     title: { display: true, text: "FGV IIMEx" }
                 },
                 x: { 
-                    grid: { display: false } 
+                    grid: { display: false } ,
+                    ticks: {
+                        maxRotation: 0,
+                        includeBounds: true,
+                        //autoSkip: true,     // skip labels if it doesn't fit
+                        //autoSkipPadding: 10,
+                        maxTicksLimit: 12,   // max number of ticks to show
+                    }
                 }
             },
             onClick: (e) => {
