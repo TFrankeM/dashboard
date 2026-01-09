@@ -79,8 +79,8 @@ document.addEventListener("DOMContentLoaded", function () {
             { label: "2025 trimestre 1 de 4", value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
             { label: "2025 trimestre 2 de 4", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
             { label: "2025 trimestre 3 de 4", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
-            { label: "2025 trimestre 4 de 4", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" }
-            { label: "2026", value: "year_2026", start: "2026-01-01", end: "2026-12-31" },
+            { label: "2025 trimestre 4 de 4", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" },
+            { label: "2026", value: "year_2026", start: "2026-01-01", end: "2026-12-31" }
 
         ],
         dynamic: [

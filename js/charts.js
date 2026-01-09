@@ -205,7 +205,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
         tension: 0.3,           // suaviza linha
         fill: false,
         spanGaps: true,
-        clip: false
+        clip: 5
     }));
 
     lineInstance = new Chart(ctx, {
@@ -236,8 +236,8 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                         maxRotation: 0,
                         includeBounds: true,
                         autoSkip: true,     // skip labels if it doesn't fit
-                        autoSkipPadding: 15,
-                        //maxTicksLimit: 12,   // max number of ticks to show
+                        //autoSkipPadding: 15,
+                        maxTicksLimit: 12,   // max number of ticks to show
                     }
                 }
             },
