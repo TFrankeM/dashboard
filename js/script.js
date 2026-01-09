@@ -113,11 +113,15 @@ document.addEventListener("DOMContentLoaded", function () {
         "Trabalho" 
     ];
 
-    const reviewersList = [
+    const reviewersList = [ 
+        { label: "Eleitor norte-americano independente", value: "Eleitor norte-americano independente" },
+        { label: "Eleitor norte-americano democrata", value: "Eleitor norte-americano democrata" },
+        { label: "Eleitor norte-americano republicano", value: "Eleitor norte-americano republicano" },
         { label: "Argentina", value: "Argentina" }
     ];
 
-    const reviewedEntityList = [
+    const reviewedEntityList = [ 
+        { label: "Trump sobre a Venezuela", value: "Trump sobre a Venezuela" },
         { label: "Brasil", value: "Brasil" }
     ];
 
@@ -293,7 +297,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!evolutionTitleEl || !evolutionSubtitleEl) return;
         
         //title
-        evolutionTitleEl.textContent = `FGV IIMEx do(a) ${appState.reviewedEntity} sob o ponto de vista do(a) ${appState.reviewer}`;
+        evolutionTitleEl.textContent = `FGV IIMEx de ${appState.reviewedEntity} sob o ponto de vista de ${appState.reviewer}`;
 
         let dateStr = "";
         if (appState.isDynamic) {
