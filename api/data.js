@@ -43,9 +43,9 @@ function buildCommonFilters(query, params) {
   // Fixed date range mode
   else if (start_date && end_date) {
     params.push(start_date);
-    conditions.push(`date >= $${params.length}`);
+    conditions.push(`date::date >= $${params.length}::date`);
     params.push(end_date);
-    conditions.push(`date <= $${params.length}`);
+    conditions.push(`date::date <= $${params.length}::date`);
   }
 
   return conditions;

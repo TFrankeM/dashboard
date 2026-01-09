@@ -146,11 +146,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const dynamicToggle = document.getElementById("dynamic-mode");
     const toggleLabel = document.getElementById("model-label");
+    const gaugeFooter = document.querySelector('.gauge-footer');
 
-    const resetZoomBtn = document.getElementById("resetZoomBtn");
-    // const averageButtonsContainer = document.querySelector(".average-buttons");
     const titleReviewerEl = document.getElementById("title-reviewer");
     const titleReviewedEntityEl = document.getElementById("title-reviewedEntity");
+    
+    const resetZoomBtn = document.getElementById("resetZoomBtn");
+    // const averageButtonsContainer = document.querySelector(".average-buttons");
+    const evolutionTitleEl = document.getElementById("evolution-title");
+    const evolutionSubtitleEl = document.getElementById("evolution-subtitle");
 
     // Referências para instâncias do Choices
     let choicesPeriod, choicesCategory, choicesReviewer, choicesReviewedEntity;
@@ -240,6 +244,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 toggleLabel.style.fontWeight = "700";
             }
         }
+
+        // Visibility of gauge footer
+        if (gaugeFooter) {
+            // dynamic = flex (visible) | static = none (hidden)
+            gaugeFooter.style.display = isDynamic ? "flex" : "none";
+        }
+
         if (dynamicToggle) {
             dynamicToggle.checked = isDynamic;
             //dynamicToggle.disabled = true;
@@ -274,6 +285,30 @@ document.addEventListener("DOMContentLoaded", function () {
         const defaultOption = options[0];
         choicesPeriod.setChoiceByValue(defaultOption.value);
         handlePeriodChange(defaultOption.value);
+    }
+
+    function updateEvolutionHeader(totalNews) {
+        if (!evolutionTitleEl || !evolutionSubtitleEl) return;
+        
+        //title
+        evolutionTitleEl.textContent = `FGV IIMEx do(a) ${appState.reviewedEntity} sob o ponto de vista do(a) ${appState.reviewer}`;
+
+        let dateStr = "";
+        if (appState.isDynamic) {
+            dateStr = `nos ${PERIODS_CONFIG.dynamic.find(p => p.value === appState.periodValue)?.label?.replace("Ú", "ú") || appState.periodValue}`;
+        } else {
+            const formatDate = (isoDate) => {
+                if (!isoDate) return "??";
+                const d = new Date(isoDate);
+                const parts = isoDate.split('-');
+                return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`; // dd/mm/aa
+            };
+            dateStr = `de ${formatDate(appState.customStartDate)} a ${formatDate(appState.customEndDate)}`;
+        }
+
+        //subtitle
+        const totalStr = totalNews ? totalNews.toLocaleString('pt-BR') : "0";
+        evolutionSubtitleEl.textContent = `Evolução do Indicador de Imagem no Exterior ${dateStr} | ${totalStr} notícias analisadas no período`;
     }
 
     // Data processing: JSON from JSON -> Chart.js format
@@ -339,6 +374,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         drawBarChart(barChartCanvas, labels, values);
         totalNoticiasEl.textContent = total.toLocaleString('pt-BR');
+
+        return total;
     }
 
 
@@ -489,8 +526,9 @@ document.addEventListener("DOMContentLoaded", function () {
             ]);
 
             updateGaugeDisplay(gaugeVal);
-            processAndUpdateBarChart(barData);
+            const totalNewsCount = processAndUpdateBarChart(barData);
             processAndUpdateLineChart(lineData);
+            updateEvolutionHeader(totalNewsCount);
         } catch (err) {
             console.error("Erro dashboard:", err);
             totalNoticiasEl.textContent = "Erro";
