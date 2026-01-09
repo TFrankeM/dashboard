@@ -133,7 +133,7 @@ export function drawGaugeChart(canvasElement, value) {
             cutout: "65%", // arco
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 15, bottom: 10 } },
+            layout: { padding: { top: 0, bottom: 10 } },
             plugins: {
                 legend: { display: false },
                 tooltip: { 
