@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { label: "2025 trimestre 3 de 4", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
             { label: "2025 trimestre 4 de 4", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" },
             { label: "2026", value: "year_2026", start: "2026-01-01", end: "2026-12-31" },
-            { label: "Dez de 2025 a Janeiro de 2026", value: "dec2025_jan2026", start: "2025-12-01", end: "2026-01-08" }
+            { label: "Dez de 2025 a Jan de 2026", value: "dec2025_jan2026", start: "2025-12-01", end: "2026-01-09" }
 
         ],
         dynamic: [
@@ -122,11 +122,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const reviewedEntityList = [ 
         { label: "Brasil", value: "Brasil" },
-        { label: "Venezuela", value: "Trump na Venezuela" }
+        { label: "Presidente Trump", value: "Trump na Venezuela" }
     ];
 
     const politicalList = [
-        "Democrat", "Republican", "Independent"
+        "Democratas", "Republicanos", "Independentes"
     ];
 
     // Currents filters applied
@@ -707,4 +707,5 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeUI();
     setTimeout(updateDashboard, 100);
 });
+
 
