@@ -67,7 +67,8 @@ document.addEventListener("DOMContentLoaded", function () {
         reviewer: "Argentina",
         reviewedEntity: "Brasil",
         category: ["Todas"],
-        aggregation: "daily"
+        politicalAlignment: ["Independent"],
+        aggregation: "hourly"
     };
 
     // Static data for dropdowns
@@ -80,7 +81,8 @@ document.addEventListener("DOMContentLoaded", function () {
             { label: "2025 trimestre 2 de 4", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
             { label: "2025 trimestre 3 de 4", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
             { label: "2025 trimestre 4 de 4", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" },
-            { label: "2026", value: "year_2026", start: "2026-01-01", end: "2026-12-31" }
+            { label: "2026", value: "year_2026", start: "2026-01-01", end: "2026-12-31" },
+            { label: "Dez de 2025 a Janeiro de 2026", value: "dec2025_jan2026", start: "2025-12-01", end: "2026-01-08" }
 
         ],
         dynamic: [
@@ -114,15 +116,17 @@ document.addEventListener("DOMContentLoaded", function () {
     ];
 
     const reviewersList = [ 
-        { label: "Eleitor norte-americano independente", value: "Eleitor norte-americano independente" },
-        { label: "Eleitor norte-americano democrata", value: "Eleitor norte-americano democrata" },
-        { label: "Eleitor norte-americano republicano", value: "Eleitor norte-americano republicano" },
-        { label: "Argentina", value: "Argentina" }
+        { label: "Argentina", value: "Argentina" },
+        { label: "Estados Unidos", value: "EUA" }
     ];
 
     const reviewedEntityList = [ 
-        { label: "Trump sobre a Venezuela", value: "Trump sobre a Venezuela" },
-        { label: "Brasil", value: "Brasil" }
+        { label: "Brasil", value: "Brasil" },
+        { label: "Venezuela", value: "Trump na Venezuela" }
+    ];
+
+    const politicalList = [
+        "Democrat", "Republican", "Independent"
     ];
 
     // Currents filters applied
@@ -134,6 +138,7 @@ document.addEventListener("DOMContentLoaded", function () {
         reviewer: DEFAULT_CONFIG.reviewer,
         reviewedEntity: DEFAULT_CONFIG.reviewedEntity,
         category: DEFAULT_CONFIG.category,
+        politicalAlignment: DEFAULT_CONFIG.politicalAlignment,
         aggregation: DEFAULT_CONFIG.aggregation
     };
 
@@ -149,6 +154,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const reviewerSelect = document.getElementById("reviewer");
     const reviewedEntitySelect = document.getElementById("reviewedEntity");
     const categorySelect = document.getElementById("category");
+    const politicalSelect = document.getElementById("politicalAlignment");
+    const politicalGroup = document.getElementById("political-filter-group");
 
     const dynamicToggle = document.getElementById("dynamic-mode");
     const toggleLabel = document.getElementById("model-label");
@@ -163,7 +170,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const evolutionSubtitleEl = document.getElementById("evolution-subtitle");
 
     // Referências para instâncias do Choices
-    let choicesPeriod, choicesCategory, choicesReviewer, choicesReviewedEntity;
+    let choicesPeriod, choicesCategory, choicesReviewer, choicesReviewedEntity, choicesPolitical;
     let pollingInterval = null;
 
     // UI INITIALIZATION
@@ -213,25 +220,32 @@ document.addEventListener("DOMContentLoaded", function () {
                 value: c, label: c, selected: c === "Todas" 
             })), "value", "label", true); /* Select todas by default; true := remove everything that exists */
 
-
-            // Adiciona listeners para controlar o colapso visual
-            const categoryContainer = choicesCategory.containerOuter.element;
-            
-            // Estado inicial colapsado
-            categoryContainer.classList.add("collapsed");
-
-            // Expande ao abrir
-            categoryContainer.addEventListener("showDropdown", () => {
-                categoryContainer.classList.remove("collapsed");
+            choicesPolitical = new Choices("#politicalAlignment", {
+                removeItemButton: true, 
+                searchEnabled: false, 
+                placeholderValue: "Selecione...",
+                itemSelectText: "", 
+                position: "bottom", 
+                maxItemCount: 3,
+                maxItemText: ""
             });
+            choicesPolitical.setChoices(politicalList.map(p => ({ 
+                value: p, label: p, selected: p === "Independent" 
+            })), 'value', 'label', true);
 
-            // Colapsa ao fechar
-            categoryContainer.addEventListener("hideDropdown", () => {
-                categoryContainer.classList.add("collapsed");
-            });
+
+            const setupCollapse = (choiceInstance) => {
+                const container = choiceInstance.containerOuter.element;
+                container.classList.add("collapsed");
+                container.addEventListener("showDropdown", () => container.classList.remove("collapsed"));
+                container.addEventListener("hideDropdown", () => container.classList.add("collapsed"));
+            };
+            setupCollapse(choicesCategory);
+            setupCollapse(choicesPolitical);
         }
         updateToggleVisual(appState.isDynamic);
-        
+        checkEvaluatorContext(appState.reviewer);
+
         // is dinamic? then, PULLING
         if (appState.isDynamic) {
             pollingInterval = setInterval(updateDashboard, 600000);
@@ -260,6 +274,21 @@ document.addEventListener("DOMContentLoaded", function () {
         if (dynamicToggle) {
             dynamicToggle.checked = isDynamic;
             //dynamicToggle.disabled = true;
+        }
+    }
+
+    // Show/hide political alignemnt filter
+    function checkEvaluatorContext(reviewer) {
+        if (!politicalGroup) return;
+        if (reviewer === "EUA") {
+            politicalGroup.classList.remove("hidden");
+        } else {
+            politicalGroup.classList.add("hidden");
+            // Reset to "Independent" when hidden
+            if (choicesPolitical) {
+                choicesPolitical.setChoiceByValue("Independent");
+                appState.politicalAlignment = null;
+            }
         }
     }
 
@@ -297,7 +326,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!evolutionTitleEl || !evolutionSubtitleEl) return;
         
         //title
-        evolutionTitleEl.textContent = `FGV IIMEx de ${appState.reviewedEntity} sob o ponto de vista de ${appState.reviewer}`;
+        evolutionTitleEl.textContent = `FGV IIMEx de ${appState.reviewedEntity} sob o ponto de vista dos ${appState.reviewer}`;
 
         let dateStr = "";
         if (appState.isDynamic) {
@@ -364,6 +393,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        const divisor = appState.reviewer === "EUA" ? 3 : 1;
         const labels = [];
         const values = [];
         let total = 0;
@@ -373,10 +403,12 @@ document.addEventListener("DOMContentLoaded", function () {
             // Extract the year for the label
             labels.push(date.getUTCFullYear("pt=BR"));
             
-            const count = parseInt(row.news_count, 10);
+            let count = parseInt(row.news_count, 10);
+            count = count / divisor
             values.push(count);
             total += count;
         });
+
 
         drawBarChart(barChartCanvas, labels, values);
         totalNoticiasEl.textContent = total.toLocaleString('pt-BR');
@@ -423,8 +455,11 @@ document.addEventListener("DOMContentLoaded", function () {
         params.append("reviewer", appState.reviewer);
         params.append("reviewedEntity", appState.reviewedEntity);
 
-        if(appState.category) {
+        if (appState.category) {
             appState.category.forEach(c => params.append("category", c));
+        }
+        if (appState.politicalAlignment) {
+            appState.politicalAlignment.forEach(p => params.append("politicalAlignment", p));
         }
 
         window.open(`details.html?${params.toString()}`, "_blank");
@@ -455,9 +490,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const allDates = new Set();
+        const allSeries = new Set();
+
         apiData.forEach(row => {
             if (row.time_period) {
                 allDates.add(row.time_period);
+            }
+            if (row.series_label) {
+                allSeries.add(row.series_label);
             }
         });
 
@@ -466,29 +506,41 @@ document.addEventListener("DOMContentLoaded", function () {
         const formattedLabels = sortedDates.map(dateStr => {
             const date = new Date(dateStr);
             
-            return date.toLocaleDateString("pt-BR", { 
-                day: "2-digit",
-                month: "2-digit",
-                year: "2-digit",
-                timeZone: "UTC" });
+            // Se for horária (hourly) ou menor, mostra a hora
+            if (appState.aggregation === 'hourly' || appState.aggregation === 'half_hourly') {
+                return date.toLocaleString('pt-BR', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    timeZone: 'UTC' 
+                });
+            }
+            
+            // Padrão Diário/Mensal
+            return date.toLocaleDateString('pt-BR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: '2-digit', 
+                timeZone: 'UTC' 
+            });
         });
 
-        // Prepare datasets per selected category
-        const datasets = appState.category.map(catName => {
-            // Backend returns "Todas" as category for all-inclusive
-            const catRows = apiData.filter(row => row.category === catName);
-
+        // Prepare datasets based on the series returned (categories or political alignments)
+        const datasets = Array.from(allSeries).map(labelName => {
+            const seriesRows = apiData.filter(row => row.series_label === labelName);
             // Fast access for date -> average grade
             const dataMap = new Map();
-            catRows.forEach(row => {
+
+            seriesRows.forEach(row => {
                 dataMap.set(row.time_period, parseFloat(row.average_grade));
             });
 
             // Align average grades with
             const alignedData = sortedDates.map(date => dataMap.get(date) || null);
-
             return {
-                label: catName,
+                label: labelName,
                 data: alignedData
             };
         });
@@ -502,6 +554,7 @@ document.addEventListener("DOMContentLoaded", function () {
             reviewer: appState.reviewer,
             reviewedEntity: appState.reviewedEntity,
             category: appState.category,
+            politicalAlignment: appState.politicalAlignment,
             aggregation: appState.aggregation
         };
 
@@ -530,7 +583,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 fetchBarChartData(apiFilters),
                 fetchLineChartData(apiFilters)
             ]);
-
             updateGaugeDisplay(gaugeVal);
             const totalNewsCount = processAndUpdateBarChart(barData);
             processAndUpdateLineChart(lineData);
@@ -565,21 +617,78 @@ document.addEventListener("DOMContentLoaded", function () {
         updateDashboard(); 
         });
     };
-    if (reviewerSelect) reviewerSelect.addEventListener("change", (e) => { 
-        appState.reviewer = e.target.value; 
-        updateDashboard(); 
-    });
+
+    // Political alignment
+    if (politicalSelect) {
+        politicalSelect.addEventListener("change", () => {
+            const selectedPol = Array.from(politicalSelect.selectedOptions).map(o => o.value);
+            
+            const currentCategories = choicesCategory ? choicesCategory.getValue(true) : [];
+            const catsArr = Array.isArray(currentCategories) ? currentCategories : [currentCategories];
+
+            // if more than 1 political alignment selected AND more than 1 category selected
+            if (selectedPol.length > 1 && catsArr.length > 1) {
+                if (choicesCategory) {
+                    // Remove multiple selections and revert to default
+                    choicesCategory.removeActiveItems(); 
+                    choicesCategory.setChoiceByValue("Todas"); 
+                }
+                appState.category = ["Todas"];
+            } 
+            
+            appState.politicalAlignment = selectedPol.length > 0 ? selectedPol : ["Independent"];
+            updateDashboard();
+        });
+    }
+
+    if (categorySelect) {
+        categorySelect.addEventListener("change", () => {
+            const selectedCat = Array.from(categorySelect.selectedOptions).map(o => o.value);
+            
+            const currentPol = choicesPolitical ? choicesPolitical.getValue(true) : [];
+            const polArr = Array.isArray(currentPol) ? currentPol : [currentPol];
+
+            // If selecting more than 1 category AND more than 1 political alignment
+            if (selectedCat.length > 1 && polArr.length > 1) {
+                // Check if the political filter is active (visible)
+                if (choicesPolitical && !politicalGroup.classList.contains("hidden")) {
+                    // Remove multiple political alignment selections and revert to default
+                    choicesPolitical.removeActiveItems();
+                    choicesPolitical.setChoiceByValue("Independent");
+                    appState.politicalAlignment = ["Independent"];
+                }
+            }
+
+            appState.category = selectedCat.length > 0 ? selectedCat : ["Todas"];
+            updateDashboard();
+        });
+    }
     
     if (reviewedEntitySelect) reviewedEntitySelect.addEventListener("change", (e) => { 
         appState.reviewedEntity = e.target.value; 
         updateDashboard(); 
     });
 
-    if (categorySelect) categorySelect.addEventListener("change", () => {
-        const selected = Array.from(categorySelect.selectedOptions).map(o => o.value);
-        appState.category = selected.length > 0 ? selected : ["Todas"];
-        updateDashboard();
-    });
+    if (reviewerSelect) {
+        reviewerSelect.addEventListener("change", (e) => { 
+            appState.reviewer = e.target.value; 
+            
+            checkEvaluatorContext(appState.reviewer);
+            
+            if (choicesPolitical) {
+                choicesPolitical.removeActiveItems();
+                choicesPolitical.setChoiceByValue("Independent");
+                appState.politicalAlignment = ["Independent"];
+            }
+            if (choicesCategory) {
+                choicesCategory.removeActiveItems(); 
+                choicesCategory.setChoiceByValue("Todas"); 
+                appState.category = ["Todas"];
+            }
+            
+            updateDashboard(); 
+        });
+    }
 
     resetZoomBtn.addEventListener("click", () => {
         resetLineChartZoom();
@@ -598,6 +707,4 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeUI();
     setTimeout(updateDashboard, 100);
 });
-
-
 

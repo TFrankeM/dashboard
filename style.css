@@ -297,9 +297,21 @@ input:checked + .slider:before {
 /* grid dos filtros */
 .filters-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 4fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 3fr;
     gap: 20px;
     align-items: end;
+    transition: grid-template-columns 0.3s ease;
+}
+
+
+.filters-grid:has(#political-filter-group.hidden) {
+    /* Muda para 4 colunas, dando mais espaço para a categoria */
+    /* Reviewer | Reviewed | Period | Category */
+    grid-template-columns: 1fr 1fr 1fr 4fr;
+}
+
+.hidden {
+    display: none !important;
 }
 
 .filter-group label {

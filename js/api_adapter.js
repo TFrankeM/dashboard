@@ -36,6 +36,14 @@ function buildApiUrl(filters, widgetType) {
         }
     };
 
+    if (filters.politicalAlignment) {
+        if (Array.isArray(filters.politicalAlignment)) {
+            filters.politicalAlignment.forEach(p => url_params.append("politicalAlignment", p));
+        } else {
+            url_params.append("politicalAlignment", filters.politicalAlignment);
+        }
+    }
+    
     // Filters for details section
     if (filters.limit) {
         url_params.append("limit", filters.limit);

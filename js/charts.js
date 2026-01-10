@@ -181,9 +181,17 @@ export function drawBarChart(canvasElement, labels, data) {
 }
 
 export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
+    console.log("Desenhando gráfico de linhas com datasets:", datasets);
     const ctx = canvasElement.getContext("2d");
     if (lineInstance) lineInstance.destroy();
     
+    const POLITICAL_COLORS = {
+        'Democrat': '#2563eb',
+        'Republican': '#dc2626',
+        'Independent': '#d97706',
+        'Geral': '#003A79'
+        };
+
     const LINE_COLORS = [
         "#1e40af",
         "#dc2626",
@@ -194,19 +202,29 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
         "#db2777"
     ];
 
-    const styledDatasets = datasets.map((dataObj, index) => ({
-        label: dataObj.label,
-        data: dataObj.data,
-        borderColor: LINE_COLORS[index % LINE_COLORS.length],
-        backgroundColor: LINE_COLORS[index % LINE_COLORS.length].replace("1)", "0.1)"),
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 3,    // aumenta o ponto ao passar o mouse
-        tension: 0.3,           // suaviza linha
-        fill: false,
-        spanGaps: true,
-        clip: 5
-    }));
+    const dataArray = Array.isArray(datasets) ? datasets : [datasets];
+
+    const styledDatasets = dataArray.map((ds, index) => {
+        let color = POLITICAL_COLORS[ds.label] || LINE_COLORS[index % LINE_COLORS.length]
+        
+        if (!POLITICAL_COLORS[ds.label] && dataArray.length > 1) {
+            color = LINE_COLORS[index % LINE_COLORS.length];
+        }
+
+        return {
+            label: ds.label,
+            data: ds.data,
+            borderColor: color,
+            backgroundColor: color.replace("1)", "0.1)"), 
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 3,    // aumenta o ponto ao passar o mouse
+            tension: 0.3,           // suaviza linha
+            fill: false,
+            spanGaps: true,
+            clip: 5
+        };
+    });
 
     lineInstance = new Chart(ctx, {
         type: "line",
@@ -237,7 +255,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                         includeBounds: true,
                         autoSkip: true,     // skip labels if it doesn't fit
                         //autoSkipPadding: 15,
-                        maxTicksLimit: 12,   // max number of ticks to show
+                        maxTicksLimit: 10,   // max number of ticks to show
                     }
                 }
             },

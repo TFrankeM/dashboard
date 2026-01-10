@@ -4,7 +4,7 @@ import { sql } from "@vercel/postgres";
 
 // Basic WHERE clause used by all charts
 function buildCommonFilters(query, params) {
-  const { reviewer, reviewed_entity, category, period, start_date, end_date } = query;
+  const { reviewer, reviewed_entity, category, period, start_date, end_date, politicalAlignment } = query;
   const conditions = [];
 
   if (reviewer) {
@@ -19,9 +19,17 @@ function buildCommonFilters(query, params) {
 
   if (category) {
     let categories = Array.isArray(category) ? category : [category];
-    if (!categories.includes("Todas") && !categories.includes("All")) {
+    if (!categories.includes("Todas")) {
       params.push(categories);
       conditions.push(`category = ANY($${params.length})`);
+    }
+  }
+
+  if (politicalAlignment) {
+    let alignments = Array.isArray(politicalAlignment) ? politicalAlignment : [politicalAlignment];
+    if (alignments.length > 0) {
+      params.push(alignments);
+      conditions.push(`political_alignment = ANY($${params.length})`);
     }
   }
 
@@ -186,15 +194,22 @@ async function getNewsList(request) {
 async function getLineChartData(request) {
   const params = [];
   const conditions = buildCommonFilters(request.query, params);
-  const { aggregation, category } = request.query;
+  const { aggregation, category, politicalAlignment } = request.query;
 
-  // Verifies if "Todas" is selected
-  const hasAll = category && (Array.isArray(category) ? category.includes("Todas") : category === "Todas");
+  // Listas de seleção
+  const categories = category ? (Array.isArray(category) ? category : [category]) : [];
+  const alignments = politicalAlignment ? (Array.isArray(politicalAlignment) ? politicalAlignment : [politicalAlignment]) : [];
 
-  // check if category has a meaningful value
-  const showCategoryBreakDown = !!category;
+  // Flags de "Todos"
+  const catHasAll = categories.includes("Todas");
+  const polHasAll = alignments.includes("Consolidado");
 
-  let dateTrunc = "week";
+  // DECISÃO DE AGRUPAMENTO:
+  // Se tivermos mais de 1 viés político selecionado, a prioridade é comparar os vieses.
+  // Nesse caso, o gráfico deve mostrar uma linha para cada viés (Ex: Democrata, Republicano).
+  const isMultiPolitical = alignments.length > 1;
+
+  let dateTrunc = "week"; 
   switch (aggregation) {
     case "yearly": dateTrunc = "year"; break;
     case "quarterly": dateTrunc = "quarter"; break;
@@ -202,21 +217,59 @@ async function getLineChartData(request) {
     case "daily": dateTrunc = "day"; break;
     case "hourly": dateTrunc = "hour"; break;
     case "minutely": dateTrunc = "minute"; break;
-    case "secondly": dateTrunc = "second"; break;
+    case "half_hourly": dateTrunc = "minute"; break;
     default: dateTrunc = "week";
   }
 
   let selectClause = "";
   let groupClause = "";
+  let havingClause = "";
 
-  if (showCategoryBreakDown) {
-    if (hasAll) {
-      selectClause = ", COALESCE(category, 'Todas') as category";
-      groupClause = ", ROLLUP(category)";
-    } else {
-      selectClause = ", category";
-      groupClause = ", category";
-    }
+  if (isMultiPolitical) {
+      // --- CENÁRIO 1: Comparação Política (Múltiplos Vieses) ---
+      // Agrupa por political_alignment
+
+      if (polHasAll) {
+          // Se tiver "Consolidado" + outros: ROLLUP gera linha de média geral (NULL) + linhas específicas
+          selectClause = ", COALESCE(political_alignment, 'Consolidado') as series_label";
+          groupClause = ", ROLLUP(political_alignment)";
+          
+          // Filtra o resultado do ROLLUP para trazer apenas os selecionados
+          const specificPols = alignments.filter(p => p !== "Consolidado");
+          if (specificPols.length > 0) {
+             params.push(specificPols);
+             havingClause = `HAVING political_alignment IS NULL OR political_alignment = ANY($${params.length})`;
+          } else {
+             // Só Consolidado
+             havingClause = `HAVING political_alignment IS NULL`; 
+          }
+      } else {
+          // Apenas linhas específicas (sem média geral)
+          selectClause = ", political_alignment as series_label";
+          groupClause = ", political_alignment";
+      }
+
+  } else {
+      // --- CENÁRIO 2: Comparação por Categoria (Padrão ou 1 Viés selecionado) ---
+      // Agrupa por category
+
+      if (catHasAll) {
+          selectClause = ", COALESCE(category, 'Todas') as series_label";
+          groupClause = ", ROLLUP(category)";
+          
+          const specificCats = categories.filter(c => c !== "Todas");
+          
+          if (specificCats.length > 0) {
+              params.push(specificCats);
+              havingClause = `HAVING category IS NULL OR category = ANY($${params.length})`;
+          } else {
+              havingClause = `HAVING category IS NULL`;
+          }
+
+      } else {
+          selectClause = ", category as series_label";
+          groupClause = ", category";
+      }
   }
 
   const query = `
@@ -227,12 +280,15 @@ async function getLineChartData(request) {
     ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
     GROUP BY 
       time_period${groupClause}
+    ${havingClause}
     ORDER BY 
       time_period ASC;
   `;
+  
   const { rows } = await sql.query(query, params);
   return rows;
 }
+
 
 
 // ROTEADOR
