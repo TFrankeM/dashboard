@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
         reviewer: "Argentina",
         reviewedEntity: "Brasil",
         category: ["Todas"],
-        politicalAlignment: ["Independent"],
+        politicalAlignment: ["Independentes"],
         aggregation: "hourly"
     };
 
@@ -122,7 +122,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const reviewedEntityList = [ 
         { label: "Brasil", value: "Brasil" },
-        { label: "Presidente Trump", value: "Trump na Venezuela" }
+        { label: "Presidente Trump", value: "Presidente Trump" }
     ];
 
     const politicalList = [
@@ -230,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 maxItemText: ""
             });
             choicesPolitical.setChoices(politicalList.map(p => ({ 
-                value: p, label: p, selected: p === "Independent" 
+                value: p, label: p, selected: p === "Independentes" 
             })), 'value', 'label', true);
 
 
@@ -284,9 +284,9 @@ document.addEventListener("DOMContentLoaded", function () {
             politicalGroup.classList.remove("hidden");
         } else {
             politicalGroup.classList.add("hidden");
-            // Reset to "Independent" when hidden
+            // Reset to "Independentes" when hidden
             if (choicesPolitical) {
-                choicesPolitical.setChoiceByValue("Independent");
+                choicesPolitical.setChoiceByValue("Independentes");
                 appState.politicalAlignment = null;
             }
         }
@@ -326,7 +326,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!evolutionTitleEl || !evolutionSubtitleEl) return;
         
         //title
-        evolutionTitleEl.textContent = `FGV IIMEx de ${appState.reviewedEntity} sob o ponto de vista dos ${appState.reviewer}`;
+        evolutionTitleEl.innerHTML = `Indicador de Imagem na Mídia por IA (FGV IMíd.IA)<br><span style="font-size: 0.8em; font-weight: 500; opacity: 0.85;">Ente avaliador: ${appState.reviewer} | Ente em avaliação: ${appState.reviewedEntity}</span>`;
 
         let dateStr = "";
         if (appState.isDynamic) {
@@ -393,7 +393,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const divisor = appState.reviewer === "EUA" ? 3 : 1;
+        const divisor = appState.periodValue ? appState.periodValue.length : 1;
         const labels = [];
         const values = [];
         let total = 0;
@@ -636,7 +636,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 appState.category = ["Todas"];
             } 
             
-            appState.politicalAlignment = selectedPol.length > 0 ? selectedPol : ["Independent"];
+            appState.politicalAlignment = selectedPol.length > 0 ? selectedPol : ["Independentes"];
             updateDashboard();
         });
     }
@@ -654,8 +654,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (choicesPolitical && !politicalGroup.classList.contains("hidden")) {
                     // Remove multiple political alignment selections and revert to default
                     choicesPolitical.removeActiveItems();
-                    choicesPolitical.setChoiceByValue("Independent");
-                    appState.politicalAlignment = ["Independent"];
+                    choicesPolitical.setChoiceByValue("Independentes");
+                    appState.politicalAlignment = ["Independentes"];
                 }
             }
 
@@ -677,8 +677,8 @@ document.addEventListener("DOMContentLoaded", function () {
             
             if (choicesPolitical) {
                 choicesPolitical.removeActiveItems();
-                choicesPolitical.setChoiceByValue("Independent");
-                appState.politicalAlignment = ["Independent"];
+                choicesPolitical.setChoiceByValue("Independentes");
+                appState.politicalAlignment = ["Independentes"];
             }
             if (choicesCategory) {
                 choicesCategory.removeActiveItems(); 

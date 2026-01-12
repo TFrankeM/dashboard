@@ -82,7 +82,7 @@ async function getGaugeData(request) {
           ${whereClauseBase}
         )
       `;
-      // calculate IIMEX for 30 minutes window
+      // calculate IMíd.IA for 30 minutes window
       /*
       timeCondition = `
         AND date >= (
@@ -226,32 +226,24 @@ async function getLineChartData(request) {
   let havingClause = "";
 
   if (isMultiPolitical) {
-      // --- CENÁRIO 1: Comparação Política (Múltiplos Vieses) ---
-      // Agrupa por political_alignment
 
       if (polHasAll) {
-          // Se tiver "Consolidado" + outros: ROLLUP gera linha de média geral (NULL) + linhas específicas
           selectClause = ", COALESCE(political_alignment, 'Consolidado') as series_label";
           groupClause = ", ROLLUP(political_alignment)";
           
-          // Filtra o resultado do ROLLUP para trazer apenas os selecionados
           const specificPols = alignments.filter(p => p !== "Consolidado");
           if (specificPols.length > 0) {
              params.push(specificPols);
              havingClause = `HAVING political_alignment IS NULL OR political_alignment = ANY($${params.length})`;
           } else {
-             // Só Consolidado
              havingClause = `HAVING political_alignment IS NULL`; 
           }
       } else {
-          // Apenas linhas específicas (sem média geral)
           selectClause = ", political_alignment as series_label";
           groupClause = ", political_alignment";
       }
 
   } else {
-      // --- CENÁRIO 2: Comparação por Categoria (Padrão ou 1 Viés selecionado) ---
-      // Agrupa por category
 
       if (catHasAll) {
           selectClause = ", COALESCE(category, 'Todas') as series_label";

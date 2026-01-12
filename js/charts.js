@@ -216,7 +216,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
             data: ds.data,
             borderColor: color,
             backgroundColor: color.replace("1)", "0.1)"), 
-            borderWidth: 2,
+            borderWidth: 1,
             pointRadius: 0,
             pointHoverRadius: 3,    // aumenta o ponto ao passar o mouse
             tension: 0.3,           // suaviza linha
@@ -246,7 +246,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                 y: { 
                     min: 1, 
                     max: 7,
-                    title: { display: true, text: "FGV IIMEx" }
+                    title: { display: true, text: "FGV IMíd.IA" }
                 },
                 x: { 
                     grid: { display: false } ,
