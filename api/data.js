@@ -2,8 +2,8 @@
 import { sql } from "@vercel/postgres";
 
 
-// Basic WHERE clause used by all charts
 function buildCommonFilters(query, params) {
+  // Basic WHERE clause used by all charts
   const { reviewer, reviewed_entity, category, period, start_date, end_date, politicalAlignment } = query;
   const conditions = [];
 
@@ -108,6 +108,38 @@ async function getGaugeData(request) {
   return rows;
 }
 
+// VOLUME CHART
+async function getVolumeChartData(request) {
+  const params = [];
+  const conditions = buildCommonFilters(request.query, params);
+  const { aggregation } = request.query;
+
+  let dateTrunc = "day"; 
+  switch (aggregation) {
+    case "yearly": dateTrunc = "year"; break;
+    case "quarterly": dateTrunc = "quarter"; break;
+    case "monthly": dateTrunc = "month"; break;
+    case "daily": dateTrunc = "day"; break;
+    case "hourly": dateTrunc = "hour"; break;
+    case "minutely": dateTrunc = "minute"; break;
+    case "half_hourly": dateTrunc = "minute"; break;
+    default: dateTrunc = "day";
+  }
+
+  const query = `
+    SELECT 
+      DATE_TRUNC('${dateTrunc}', date) AS time_period,
+      COUNT(*) AS news_count
+    FROM noticias
+    ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
+    GROUP BY 
+      time_period
+    ORDER BY 
+      time_period ASC;
+  `;
+  const { rows } = await sql.query(query, params);  
+  return rows;
+}
 
 // BAR CHART
 async function getBarChartData(request) {
@@ -307,6 +339,10 @@ export default async function handler(request, response) {
     switch (widget) {
       case "gauge":
         data = await getGaugeData(request);
+        break;
+      case "volume":
+        data = await getVolumeChartData(request);
+        console.log("Volume Data:", data);
         break;
       case "bar":
         data = await getBarChartData(request);

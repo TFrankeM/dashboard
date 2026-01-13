@@ -1,5 +1,5 @@
-import { fetchLineChartData, fetchBarChartData, fetchGaugeData } from "./api_adapter.js";
-import { drawGaugeChart, drawBarChart, drawLineChart, resetLineChartZoom } from "./charts.js";
+import { fetchGaugeData, fetchVolumeChartData, fetchBarChartData, fetchLineChartData } from "./api_adapter.js";
+import { drawGaugeChart, drawVolumeChart, drawBarChart, drawLineChart, resetLineChartZoom } from "./charts.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     
@@ -143,31 +143,34 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     // DOM SELECTORS
-    const lineChartCanvas = document.getElementById("lineChart");
-    const barChartCanvas = document.getElementById("barChart");
-    const gaugeChartCanvas = document.getElementById("gaugeChart");
-    const gaugeValueText = document.getElementById("gaugeValueText");
-    const gaugeDescription = document.getElementById("gaugeDescription")
-    const totalNoticiasEl = document.getElementById("total-noticias");
-    
     const periodSelect = document.getElementById("period");
     const reviewerSelect = document.getElementById("reviewer");
     const reviewedEntitySelect = document.getElementById("reviewedEntity");
     const categorySelect = document.getElementById("category");
     const politicalSelect = document.getElementById("politicalAlignment");
     const politicalGroup = document.getElementById("political-filter-group");
-
     const dynamicToggle = document.getElementById("dynamic-mode");
-    const toggleLabel = document.getElementById("model-label");
+    const toggleLabel = document.getElementById("mode-label");
     const gaugeFooter = document.querySelector('.gauge-footer');
 
+    const volumeChartCanvas = document.getElementById("volumeChart");
+    const totalNewsEl = document.getElementById("total-news");
+
+    const barChartCanvas = document.getElementById("barChart");
+    const totalNoticiasEl = document.getElementById("total-noticias");
     const titleReviewerEl = document.getElementById("title-reviewer");
     const titleReviewedEntityEl = document.getElementById("title-reviewedEntity");
+
+    const gaugeChartCanvas = document.getElementById("gaugeChart");
+    const gaugeValueText = document.getElementById("gaugeValueText");
+    const gaugeDescription = document.getElementById("gaugeDescription")
     
+    const lineChartCanvas = document.getElementById("lineChart");
     const resetZoomBtn = document.getElementById("resetZoomBtn");
     // const averageButtonsContainer = document.querySelector(".average-buttons");
     const evolutionTitleEl = document.getElementById("evolution-title");
     const evolutionSubtitleEl = document.getElementById("evolution-subtitle");
+
 
     // Referências para instâncias do Choices
     let choicesPeriod, choicesCategory, choicesReviewer, choicesReviewedEntity, choicesPolitical;
@@ -386,6 +389,50 @@ document.addEventListener("DOMContentLoaded", function () {
         drawGaugeChart(gaugeChartCanvas, finalValue);
     }
 
+    function processAndUpdateVolumeChart(apiData) {
+        if (!apiData || apiData.length === 0) {
+            totalNewsEl.textContent = "0";
+            drawVolumeChart(volumeChartCanvas, ["Nenhum dado"], []);
+            return 0;
+        }
+
+        const divisor = (appState.politicalAlignment && appState.politicalAlignment.length > 0) ? appState.politicalAlignment.length : 1;
+        const labels = [];
+        const values = [];
+        let total = 0;
+
+        // Ordenação por data (crítico para gráfico de linha)
+        const sortedData = apiData.sort((a, b) => new Date(a.time_period) - new Date(b.time_period));
+
+        sortedData.forEach(row => {
+            const date = new Date(row.time_period);
+            
+            // Lógica de formatação inteligente (igual ao gráfico principal)
+            let labelStr = "";
+            if (['hourly', 'half_hourly', 'minutely'].includes(appState.aggregation)) {
+                labelStr = date.toLocaleString('pt-BR', { 
+                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' 
+                });
+            } else {
+                labelStr = date.toLocaleDateString('pt-BR', { 
+                    day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' 
+                });
+            }
+            labels.push(labelStr);
+            
+            let count = parseInt(row.news_count, 10);
+            count = Math.round(count / divisor);
+            
+            values.push(count);
+            total += count;
+        });
+
+        // Chama função de linha de volume
+        drawVolumeChart(volumeChartCanvas, labels, values);
+        totalNewsEl.textContent = total.toLocaleString('pt-BR');
+        return total;
+    }
+
     function processAndUpdateBarChart(apiData) {
         if (!apiData || apiData.length === 0) {
             totalNoticiasEl.textContent = "0";
@@ -575,18 +622,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             console.log("[Dashboard] Buscando dados...", apiFilters);
-            const [gaugeVal, barData, lineData] = await Promise.all([
+            const [gaugeVal, volumeData, barData, lineData] = await Promise.all([
                 fetchGaugeData(apiFilters),
+                fetchVolumeChartData(apiFilters),
                 fetchBarChartData(apiFilters),
                 fetchLineChartData(apiFilters)
             ]);
-            updateGaugeDisplay(gaugeVal);
-            const totalNewsCount = processAndUpdateBarChart(barData);
+            updateGaugeDisplay(gaugeVal); 
+            const totalNewsCount =processAndUpdateVolumeChart(volumeData);
+            const _ = processAndUpdateBarChart(barData);
             processAndUpdateLineChart(lineData);
             updateEvolutionHeader(totalNewsCount);
         } catch (err) {
             console.error("Erro dashboard:", err);
-            totalNoticiasEl.textContent = "Erro";
+            totalNewsEl.textContent = "Erro";
         }
     }
     

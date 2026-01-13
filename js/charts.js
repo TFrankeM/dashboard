@@ -3,8 +3,14 @@
 */
 
 let gaugeInstance = null;
+let volumeInstance = null;
 let barInstance = null;
 let lineInstance = null;
+
+const COLORS = {
+    bluePrimary: '#003A79',
+    blueLight: '#008BC9'
+};
 
 // Global plugins
 if (typeof Chart !== 'undefined' && typeof ChartZoom !== 'undefined') {
@@ -149,6 +155,61 @@ export function drawGaugeChart(canvasElement, value) {
             }
         },
         plugins: [gaugeNeedlePlugin, gaugeLabelsPlugin]
+    });
+}
+
+export function drawVolumeChart(canvasElement, labels, data) {
+    const ctx = canvasElement.getContext("2d");
+    if (volumeInstance) volumeInstance.destroy();
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvasElement.height);
+    gradient.addColorStop(0, "rgba(0, 58, 121, 0.5)");
+    gradient.addColorStop(1, "rgba(0, 58, 121, 0)");
+
+    volumeInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Notícias",
+                data: data,
+                borderColor: COLORS.bluePrimary,
+                backgroundColor: gradient,
+                borderWidth: 1.5,
+                pointRadius: 0,
+                hitRadius: 5,
+                pointHoverRadius: 4,
+                pointBackgroundColor: COLORS.bluePrimary,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { 
+                mode: "index", 
+                intersect: false
+                // mode: "nearest",
+                // intersect: false,
+                // axis: "xy"
+            },
+            scales: {
+                y: { beginAtZero: true,  display: false },
+                x: { display: false }
+            },
+            plugins: { 
+                legend: { display: false }, 
+                tooltip: { 
+                    backgroundColor: "rgba(30, 41, 59, 0.9)",
+                    titleFont: { size: 11 },
+                    bodyFont: { weight: "bold", size: 12 },
+                    cornerRadius: 6,
+                    displayColors: false,
+                    callbacks: { title: (ctx) => ctx[0].label, label: (ctx) => ` ${ctx.raw} notícias` }
+                } 
+            }
+        }
     });
 }
 

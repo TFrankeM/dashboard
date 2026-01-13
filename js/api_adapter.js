@@ -1,11 +1,14 @@
+
 /*
     Responsable for comunicating with the backend `api/data.js`, the endpoint that provides the data for the widgets.
 */
 
 const API_ENDPOINT = "/api/data";
 
-/* Builds the URL with parameters*/
+
 function buildApiUrl(filters, widgetType) {
+    /* Builds the URL with parameters*/
+
     const url_params = new URLSearchParams();
     url_params.append("widget", widgetType);
 
@@ -19,15 +22,15 @@ function buildApiUrl(filters, widgetType) {
     if (filters.reviewer) {
         url_params.append("reviewer", filters.reviewer);
     };
+
     if (filters.reviewedEntity) {
         url_params.append("reviewed_entity", filters.reviewedEntity);
     };
 
-    if (filters.aggregation && widgetType === "line") {
+    if (filters.aggregation) {
         url_params.append("aggregation", filters.aggregation);
     };
 
-    // Array for categories
     if (filters.category) {
         if (Array.isArray(filters.category)) {
             filters.category.forEach(cat => url_params.append("category", cat));
@@ -56,14 +59,16 @@ function buildApiUrl(filters, widgetType) {
     return url_params;
 }
 
-/* Internal function to fetch data from the API */
+
+
 async function fetchFromApi(filters, widgetType) {
+    /* Internal function to fetch data from the API */
     try {
         let url_params = buildApiUrl(filters, widgetType);
         url_params = url_params.toString().replace(/\+/g, "%20");
         const fullUrl = `${API_ENDPOINT}?${url_params.toString()}`;
 
-        console.log(`[Adapter] Requesting: ${fullUrl}`);
+        console.log(`[Fetching from API] Requesting: ${fullUrl}`);
 
         const response = await fetch(fullUrl);
 
@@ -78,19 +83,9 @@ async function fetchFromApi(filters, widgetType) {
     }
 }
 
+
+
 /* Functions exported to script.js */
-export async function fetchLineChartData(filters) {
-    const safeFilters = {
-        ...filters,
-        aggregation: filters.aggregation || "weekly"
-    }
-    return await fetchFromApi(safeFilters, "line");
-}
-
-export async function fetchBarChartData(filters) {
-    return await fetchFromApi(filters, "bar");
-}
-
 export async function fetchGaugeData(filters) {
     const data = await fetchFromApi(filters, "gauge");
     if (data && data.length > 0) {
@@ -98,3 +93,22 @@ export async function fetchGaugeData(filters) {
     }
     return null;
 }
+
+export async function fetchVolumeChartData(filters) {
+    const safeFilters = { ...filters, aggregation: filters.aggregation || "daily" }
+    return await fetchFromApi(safeFilters, "volume");
+}
+
+export async function fetchLineChartData(filters) {
+    const safeFilters = { ...filters, aggregation: filters.aggregation || "daily" }
+    return await fetchFromApi(safeFilters, "line");
+}
+
+export async function fetchBarChartData(filters) {
+    return await fetchFromApi(filters, "bar");
+}
+
+export async function fetchDetailsData(filters) {
+    return await fetchFromApi(filters, "details");
+}
+
