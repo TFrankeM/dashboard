@@ -181,15 +181,14 @@ export function drawBarChart(canvasElement, labels, data) {
 }
 
 export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
-    console.log("Desenhando gráfico de linhas com datasets:", datasets);
+    //console.log("Desenhando gráfico de linhas com datasets:", datasets);
     const ctx = canvasElement.getContext("2d");
     if (lineInstance) lineInstance.destroy();
     
     const POLITICAL_COLORS = {
-        'Democrat': '#2563eb',
-        'Republican': '#dc2626',
-        'Independent': '#d97706',
-        'Geral': '#003A79'
+        'Democratas': '#2563eb',
+        'Republicanos': '#dc2626',
+        'Independentes': '#d97706'
         };
 
     const LINE_COLORS = [
@@ -260,13 +259,13 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                 }
             },
             onClick: (e) => {
-                const points = lineInstance.getElementsAtEventForMode(e, "nearest", { intersect: true }, true);
+                const points = lineInstance.getElementsAtEventForMode(e, "index", { intersect: false }, true);
                 if (points.length && onPointClicked) {
                     const firstPoint = points[0];
                     const index = firstPoint.index;
                     const dateClicked = lineInstance.data.labels[index];
                     console.log("Ponto clicado:", dateClicked);
-                    onPointClicked(dateClicked, e);
+                    onPointClicked(dateClicked, index, e);
                 }
             },
             plugins: { 

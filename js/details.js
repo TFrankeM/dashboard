@@ -6,7 +6,7 @@ const COLUMNS = [
     { key: "source", label: "Fonte" },
     { key: "category", label: "Categoria" },
     { key: "analysis", label: "Análise", expandable: true },
-    { key: "grade", label: "IIMEx", type: "number" },
+    { key: "grade", label: "IMíd.IA", type: "number" },
     { key: "url", label: "Link", type: "Veja" },
 ];
 
@@ -52,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     fetchData(urlParams);
 
-    document.getElementById("refresh-btn").addEventListener("click", () => fetchData(urlParams));
     document.getElementById("limit-select").addEventListener("change", () => fetchData(urlParams));
 });
 

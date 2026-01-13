@@ -68,15 +68,6 @@ body {
     stroke-width: 2px;
 }
 
-.btn-primary { 
-    background: #003A79; 
-    color: white; 
-}
-
-.btn-primary:hover {
-    background-color: #002855;
-}
-
 .btn-outline { 
     border: 1px solid #e2e8f0; 
     background: white; 

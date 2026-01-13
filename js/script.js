@@ -74,15 +74,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // Static data for dropdowns
     const PERIODS_CONFIG = {
         static: [
-            { label: "2025", value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
             { label: "2025 semestre 1 de 2", value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
             { label: "2025 semestre 2 de 2", value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
             { label: "2025 trimestre 1 de 4", value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
             { label: "2025 trimestre 2 de 4", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
             { label: "2025 trimestre 3 de 4", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
             { label: "2025 trimestre 4 de 4", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" },
+            { label: "2025", value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
             { label: "2026", value: "year_2026", start: "2026-01-01", end: "2026-12-31" },
-            { label: "Dez de 2025 a Jan de 2026", value: "dec2025_jan2026", start: "2025-12-01", end: "2026-01-09" }
+            { label: "Dez de 2025 a Fev de 2026", value: "dec2025_jan2026", start: "2025-12-01", end: "2026-02-10" }
 
         ],
         dynamic: [
@@ -393,7 +393,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const divisor = appState.periodValue ? appState.periodValue.length : 1;
+        const divisor = (appState.politicalAlignment && appState.politicalAlignment.length) ? appState.politicalAlignment.length : 1; 
         const labels = [];
         const values = [];
         let total = 0;
@@ -421,7 +421,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Confirmation pop-up window for news roll down logic
     const confirmPopup = document.getElementById("chart-popup");
     let currentClickedDate = null;
-    const datePopup = document.getElementById("popup-date")
+    const popupDateSpan = document.getElementById("popup-date")
     // Close popup when clicking outside line chart or popup
     document.addEventListener("click", (e) => {
         if (!e.target.closest("#chart-popup")) {
@@ -439,15 +439,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // convert dd/mm/aaaa to mm/dd/aaaa for URL
         let dateISO = currentClickedDate.date;;
-        if (dateISO && dateISO.includes("/")) {
-            const parts = dateISO.split("/");
-            if (parts.length === 3) {
-                dateISO = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            }
-        }
-
         // url for new handlePeriodChange
         const params = new URLSearchParams();
         params.append("date", dateISO);
@@ -465,22 +457,6 @@ document.addEventListener("DOMContentLoaded", function () {
         window.open(`details.html?${params.toString()}`, "_blank");
         confirmPopup.classList.add("hidden");
     });
-
-
-    const handlePointClick = (dateStr, event) => {
-        if (dateStr) {
-            datePopup.textContent = dateStr;
-        };
-
-        currentClickedDate = { date: dateStr};
-
-        const x = event.native.clientX;
-        const y = event.native.clientY;
-        confirmPopup.style.left = `${x}px`;
-        confirmPopup.style.top = `${y-90}px`;
-
-        confirmPopup.classList.remove("hidden");
-    };
 
 
     function processAndUpdateLineChart(apiData) {
@@ -544,6 +520,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 data: alignedData
             };
         });
+
+        
+        const handlePointClick = (formattedDateStr, index, event) => {
+            const rawDateISO = sortedDates[index];
+            console.log("Data clicada (ISO):", rawDateISO);
+            // Atualiza visual do popup
+            if (formattedDateStr && popupDateSpan) {
+                popupDateSpan.textContent = formattedDateStr;
+            }
+            
+            // Guarda dado bruto para a navegação
+            currentClickedDate = { date: rawDateISO };
+
+            const x = event.native.clientX;
+            const y = event.native.clientY;
+            
+            // Posiciona e mostra
+            confirmPopup.style.left = `${x}px`;
+            confirmPopup.style.top = `${y - 90}px`;
+            confirmPopup.classList.remove("hidden");
+        };
 
         drawLineChart(lineChartCanvas, formattedLabels, datasets, handlePointClick);
     }

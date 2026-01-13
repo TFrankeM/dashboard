@@ -305,7 +305,6 @@ input:checked + .slider:before {
 
 
 .filters-grid:has(#political-filter-group.hidden) {
-    /* Muda para 4 colunas, dando mais espaço para a categoria */
     /* Reviewer | Reviewed | Period | Category */
     grid-template-columns: 1fr 1fr 1fr 4fr;
 }
@@ -342,7 +341,7 @@ input:checked + .slider:before {
     padding: 7px 8px !important;
     min-height: 38px !important;
     box-shadow: none !important;
-    font-size: 15px !important;
+    font-size: 13px !important;
     color: var(--fgv-gray-dark) !important;
     width: 100% !important;
     font-family: "Gotham", Arial, sans-serif !important;
@@ -351,7 +350,7 @@ input:checked + .slider:before {
 /* itens do dropdown */
 .filter-group, .choices__list--dropdown .choices__item {
     color: var(--fgv-gray-dark) !important;
-    font-size: 15px !important;    
+    font-size: 13px !important;    
     font-family: "Gotham", Arial, sans-serif !important;
 }
 
@@ -366,7 +365,7 @@ input:checked + .slider:before {
     border: 1px solid var(--fgv-blue) !important;
     color: white !important;
     border: none !important;
-    font-size: 15px !important;
+    font-size: 13px !important;
     border-radius: 3px !important;
     margin-right: 4px !important;
 }
@@ -394,7 +393,7 @@ input:checked + .slider:before {
 
 .sticky-filters.compact .choices__inner {
     min-height: 32px !important;
-    font-size: 13px !important;
+    font-size: 11px !important;
     font-family: "Gotham", Arial, sans-serif !important;
 }
 
