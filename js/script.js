@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
         reviewedEntity: "Brasil",
         category: ["Todas"],
         politicalAlignment: ["Independentes"],
-        aggregation: "hourly"
+        aggregation: "daily"
     };
 
     // Static data for dropdowns
@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ]
     };
     
-    const categoriesList = [
+    const CATEGORIESLIST = [
         "Todas", 
         "Artes, cultura, entretenimento e mídia", 
         "Ciência e tecnologia", 
@@ -113,6 +113,14 @@ document.addEventListener("DOMContentLoaded", function () {
         "Saúde", 
         "Sociedade", 
         "Trabalho" 
+    ];
+
+    const AGGREGATIONLIST = [
+        { label: "1 minuto", value: "minutely" },
+        { label: "30 minutos", value: "half_hourly" },
+        { label: "1 hora", value: "hourly" },
+        { label: "6 horas", value: "six_hourly" },
+        { label: "24 horas", value: "daily" },
     ];
 
     const reviewersList = [ 
@@ -219,7 +227,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 //     return `O máximo de ${maxItemCount} categorias selecionadas foi atingido.`;
                 // }
             });
-            choicesCategory.setChoices(categoriesList.map(c => ({ 
+            choicesCategory.setChoices(CATEGORIESLIST.map(c => ({ 
                 value: c, label: c, selected: c === "Todas" 
             })), "value", "label", true); /* Select todas by default; true := remove everything that exists */
 
@@ -401,17 +409,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const values = [];
         let total = 0;
 
-        // Ordenação por data (crítico para gráfico de linha)
         const sortedData = apiData.sort((a, b) => new Date(a.time_period) - new Date(b.time_period));
 
         sortedData.forEach(row => {
             const date = new Date(row.time_period);
             
-            // Lógica de formatação inteligente (igual ao gráfico principal)
             let labelStr = "";
             if (['hourly', 'half_hourly', 'minutely'].includes(appState.aggregation)) {
                 labelStr = date.toLocaleString('pt-BR', { 
-                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' 
+                    day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' 
                 });
             } else {
                 labelStr = date.toLocaleDateString('pt-BR', { 
@@ -429,7 +435,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Chama função de linha de volume
         drawVolumeChart(volumeChartCanvas, labels, values);
-        totalNewsEl.textContent = total.toLocaleString('pt-BR');
+        const sufixo = total === 1 ? "notícia analisada no período" : "notícias analisadas no período";
+        totalNewsEl.innerHTML = `<strong>${total.toLocaleString('pt-BR')}</strong> ${sufixo}`;
         return total;
     }
 

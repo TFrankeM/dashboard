@@ -163,8 +163,8 @@ export function drawVolumeChart(canvasElement, labels, data) {
     if (volumeInstance) volumeInstance.destroy();
 
     const gradient = ctx.createLinearGradient(0, 0, 0, canvasElement.height);
-    gradient.addColorStop(0, "rgba(0, 58, 121, 0.5)");
-    gradient.addColorStop(1, "rgba(0, 58, 121, 0)");
+    gradient.addColorStop(0, "rgba(0, 58, 121, 0.7)");
+    gradient.addColorStop(1, "rgba(0, 58, 121, 0.1)");
 
     volumeInstance = new Chart(ctx, {
         type: "line",
@@ -178,7 +178,7 @@ export function drawVolumeChart(canvasElement, labels, data) {
                 borderWidth: 1.5,
                 pointRadius: 0,
                 hitRadius: 5,
-                pointHoverRadius: 4,
+                //pointHoverRadius: 4,
                 pointBackgroundColor: COLORS.bluePrimary,
                 fill: true,
                 tension: 0.4
@@ -194,9 +194,31 @@ export function drawVolumeChart(canvasElement, labels, data) {
                 // intersect: false,
                 // axis: "xy"
             },
+            layout : { 
+                padding: { left: -10 }
+            },
             scales: {
-                y: { beginAtZero: true,  display: false },
-                x: { display: false }
+                y: { 
+                    beginAtZero: true,  
+                    grid: {display: false},
+                    border: { display: true },
+                    ticks: { display: false }
+                },
+                x: { 
+                    grid: { display: false },
+                    border: { display: true },
+                    ticks: { 
+                        callback: function (value, index, values) {
+                            if (index === 0 || index === values.length - 1) {
+                            return this.getLabelForValue(value);
+                            }
+                            return "";
+                        },
+                        autoSkip: false,
+                        maxRotation: 0,
+                        align: "inner"
+                    }
+                }
             },
             plugins: { 
                 legend: { display: false }, 
@@ -206,8 +228,20 @@ export function drawVolumeChart(canvasElement, labels, data) {
                     bodyFont: { weight: "bold", size: 12 },
                     cornerRadius: 6,
                     displayColors: false,
-                    callbacks: { title: (ctx) => ctx[0].label, label: (ctx) => ` ${ctx.raw} notícias` }
-                } 
+                    titleAlign: "left",
+                    labelAlign: "left",
+                    callbacks: { 
+                        title: (ctx) => {
+                            const label = Array.isArray(ctx) ? ctx[0].label : ctx.label;
+                            return `Dia ${label}`;
+                        },
+                        label: (ctx) => {
+                            const valor = ctx.raw;
+                            const sufixo = valor !== 1 ? 'notícias analisadas' : 'notícia analisada';
+                            return `${valor} ${sufixo}`;
+                        }
+                    } 
+                }
             }
         }
     });

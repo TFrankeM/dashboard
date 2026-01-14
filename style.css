@@ -461,7 +461,7 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    /* margin-bottom: 5px; */
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 10px;
 }
@@ -565,7 +565,15 @@ input:checked + .slider:before {
     stroke-width: 2px;
 }
 
-/* Volume de notícias */
+/* News volume | quantity */
+.total-news-container {
+    display: flex;
+    align-items: baseline; 
+    gap: 4px;
+    margin-bottom: 0.75rem;
+    padding-left: 2px;
+}
+
 .metric-subtitle { 
     font-size: 13px; 
     color: var(--text-secondary); 

@@ -118,7 +118,9 @@
 
             <!-- Container center: quantity of news -->
             <div class="card metric-card">
+
                 <div class="card-header">
+                    
                     <div class="card-header-title-group">
                         <h3>Volume de notícias</h3>
                         <span class="info-icon" data-tippy-content="Total de publicações capturadas e processadas pelo motor de análise.">?</span>
@@ -127,12 +129,10 @@
                     <i data-lucide="bar-chart-2" class="card-icon"></i>
                 </div>
 
+                <div class="total-news-container card-desc">
+                    <span class="total-news-value" id="total-news">Carregando...</span>
+                </div>
                 <div class="card-body">
-                    <div class="total-news-container">
-                        <span class="total-news-value" id="total-news">--</span>
-                        <span class="total-news-subtitle">notícias analisadas</span>
-                    </div>
-
                     <div class="canvas-container">
                         <canvas id="volumeChart"></canvas>
                     </div>
