@@ -2,9 +2,9 @@
     Viwer layer
 */
 
+let histogramInstance = null;
 let gaugeInstance = null;
 let volumeInstance = null;
-let barInstance = null;
 let lineInstance = null;
 
 const COLORS = {
@@ -158,6 +158,61 @@ export function drawGaugeChart(canvasElement, value) {
     });
 }
 
+export function drawGradesHistogramChart(canvasElement, labels, data) {
+    const ctx = canvasElement.getContext("2d");
+    if (histogramInstance) histogramInstance.destroy();
+
+    const sentimentColors = [
+        "#b91c1c", // 1 (Extremamente Negativa)
+        "#ef4444", // 2 (Muito Negativa)
+        "#fdae61", // 3 (Levemente Negativa)
+        "#94a3b8", // 4 (Neutra - Cinza)
+        "#84cc16", // 5 (Levemente Positiva)
+        "#22c55e", // 6 (Positiva)
+        "#15803d"  // 7 (Extremamente Positiva)
+    ];
+
+    histogramInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels, // [1, 2, 3, 4, 5, 6, 7]
+            datasets: [{
+                label: "Frequência",
+                data: data,
+                backgroundColor: sentimentColors,
+                borderRadius: 4,
+                barPercentage: 0.8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { 
+                    beginAtZero: true, 
+                    grid: { display: false },
+                    border: { display: true }
+                },
+                x: { 
+                    grid: { display: false },
+                    border: { display: true },
+                    // title: { display: true, text: "Nota FGV IMíd.IA" }
+                }
+            },
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: (ctx) => `Nota: ${ctx[0].label}`,
+                        label: (ctx) => `${ctx.raw} notícias`
+                    }
+                }
+            }
+        }
+    });
+}
+
+
 export function drawVolumeChart(canvasElement, labels, data) {
     const ctx = canvasElement.getContext("2d");
     if (volumeInstance) volumeInstance.destroy();
@@ -175,13 +230,14 @@ export function drawVolumeChart(canvasElement, labels, data) {
                 data: data,
                 borderColor: COLORS.bluePrimary,
                 backgroundColor: gradient,
-                borderWidth: 1.5,
+                borderWidth: 1,
                 pointRadius: 0,
-                hitRadius: 5,
-                //pointHoverRadius: 4,
+                hitRadius: 1,
+                pointHoverRadius: 3,
                 pointBackgroundColor: COLORS.bluePrimary,
                 fill: true,
-                tension: 0.4
+                tension: 0.4,
+                clip: 5
             }]
         },
         options: {
@@ -195,7 +251,7 @@ export function drawVolumeChart(canvasElement, labels, data) {
                 // axis: "xy"
             },
             layout : { 
-                padding: { left: -10 }
+                padding: { left: -4, right: 5 }
             },
             scales: {
                 y: { 
@@ -247,33 +303,6 @@ export function drawVolumeChart(canvasElement, labels, data) {
     });
 }
 
-export function drawBarChart(canvasElement, labels, data) {
-    const ctx = canvasElement.getContext("2d");
-    if (barInstance) barInstance.destroy();
-
-    barInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Quantidade de notícias",
-                data: data,
-                backgroundColor: "#003a79",
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            // layout: { padding: {bottom: 5} },
-            scales: {
-                y: { beginAtZero: true, grid: { display: false } },
-                x: { grid: { display: true } }
-            },
-            plugins: { legend: { display: false } }
-        }
-    });
-}
 
 export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
     //console.log("Desenhando gráfico de linhas com datasets:", datasets);
@@ -334,7 +363,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                 intersect: false,
             },
             layout: {
-                padding: { bottom: 30, left: 10, right: 30 } 
+                padding: { top: 15, bottom: 15, left: 10, right: 30 } 
             },
             scales: {
                 y: { 
@@ -359,7 +388,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                     const firstPoint = points[0];
                     const index = firstPoint.index;
                     const dateClicked = lineInstance.data.labels[index];
-                    console.log("Ponto clicado:", dateClicked);
+                    //console.log("Ponto clicado:", dateClicked);
                     onPointClicked(dateClicked, index, e);
                 }
             },

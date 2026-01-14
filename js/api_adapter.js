@@ -86,6 +86,15 @@ async function fetchFromApi(filters, widgetType) {
 
 
 /* Functions exported to script.js */
+export async function fetchGradesHistogramData(filters) {
+    return await fetchFromApi(filters, "grade");
+}
+
+export async function fetchVolumeChartData(filters) {
+    const safeFilters = { ...filters, aggregation: filters.aggregation || "daily" }
+    return await fetchFromApi(safeFilters, "volume");
+}
+
 export async function fetchGaugeData(filters) {
     const data = await fetchFromApi(filters, "gauge");
     if (data && data.length > 0) {
@@ -94,18 +103,9 @@ export async function fetchGaugeData(filters) {
     return null;
 }
 
-export async function fetchVolumeChartData(filters) {
-    const safeFilters = { ...filters, aggregation: filters.aggregation || "daily" }
-    return await fetchFromApi(safeFilters, "volume");
-}
-
 export async function fetchLineChartData(filters) {
     const safeFilters = { ...filters, aggregation: filters.aggregation || "daily" }
     return await fetchFromApi(safeFilters, "line");
-}
-
-export async function fetchBarChartData(filters) {
-    return await fetchFromApi(filters, "bar");
 }
 
 export async function fetchDetailsData(filters) {

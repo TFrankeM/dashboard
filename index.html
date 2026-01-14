@@ -108,13 +108,26 @@
 
         <!-- Executive summary -->
         <main class="main-content" id="metrics">
-            <!-- <div class="card metric-card placeholder-card">
-                <div class="placeholder-content">
-                    <i data-lucide="hammer" class="placeholder-icon"></i>
-                    <h3>Em Desenvolvimento.</h3>
-                    <p>Histogramas de fontes, indicadores e categorias</p>
+            <!-- Container left: grades histogram -->
+             <div class="card metric-card">
+                <div class="card-header">
+                    <div>    
+                        <div class="card-header-title-group">
+                            <h3>Frequência de notas</h3>
+                            <span class="info-icon" data-tippy-content="Quantidade de notícias atribuidas com cada nota">?</span>
+                        </div>
+                    </div>    
+                    <i data-lucide="chart-no-axes-column" class="card-icon"></i>
                 </div>
-            </div> -->
+                <div class="card-desc">
+                    <span>Distribuição do sentimento das notícias</span>
+                </div>
+                <div class="card-body">
+                    <div class="canvas-container">
+                        <canvas id="gradesChart"></canvas>
+                    </div>
+                </div>
+            </div>
 
             <!-- Container center: quantity of news -->
             <div class="card metric-card">
@@ -126,38 +139,15 @@
                         <span class="info-icon" data-tippy-content="Total de publicações capturadas e processadas pelo motor de análise.">?</span>
                     </div>
                     
-                    <i data-lucide="bar-chart-2" class="card-icon"></i>
+                    <i data-lucide="chart-spline" class="card-icon"></i>
                 </div>
 
-                <div class="total-news-container card-desc">
-                    <span class="total-news-value" id="total-news">Carregando...</span>
+                <div class="card-desc">
+                    <span id="total-news">Carregando...</span>
                 </div>
                 <div class="card-body">
                     <div class="canvas-container">
                         <canvas id="volumeChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Container center: quantity of news -->
-            <div class="card metric-card">
-                <div class="card-header">
-                    <div>    
-                        <div class="card-header-title-group">
-                            <h3>Notícias</h3>
-                            <span class="info-icon" data-tippy-content="Quantidade de notícias analisadas com os filtros aplicados.">?</span>
-                        </div>
-                        <p class="card-desc volume">Quantidade de notícias analisadas</p>
-                    </div>    
-                    <i data-lucide="bar-chart" class="card-icon"></i>
-                </div>
-                <div class="card-body">
-                    <p class="metric-subtitle">
-                        <span id="title-reviewer">--</span> sobre <span id="title-reviewedEntity">--</span>: 
-                        <strong id="total-noticias">--</strong>
-                    </p>
-                    <div class="canvas-container">
-                        <canvas id="barChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -194,7 +184,7 @@
                             <span class="info-icon" data-tippy-content="Evolução do FGV IMíd.IA.">?</span>
                         </div>
                         <p class="card-desc" id="evolution-subtitle">
-                            Evolução do Indicador de Imagem no Exterior ao longo do tempo
+                            Carregando...
                         </p>
                     </div>
                     <div class="chart-controls">
@@ -216,12 +206,22 @@
             </div>
         </section>
 
+        <!-- 
+        <div class="card metric-card placeholder-card">
+            <div class="placeholder-content">
+                <i data-lucide="hammer" class="placeholder-icon"></i>
+                <h3>Em Desenvolvimento.</h3>
+                <p>Aguarde</p>
+            </div>
+        </div> 
+        -->
+
         <footer class="dashboard-footer">
             <div class="footer-content">
                 <p>
                     &copy; 2026 <a href="https://dint.fgv.br/" target="_blank">Diretoria Internacional da Fundação Getulio Vargas</a>
                 </p>
-                <p class="sub-footer">FGV IMíd.IA 5.1 • Versão beta • international.affairs@fgv.br</p>
+                <p class="sub-footer">Em desenvolvimento • international.affairs@fgv.br</p>
             </div>
         </footer>
     </div>
@@ -240,16 +240,4 @@
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
 

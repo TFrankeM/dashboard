@@ -1,5 +1,5 @@
-import { fetchGaugeData, fetchVolumeChartData, fetchBarChartData, fetchLineChartData } from "./api_adapter.js";
-import { drawGaugeChart, drawVolumeChart, drawBarChart, drawLineChart, resetLineChartZoom } from "./charts.js";
+import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData } from "./api_adapter.js";
+import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, resetLineChartZoom } from "./charts.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     
@@ -86,7 +86,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         ],
         dynamic: [
-            // { label: "Últimos 7 dias", value: "Last7d" },
             { label: "Últimos 30 dias", value: "Last30d" },
             { label: "Últimos 120 dias", value: "Last120d" },
             { label: "Últimos 180 dias", value: "Last180d" },
@@ -159,19 +158,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const politicalGroup = document.getElementById("political-filter-group");
     const dynamicToggle = document.getElementById("dynamic-mode");
     const toggleLabel = document.getElementById("mode-label");
-    const gaugeFooter = document.querySelector('.gauge-footer');
+
+    const gradesChartCanvas = document.getElementById("gradesChart");
 
     const volumeChartCanvas = document.getElementById("volumeChart");
     const totalNewsEl = document.getElementById("total-news");
 
-    const barChartCanvas = document.getElementById("barChart");
-    const totalNoticiasEl = document.getElementById("total-noticias");
-    const titleReviewerEl = document.getElementById("title-reviewer");
-    const titleReviewedEntityEl = document.getElementById("title-reviewedEntity");
-
     const gaugeChartCanvas = document.getElementById("gaugeChart");
     const gaugeValueText = document.getElementById("gaugeValueText");
     const gaugeDescription = document.getElementById("gaugeDescription")
+    const gaugeFooter = document.querySelector(".gauge-footer");
     
     const lineChartCanvas = document.getElementById("lineChart");
     const resetZoomBtn = document.getElementById("resetZoomBtn");
@@ -223,9 +219,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 maxItemCount: 5,
                 maxItemText: "",
                 position: "bottom"
-                // maxItemText: (maxItemCount) => {
-                //     return `O máximo de ${maxItemCount} categorias selecionadas foi atingido.`;
-                // }
             });
             choicesCategory.setChoices(CATEGORIESLIST.map(c => ({ 
                 value: c, label: c, selected: c === "Todas" 
@@ -242,7 +235,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             choicesPolitical.setChoices(politicalList.map(p => ({ 
                 value: p, label: p, selected: p === "Independentes" 
-            })), 'value', 'label', true);
+            })), "value", "label", true);
 
 
             const setupCollapse = (choiceInstance) => {
@@ -262,6 +255,19 @@ document.addEventListener("DOMContentLoaded", function () {
             pollingInterval = setInterval(updateDashboard, 600000);
         }
     };
+
+    function updatePeriodDropdown(isDynamic) {
+        if (!choicesPeriod) return;
+        
+        const options = isDynamic ? PERIODS_CONFIG.dynamic : PERIODS_CONFIG.static;
+        choicesPeriod.clearStore(); // Clear all options
+        choicesPeriod.setChoices(options, "value", "label", true);
+        
+        // Set first option as default selected
+        const defaultOption = options[0];
+        choicesPeriod.setChoiceByValue(defaultOption.value);
+        handlePeriodChange(defaultOption.value);
+    }
 
     function updateToggleVisual(isDynamic) {
         if (toggleLabel) {
@@ -320,83 +326,22 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    function updatePeriodDropdown(isDynamic) {
-        if (!choicesPeriod) return;
+    function processAndUpdateHistogramChart(apiData) {
+        // apiData expected: [{ bucket: 1, count: 10 }, { bucket: 2, count: 5 }, ...]
+        const fullBuckets = [1, 2, 3, 4, 5, 6, 7];
+        const labels = fullBuckets.map(String);
+        const dataMap = {};
         
-        const options = isDynamic ? PERIODS_CONFIG.dynamic : PERIODS_CONFIG.static;
-        choicesPeriod.clearStore(); // Clear all options
-        choicesPeriod.setChoices(options, "value", "label", true);
+        if (apiData) {
+            apiData.forEach(row => {
+                dataMap[parseInt(row.grade_bucket)] = parseInt(row.count);
+            });
+        }
         
-        // Set first option as default selected
-        const defaultOption = options[0];
-        choicesPeriod.setChoiceByValue(defaultOption.value);
-        handlePeriodChange(defaultOption.value);
+        const values = fullBuckets.map(bucket => dataMap[bucket] || 0);
+        drawGradesHistogramChart(gradesChartCanvas, labels, values);
     }
-
-    function updateEvolutionHeader(totalNews) {
-        if (!evolutionTitleEl || !evolutionSubtitleEl) return;
-        
-        //title
-        evolutionTitleEl.innerHTML = `Indicador de Imagem na Mídia por IA (FGV IMíd.IA)<br><span style="font-size: 0.8em; font-weight: 500; opacity: 0.85;">Ente avaliador: ${appState.reviewer} | Ente em avaliação: ${appState.reviewedEntity}</span>`;
-
-        let dateStr = "";
-        if (appState.isDynamic) {
-            dateStr = `nos ${PERIODS_CONFIG.dynamic.find(p => p.value === appState.periodValue)?.label?.replace("Ú", "ú") || appState.periodValue}`;
-        } else {
-            const formatDate = (isoDate) => {
-                if (!isoDate) return "??";
-                const d = new Date(isoDate);
-                const parts = isoDate.split('-');
-                return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`; // dd/mm/aa
-            };
-            dateStr = `de ${formatDate(appState.customStartDate)} a ${formatDate(appState.customEndDate)}`;
-        }
-
-        //subtitle
-        const totalStr = totalNews ? totalNews.toLocaleString('pt-BR') : "0";
-        evolutionSubtitleEl.textContent = `Evolução do Indicador de Imagem no Exterior ${dateStr} | ${totalStr} notícias analisadas no período`;
-    }
-
-    // Data processing: JSON from JSON -> Chart.js format
-    function updateGaugeDisplay(value) {
-        const finalValue = value !== undefined && value !== null ? parseFloat(value) : 4.00;
-        gaugeValueText.textContent = finalValue.toFixed(2);
-
-        let descText = "Sem dados";
-        let descColor = "#94a3b8";
-
-        if (finalValue <= 1.50) { 
-            descText = "Extremamente negativa"; 
-            descColor = "#b91c1c";
-        } else if (finalValue <= 2.50) { 
-            descText = "Muito negativa"; 
-            descColor = "#ef4444";
-        } else if (finalValue <= 3.50) { 
-            descText = "Levemente negativa"; 
-            descColor = "#fdae61";
-        } else if (finalValue <= 4.49) { 
-            descText = "Neutra"; 
-            descColor = "#64748b";
-        } else if (finalValue <= 5.49) { 
-            descText = "Levemente positiva"; 
-            descColor = "#84cc16";
-        } else if (finalValue <= 6.49) { 
-            descText = "Muito positiva"; 
-            descColor = "#22c55e";
-        } else { 
-            descText = "Extremamente positiva"; 
-            descColor = "#15803d";
-        }
-
-        const gaugeDescriptionEl = document.getElementById("gaugeDescription");
-        if (gaugeDescriptionEl) {
-            gaugeDescriptionEl.textContent = descText;
-            gaugeDescriptionEl.style.color = descColor;
-        }
-
-        drawGaugeChart(gaugeChartCanvas, finalValue);
-    }
-
+    
     function processAndUpdateVolumeChart(apiData) {
         if (!apiData || apiData.length === 0) {
             totalNewsEl.textContent = "0";
@@ -433,43 +378,50 @@ document.addEventListener("DOMContentLoaded", function () {
             total += count;
         });
 
-        // Chama função de linha de volume
         drawVolumeChart(volumeChartCanvas, labels, values);
         const sufixo = total === 1 ? "notícia analisada no período" : "notícias analisadas no período";
         totalNewsEl.innerHTML = `<strong>${total.toLocaleString('pt-BR')}</strong> ${sufixo}`;
         return total;
     }
 
-    function processAndUpdateBarChart(apiData) {
-        if (!apiData || apiData.length === 0) {
-            totalNoticiasEl.textContent = "0";
-            drawBarChart(barChartCanvas, ["Nenhum dado encontrado."], []);
-            return;
+    // Data processing: JSON from JSON -> Chart.js format
+    function processAndUpdateGaugeDisplay(value) {
+        const finalValue = value !== undefined && value !== null ? parseFloat(value) : 4.00;
+        gaugeValueText.textContent = finalValue.toFixed(2);
+
+        let descText = "Sem dados";
+        let descColor = "#94a3b8";
+
+        if (finalValue <= 1.50) { 
+            descText = "Extremamente negativa"; 
+            descColor = "#b91c1c";
+        } else if (finalValue <= 2.50) { 
+            descText = "Muito negativa"; 
+            descColor = "#ef4444";
+        } else if (finalValue <= 3.50) { 
+            descText = "Levemente negativa"; 
+            descColor = "#fdae61";
+        } else if (finalValue <= 4.49) { 
+            descText = "Neutra"; 
+            descColor = "#64748b";
+        } else if (finalValue <= 5.49) { 
+            descText = "Levemente positiva"; 
+            descColor = "#84cc16";
+        } else if (finalValue <= 6.49) { 
+            descText = "Muito positiva"; 
+            descColor = "#22c55e";
+        } else { 
+            descText = "Extremamente positiva"; 
+            descColor = "#15803d";
         }
 
-        const divisor = (appState.politicalAlignment && appState.politicalAlignment.length) ? appState.politicalAlignment.length : 1; 
-        const labels = [];
-        const values = [];
-        let total = 0;
+        if (gaugeDescription) {
+            gaugeDescription.textContent = descText;
+            gaugeDescription.style.color = descColor;
+        }
 
-        apiData.forEach(row => {
-            const date = new Date(row.time_period);
-            // Extract the year for the label
-            labels.push(date.getUTCFullYear("pt=BR"));
-            
-            let count = parseInt(row.news_count, 10);
-            count = count / divisor
-            values.push(count);
-            total += count;
-        });
-
-
-        drawBarChart(barChartCanvas, labels, values);
-        totalNoticiasEl.textContent = total.toLocaleString('pt-BR');
-
-        return total;
+        drawGaugeChart(gaugeChartCanvas, finalValue);
     }
-
 
     //// POP-UP
     // Confirmation pop-up window for news roll down logic
@@ -512,6 +464,30 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmPopup.classList.add("hidden");
     });
 
+
+    function updateEvolutionHeader(totalNews) {
+        if (!evolutionTitleEl || !evolutionSubtitleEl) return;
+        
+        //title
+        evolutionTitleEl.innerHTML = `Indicador de Imagem na Mídia por IA (FGV IMíd.IA)<br><span style="font-size: 0.8em; font-weight: 500; opacity: 0.85;">Ente avaliador: ${appState.reviewer} | Ente em avaliação: ${appState.reviewedEntity}</span>`;
+
+        let dateStr = "";
+        if (appState.isDynamic) {
+            dateStr = `nos ${PERIODS_CONFIG.dynamic.find(p => p.value === appState.periodValue)?.label?.replace("Ú", "ú") || appState.periodValue}`;
+        } else {
+            const formatDate = (isoDate) => {
+                if (!isoDate) return "??";
+                const d = new Date(isoDate);
+                const parts = isoDate.split('-');
+                return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`; // dd/mm/aa
+            };
+            dateStr = `de ${formatDate(appState.customStartDate)} a ${formatDate(appState.customEndDate)}`;
+        }
+
+        //subtitle
+        const totalStr = totalNews ? totalNews.toLocaleString('pt-BR') : "0";
+        evolutionSubtitleEl.textContent = `Evolução do Indicador de Imagem no Exterior ${dateStr} | ${totalStr} notícias analisadas no período`;
+    }
 
     function processAndUpdateLineChart(apiData) {
         if (!apiData || apiData.length === 0) {
@@ -599,7 +575,6 @@ document.addEventListener("DOMContentLoaded", function () {
         drawLineChart(lineChartCanvas, formattedLabels, datasets, handlePointClick);
     }
 
-
     async function updateDashboard() {
         const apiFilters = {
             reviewer: appState.reviewer,
@@ -619,25 +594,18 @@ document.addEventListener("DOMContentLoaded", function () {
             apiFilters.period = null;
         }
 
-        if (titleReviewerEl) {
-            titleReviewerEl.textContent = appState.reviewer;
-        }
-        if (titleReviewedEntityEl) {
-            titleReviewedEntityEl.textContent = appState.reviewedEntity;
-        }
-        totalNoticiasEl.textContent = "...";
-
         try {
             console.log("[Dashboard] Buscando dados...", apiFilters);
-            const [gaugeVal, volumeData, barData, lineData] = await Promise.all([
+            const [gradesData, gaugeVal, volumeData, lineData] = await Promise.all([
+                fetchGradesHistogramData(apiFilters),
                 fetchGaugeData(apiFilters),
                 fetchVolumeChartData(apiFilters),
-                fetchBarChartData(apiFilters),
                 fetchLineChartData(apiFilters)
             ]);
-            updateGaugeDisplay(gaugeVal); 
-            const totalNewsCount =processAndUpdateVolumeChart(volumeData);
-            const _ = processAndUpdateBarChart(barData);
+
+            processAndUpdateHistogramChart(gradesData);
+            processAndUpdateGaugeDisplay(gaugeVal); 
+            const totalNewsCount = processAndUpdateVolumeChart(volumeData);
             processAndUpdateLineChart(lineData);
             updateEvolutionHeader(totalNewsCount);
         } catch (err) {
@@ -760,5 +728,4 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeUI();
     setTimeout(updateDashboard, 100);
 });
-
 

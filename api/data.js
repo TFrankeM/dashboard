@@ -60,6 +60,62 @@ function buildCommonFilters(query, params) {
 }
 
 
+// GRADES HISTOGRAM
+async function getGradesChartData(request) {
+  const params = [];
+  const conditions = buildCommonFilters(request.query, params);
+
+  const query = `
+    SELECT 
+      round(grade) as grade_bucket,
+      COUNT(*) AS count
+    FROM noticias
+    ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
+    GROUP BY 
+      grade_bucket
+    ORDER BY 
+      grade_bucket ASC;
+  `;
+
+  const { rows } = await sql.query(query, params);
+  return rows;
+}
+
+
+// VOLUME CHART
+async function getVolumeChartData(request) {
+  const params = [];
+  const conditions = buildCommonFilters(request.query, params);
+  const { aggregation } = request.query;
+
+  let dateTrunc = "day"; 
+  switch (aggregation) {
+    case "yearly": dateTrunc = "year"; break;
+    case "quarterly": dateTrunc = "quarter"; break;
+    case "monthly": dateTrunc = "month"; break;
+    case "daily": dateTrunc = "day"; break;
+    case "hourly": dateTrunc = "hour"; break;
+    case "minutely": dateTrunc = "minute"; break;
+    case "half_hourly": dateTrunc = "minute"; break;
+    default: dateTrunc = "day";
+  }
+
+  const query = `
+    SELECT 
+      DATE_TRUNC('${dateTrunc}', date) AS time_period,
+      COUNT(*) AS news_count
+    FROM noticias
+    ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
+    GROUP BY 
+      time_period
+    ORDER BY 
+      time_period ASC;
+  `;
+  const { rows } = await sql.query(query, params);  
+  return rows;
+}
+
+
 // GAUGE CHART
 async function getGaugeData(request) {
   const params = [];
@@ -106,119 +162,6 @@ async function getGaugeData(request) {
 
   const { rows } = await sql.query(query, params);
   return rows;
-}
-
-// VOLUME CHART
-async function getVolumeChartData(request) {
-  const params = [];
-  const conditions = buildCommonFilters(request.query, params);
-  const { aggregation } = request.query;
-
-  let dateTrunc = "day"; 
-  switch (aggregation) {
-    case "yearly": dateTrunc = "year"; break;
-    case "quarterly": dateTrunc = "quarter"; break;
-    case "monthly": dateTrunc = "month"; break;
-    case "daily": dateTrunc = "day"; break;
-    case "hourly": dateTrunc = "hour"; break;
-    case "minutely": dateTrunc = "minute"; break;
-    case "half_hourly": dateTrunc = "minute"; break;
-    default: dateTrunc = "day";
-  }
-
-  const query = `
-    SELECT 
-      DATE_TRUNC('${dateTrunc}', date) AS time_period,
-      COUNT(*) AS news_count
-    FROM noticias
-    ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
-    GROUP BY 
-      time_period
-    ORDER BY 
-      time_period ASC;
-  `;
-  const { rows } = await sql.query(query, params);  
-  return rows;
-}
-
-// BAR CHART
-async function getBarChartData(request) {
-  const params = [];
-
-  const conditions = buildCommonFilters(request.query, params);
-  // Bar chart groups by YEAR
-  const query = `
-    SELECT 
-      DATE_TRUNC('year', date) AS time_period,
-      COUNT(*) AS news_count
-    FROM noticias
-    ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
-    GROUP BY 
-      time_period
-    ORDER BY 
-      time_period ASC;
-  `;
-  const { rows } = await sql.query(query, params);  
-  return rows;
-}
-
-// NEWS DETAILS LIST
-async function getNewsList(request) {
-    const params = [];
-    //console.log("Request Query:", request.query);
-    const { date, aggregation, limit } = request.query;
-    //console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
-    const queryForFilters = { ...request.query };
-    delete queryForFilters.period; 
-    
-    const conditions = buildCommonFilters(queryForFilters, params);
-
-    if (date && aggregation) {
-        let dateTrunc = 'day';
-        switch (aggregation) {
-            case 'monthly': dateTrunc = 'month'; break;
-            case 'weekly': dateTrunc = 'week'; break;
-            case 'daily': dateTrunc = 'day'; break;
-            case 'hourly': dateTrunc = 'hour'; break;
-            case 'half_hourly': dateTrunc = 'minute'; break;
-            default: dateTrunc = 'day';
-        }
-
-        params.push(date);
-        
-        // ::date para forçar o banco a olhar apenas o dia (YYYY-MM-DD)
-        if (dateTrunc === 'day') {
-            conditions.push(`date::date = $${params.length}::date`);
-        } else {
-            conditions.push(`DATE_TRUNC('${dateTrunc}', date) = DATE_TRUNC('${dateTrunc}', $${params.length}::timestamp)`);
-        }
-    }
-
-    const limitClause = limit ? `LIMIT ${parseInt(limit)}` : 'LIMIT 50';
-
-    const query = `
-        SELECT 
-            id,
-            date,
-            headline,
-            summary,
-            article_text,
-            url,
-            language,
-            source,
-            category,
-            grade,
-            analysis
-        FROM noticias
-        ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
-        ORDER BY date DESC, grade DESC
-        ${limitClause};
-    `;
-
-    //console.log("Query Details:", query, params);
-
-    const { rows } = await sql.query(query, params);
-    return rows;
 }
 
 
@@ -314,6 +257,65 @@ async function getLineChartData(request) {
 }
 
 
+// NEWS DETAILS LIST
+async function getNewsList(request) {
+    const params = [];
+    //console.log("Request Query:", request.query);
+    const { date, aggregation, limit } = request.query;
+    //console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
+    const queryForFilters = { ...request.query };
+    delete queryForFilters.period; 
+    
+    const conditions = buildCommonFilters(queryForFilters, params);
+
+    if (date && aggregation) {
+        let dateTrunc = 'day';
+        switch (aggregation) {
+            case 'monthly': dateTrunc = 'month'; break;
+            case 'weekly': dateTrunc = 'week'; break;
+            case 'daily': dateTrunc = 'day'; break;
+            case 'hourly': dateTrunc = 'hour'; break;
+            case 'half_hourly': dateTrunc = 'minute'; break;
+            default: dateTrunc = 'day';
+        }
+
+        params.push(date);
+        
+        // ::date para forçar o banco a olhar apenas o dia (YYYY-MM-DD)
+        if (dateTrunc === 'day') {
+            conditions.push(`date::date = $${params.length}::date`);
+        } else {
+            conditions.push(`DATE_TRUNC('${dateTrunc}', date) = DATE_TRUNC('${dateTrunc}', $${params.length}::timestamp)`);
+        }
+    }
+
+    const limitClause = limit ? `LIMIT ${parseInt(limit)}` : 'LIMIT 50';
+
+    const query = `
+        SELECT 
+            id,
+            date,
+            headline,
+            summary,
+            article_text,
+            url,
+            language,
+            source,
+            category,
+            grade,
+            analysis
+        FROM noticias
+        ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
+        ORDER BY date DESC, grade DESC
+        ${limitClause};
+    `;
+
+    //console.log("Query Details:", query, params);
+
+    const { rows } = await sql.query(query, params);
+    return rows;
+}
+
 
 // ROTEADOR
 /*
@@ -337,15 +339,15 @@ export default async function handler(request, response) {
     let data;
 
     switch (widget) {
-      case "gauge":
-        data = await getGaugeData(request);
+      case "grade":
+        data = await getGradesChartData(request);
+        console.log("Grades Data:", data);
         break;
       case "volume":
         data = await getVolumeChartData(request);
-        console.log("Volume Data:", data);
         break;
-      case "bar":
-        data = await getBarChartData(request);
+      case "gauge":
+        data = await getGaugeData(request);
         break;
       case "details":
         data = await getNewsList(request);
