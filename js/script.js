@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
         reviewedEntity: "Brasil",
         category: ["Todas"],
         politicalAlignment: ["Independentes"],
-        aggregation: "daily"
+        aggregation: "hourly"
     };
 
     // Static data for dropdowns
@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
         { label: "30 minutos", value: "half_hourly" },
         { label: "1 hora", value: "hourly" },
         { label: "6 horas", value: "six_hourly" },
-        { label: "24 horas", value: "hourly" },
+        { label: "24 horas", value: "daily" },
     ];
 
     const reviewersList = [ 
@@ -728,5 +728,6 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeUI();
     setTimeout(updateDashboard, 100);
 });
+
 
 
