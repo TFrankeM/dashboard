@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
         { label: "30 minutos", value: "half_hourly" },
         { label: "1 hora", value: "hourly" },
         { label: "6 horas", value: "six_hourly" },
-        { label: "24 horas", value: "daily" },
+        { label: "24 horas", value: "hourly" },
     ];
 
     const reviewersList = [ 
@@ -728,4 +728,5 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeUI();
     setTimeout(updateDashboard, 100);
 });
+
 
