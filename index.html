@@ -35,14 +35,23 @@
 
     <div class="dashboard-wrapper">
         
+        <!-- Languages -->
+        <div class="top-language-bar">
+            <div class="language-buttons">
+                <button class="lang-btn active" data-lang="pt-BR">PT</button>
+                <button class="lang-btn" data-lang="en-US">EN</button>
+                <button class="lang-btn" data-lang="es-ES">ES</button>
+            </div>
+        </div>
+
         <!-- Faixa de marca -->
         <header class="brand-header" id="top">
             <div class="header-content">
                 <div class="brand-title">
                     <i data-lucide="bar-chart-2" class="brand-icon"></i>
                     <div>
-                        <h1>Indicador da Imagem no Exterior (FGV IMíd.IA)</h1>
-                        <span class="subtitle">Monitoramento longitudinal de imagem na mídia digital internacional</span>
+                        <h1 data-i18n="app_title">Indicador da Imagem no Exterior (FGV IMíd.IA)</h1>
+                        <span class="subtitle" data-i18n="app_subtitle">Monitoramento longitudinal de imagem na mídia digital internacional</span>
                     </div>
                 </div>
                 <img src="assets/logodint.svg" alt="Logo FGV" class="logo-fgv">
@@ -53,11 +62,12 @@
         <section class="sticky-filters" id="filters-container">
             <div class="filters-header">
                 <h2>
-                    <i data-lucide="sliders-horizontal" class="icon-sm"></i> Filtros
+                    <i data-lucide="sliders-horizontal" class="icon-sm"></i> 
+                    <span data-i18n="filter_section_title">Filtros</span>
                 </h2>
                 <!-- Toggle Dinâmico -->
                 <div class="toggle-container">
-                    <span id="mode-label" class="toggle-label">Modo estático: 2025</span>
+                    <span id="mode-label" class="toggle-label" data-i18n="mode_static">Modo estático: 2025</span>
 
                     <label class="switch">
                         <input type="checkbox" id="dynamic-mode">
@@ -70,38 +80,58 @@
             
             <div class="filters-grid">
                 <div class="filter-group">
-                    <label for="reviewer">Ente avaliador 
+                    <label for="reviewer">
+                        <span data-i18n="label_reviewer">Ente avaliador</span>
                         <span class="info-icon" data-tippy-content="País ou entidade que avalia a imagem do ente em avaliação.">?</span>
                     </label>
-                    <select id="reviewer"></select>
+                    <select id="reviewer" multiple></select>
                 </div>
-                
+
+                <div class="filter-group">
+                    <label for="reviewedEntity">
+                        <span data-i18n="label_reviewedEntity">Ente em avaliação</span>
+                        <span class="info-icon" data-tippy-content="País ou entidade que é o objeto de avaliação por parte do ente avaliador.">?</span>
+                    </label>
+                    <select id="reviewedEntity" multiple></select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="period">
+                        <span data-i18n="label_period">Período</span>
+                        <span class="info-icon" data-tippy-content="Define o intervalo de tempo do FGV IMíd.IA.">?</span>
+                    </label>
+                    <select id="period"></select>
+                </div>
+                              
+                <div class="filter-group">
+                    <label for="aggregation">
+                        <span data-i18n="label_aggregation">Agregação (em horas)</span>
+                        <span class="info-icon" data-tippy-content="Defina o intervalo em horas para agrupar os dados (ex: 0.5 para 30min, 24 para um dia).">?</span>
+                    </label>
+                    <input type="number" id="aggregation" min="0.25" step="0.5" class="input-aggregation">
+                </div>
+                                
                 <div class="filter-group hidden" id="political-filter-group">
-                    <label for="politicalAlignment">Alinhamento político
+                    <label for="politicalAlignment">
+                        <span data-i18n="label_political">Alinhamento político</span>
                         <span class="info-icon" data-tippy-content="Selecione um alinhamento para comparar até cinco categorias.<br>Selecione até três alinhamentos para comparar suas visões sobre uma única categoria.">?</span>
                     </label>
                     <select id="politicalAlignment" multiple></select>
                 </div>
 
-                <div class="filter-group">
-                    <label for="reviewedEntity">Ente em avaliação 
-                        <span class="info-icon" data-tippy-content="País ou entidade que é o objeto de avaliação por parte do ente avaliador.">?</span>
-                    </label>
-                    <select id="reviewedEntity"></select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="period">Período 
-                        <span class="info-icon" data-tippy-content="Define o intervalo de tempo do FGV IMíd.IA.">?</span>
-                    </label>
-                    <select id="period"></select>
-                </div>
-                
-                <div class="filter-group">
-                    <label for="category">Categorias 
+                <div class="filter-group span-2">
+                    <label for="category">
+                        <span data-i18n="label_category">Categorias</span>
                         <span class="info-icon" data-tippy-content="Filtra as categorias avaliadas. Selecione até cinco categorias simultaneamente.">?</span>
                     </label>
                     <select id="category" multiple></select>
+                </div>
+
+                <div class="filter-apply">
+                    <button class="btn-apply disabled" id="btn-apply" disabled>
+                        <i data-lucide="check-circle" class="icon-sm"></i>
+                        <span data-i18n="btn_apply">Aplicar mudanças</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -113,14 +143,14 @@
                 <div class="card-header">
                     <div>    
                         <div class="card-header-title-group">
-                            <h3>Frequência de notas</h3>
+                            <h3 data-i18n="chart_histogram_title">Frequência de notas</h3>
                             <span class="info-icon" data-tippy-content="Frequência de notícias agrupadas pela nota de 1 a 7 do IMíd.IA.">?</span>
                         </div>
                     </div>    
                     <i data-lucide="chart-no-axes-column" class="card-icon"></i>
                 </div>
                 <div class="card-desc">
-                    <span>Distribuição do sentimento das notícias</span>
+                    <span data-i18n="chart_histogram_desc">Distribuição do sentimento das notícias</span>
                 </div>
                 <div class="card-body">
                     <div class="canvas-container">
@@ -135,7 +165,7 @@
                 <div class="card-header">
                     
                     <div class="card-header-title-group">
-                        <h3>Volume de notícias</h3>
+                        <h3 data-i18n="chart_volume_title">Quantidade de notícias</h3>
                         <span class="info-icon" data-tippy-content="Total de publicações capturadas e processadas pelo motor de análise.">?</span>
                     </div>
                     
@@ -168,7 +198,7 @@
                         <div id="gaugeDescription" class="gauge-description"> </div>
                     </div>
                     <p class="gauge-footer">
-                        <i data-lucide="clock" class="icon-xs"></i> Última atualização: 30 min
+                        <i data-lucide="clock" class="icon-xs"></i> <span data-i18n="last_update">Atualizado a cada 30min</span>
                     </p>
                 </div>
             </div>
@@ -196,7 +226,7 @@
                             <button class="avg-btn" data-period="half_hourly">30 min</button>
                         </div> -->
                         <button id="resetZoomBtn" class="reset-btn">
-                            <i data-lucide="rotate-ccw" class="icon-xs"></i> Reset
+                            <i data-lucide="rotate-ccw" class="icon-xs"></i> <span data-i18n="btn_reset">Redefinir</span>
                         </button>
                     </div>
                 </div>
@@ -216,6 +246,7 @@
         </div> 
         -->
 
+        <!-- Footer -->
         <footer class="dashboard-footer">
             <div class="footer-content">
                 <p>
@@ -229,10 +260,10 @@
     <!-- Pop-up drill-down de noticias -->
      <div id="chart-popup" class="chart-popup hidden">
         <div class="popup-content">
-            <p>Entenda o IMíd.IA de <span id="popup-date">--</span>?</p>
+            <p><span data-i18n="popup_text">Entenda o IMíd.IA de</span> <span id="popup-date">--</span>?</p>
             <div class="popup-actions">
-                <button id="popup-confirm" class="btn-confirm">Veja as notícias</button>
-                <button id="popup-cancel" class="btn-cancel">Cancelar</button>
+                <button id="popup-confirm" class="btn-confirm" data-i18n="btn_view_news">Veja as notícias</button>
+                <button id="popup-cancel" class="btn-cancel" data-i18n="btn_cancel">Cancelar</button>
             </div>
         </div>
         <div class="popup-arrow"></div>

@@ -1,3 +1,4 @@
+
 @font-face {
     font-family: "Gotham";
     src: url("assets/fonts/gotham_family/Gotham-Book.otf") format("opentype");
@@ -14,31 +15,34 @@
     font-display: swap; 
 }
 
-/* paleta de cores oficial da fgv */
-:root {
-    /* Primárias (Azuis) */
-    --fgv-blue-navy: #002D4D;   /* Azul Marinho */
-    --fgv-blue-dark: #003A79;   /* Azul Escuro (Principal) */
-    --fgv-blue-med:  #0C63AA;   /* Azul Médio */
-    --fgv-blue-light:#008BC9;   /* Azul Claro */
-    --fgv-blue-sky:  #73BFE8;   /* Azul Celeste */
 
-    /* Secundárias (Cinzas) */
+
+/* OFFICIAL FGV COLOR PALETTE */
+
+:root {
+    /* Primary - blues */
+    --fgv-blue-navy: #002D4D;   /* Navy */
+    --fgv-blue-dark: #003A79;   /* Dark (Main) */
+    --fgv-blue-med:  #0C63AA;   /* Medium */
+    --fgv-blue-light:#008BC9;   /* Light */
+    --fgv-blue-sky:  #73BFE8;   /* Sky */
+
+    /* Secondary - grays */
     --fgv-gray-dark:  #5C5B5F;
     --fgv-gray-med:   #88868B;
     --fgv-gray-light: #AFAEB4;
     --fgv-gray-pale:  #D7D9DD;
     --fgv-white:      #FFFFFF;
 
-    /* Auxiliares (Suporte Funcional) */
-    --fgv-aux-yellow:  #F0BF78; /* Alerta/Neutro */
-    --fgv-aux-blue:    #008BC9; /* Positivo */
-    --fgv-aux-red:     #7F1343; /* Negativo */
-    --fgv-aux-gold:    #BDA132; /* Destaque */
+    /* Auxiliary - functional support */
+    --fgv-aux-yellow:  #F0BF78; /* Alert/Neutral */
+    --fgv-aux-blue:    #008BC9; /* Positive */
+    --fgv-aux-red:     #7F1343; /* Negative */
+    --fgv-aux-gold:    #BDA132; /* Highlight */
 
-    /* utilidades */
-    --bg-light: #D7D9DD;    /* fundo cinza claro para a página */
-    --bg-page: #f3f4f6;     /* fundo ainda mais claro como opção */
+    /* Utilities */
+    --bg-light: #D7D9DD;    /* light gray background for the page */
+    --bg-page: #f3f4f6;     /* even lighter background as an option */
     --text-primary: var(--fgv-gray-dark);
     --text-secondary: var(--fgv-gray-med);
     --border-card: var(--fgv-gray-pale);
@@ -56,6 +60,9 @@
 }
 
 
+
+/* GLOBAL STYLES */
+
 body {
     font-family: "Gotham", "Arial", sans-serif;
     background-color: var(--bg-light);
@@ -70,16 +77,19 @@ body {
     padding-bottom: 40px;
 }
 
-/* Menu lateral de navegação */
+
+
+/* SIDE NAVIGATION BAR */
+
 .side-nav {
     position: fixed;
     right: 20px;
-    top: 50%;                        /* Posiciona no meio da tela */
-    transform: translateY(-50%);     /* Centraliza verticalmente */
+    top: 50%;                        /* Positions in the middle of the screen */
+    transform: translateY(-50%);     /* Centers vertically */
     display: flex;
     flex-direction: column;
     gap: 15px;
-    z-index: 1000;                   /* Garante que fique acima de outros elementos */
+    z-index: 1000;                   /* Ensures it stays above other elements */
 }
 
 .nav-dot {
@@ -89,47 +99,88 @@ body {
     border: 2px solid var(--fgv-blue-light);
     background-color: transparent;
     transition: all 0.3s ease;
-    position: relative;              /* Para q elementos filhos (tooltip) sejam posicionados relativamente a ele */
+    position: relative;              /* So that child elements (tooltip) are positioned relative to it */
 }
 
 .nav-dot:hover {
     background-color: var(--fgv-blue-light);
-    transform: scale(1.1);           /* Aumenta ponto ao ativar/passar mouse */
+    transform: scale(1.1);           /* Increases dot size on hover/activation */
 }
 
 .nav-dot.active {
     background: var(--fgv-blue-dark);
     background-color: var(--fgv-blue-dark);
-    transform: scale(1.3);           /* Aumenta ponto ao ativar/passar mouse */
+    transform: scale(1.3);           /* Increases dot size on activation/hover */
 }
 
 /* Tooltip do Menu Lateral */
 .nav-dot::before {
     content: attr(data-label);
     position: absolute;
-    right: 150%;                     /* Posiciona à esquerda do ponto */
+    right: 150%;                     /* Positions to the left of the dot */
     top: 50%;
     transform: translateY(-50%);
-    background-color: var(--fgv-blue-dark);     /* Fundo escuro */
+    background-color: var(--fgv-blue-dark);     /* Dark background */
     color: white;
     padding: 6px 10px;
     border-radius: 4px;
     font-size: 12px;
     white-space: nowrap;
-    opacity: 0;                      /* Inicialmente invisível */    
+    opacity: 0;                      /* Initially invisible */    
     pointer-events: none;
     transition: opacity 0.3s ease;
     font-family: "Gotham", "Arial", sans-serif;
 }
 
 .nav-dot:hover::before {
-    opacity: 1;                      /* Torna visível ao passar o mouse */
+    opacity: 1;                      /* Becomes visible on mouse hover */
 }
 
-/* Header | titulo da IIBEx e foto FGV*/
+
+/* LANGUAGES MENU */
+.top-language-bar {
+    background-color: var(--white);
+    padding: 8px 40px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.language-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.lang-btn {
+    background: none;
+    border: 1px solid var(--fgv-gray-pale);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-family: "Gotham", sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.lang-btn:hover {
+    border-color: var(--fgv-blue);
+    color: var(--fgv-blue);
+}
+
+.lang-btn.active {
+    background-color: var(--fgv-blue);
+    color: white;
+    border-color: var(--fgv-blue);
+}
+
+/* HEADER | IMíd.IA title and FGV photo */
+
 .brand-header {
-    background-color: var(--fgv-white);
-    padding: 20px 40px;             /* margem cima/baixo. esquerda/direita */
+    background-color: var(--fgv-gray-pale);
+    padding: 20px 40px;             /* margin top/bottom, left/right */
     border-bottom: 1px solid var(--fgv-blue-dark);
 }
 
@@ -173,7 +224,9 @@ body {
     height: 60px;
 }
 
-/* Filtros */
+
+/* FILTERS */
+
 .sticky-filters {
     position: sticky;
     top: 0;
@@ -181,7 +234,7 @@ body {
     color: white;
     padding: 20px 40px;
     box-shadow: var(--shadow-sm);
-    z-index: 500;                   /* acima do conteúdo, mas abaixo do menu lateral */
+    z-index: 500;                   /* above content, but below side menu */
     transition: all 0.3s ease;
     border-bottom: 1px solid var(--fgv-blue-light);
 }
@@ -227,13 +280,12 @@ body {
     gap: 10px;
 }
 
-.switch {
+.switch {       /* the switch - the box around the slider */
     position: relative;
     display: inline-block;
     width: 50px;
     height: 24px;
-    /* Animação de escala */
-    transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1); /* Define the speed of the animation */
 }
 
 .switch:hover {
@@ -246,8 +298,7 @@ body {
     height: 0;
 }
 
-/* Fundo do checkbox */
-.slider {
+.slider { /* Background of the checkbox */
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -256,11 +307,11 @@ body {
     bottom: 0;
     transition: 0.4s;
     border-radius: 24px;
-    background-color: rgba(255,255,255,0.2); /* (Desligado em 2025) */
+    background-color: rgba(255,255,255,0.2); /* (Off in 2025) */
     border: 1px solid rgba(255,255,255,0.4);
 }
 
-/* Bolinha do checkbox*/
+/* Checkbox knob (botao, circulo) */
 .slider:before {
     position: absolute;
     content: "";
@@ -273,15 +324,15 @@ body {
     border-radius: 50%;
 }
 
-/* Se checkbox estiver marcado (input:checked), mude cor de fundo do slider */
+/* If checkbox is checked (input:checked), change slider background color */
 input:checked + .slider {
-    background-color: var(--fgv-aux-blue);     /* Cor quando ligado (Dinâmico) */
+    background-color: var(--fgv-aux-blue);     /* Color when dynamic */
     border-color: #164339;
     /* background-color: #782082; */
 }
 
 input:checked + .slider:before {
-    transform: translateX(26px);
+    transform: translateX(24px);
 }
 
 .toggle-label {
@@ -289,30 +340,13 @@ input:checked + .slider:before {
     font-size: 16px;
     font-weight: 700;
     color: var(--fgv-white);
-    min-width: 120px;                 /* Evita pulo no layout quando texto muda */
+    min-width: 120px;                 /* Avoid layout shift when text changes */
     text-align: right;
     transition: color 0.3s ease;
 }
 
-/* grid dos filtros */
-.filters-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 3fr;
-    gap: 20px;
-    align-items: end;
-    transition: grid-template-columns 0.3s ease;
-}
 
-
-.filters-grid:has(#political-filter-group.hidden) {
-    /* Reviewer | Reviewed | Period | Category */
-    grid-template-columns: 1fr 1fr 1fr 4fr;
-}
-
-.hidden {
-    display: none !important;
-}
-
+/* GRID FOR THE FILTERS GROUPS */
 .filter-group label {
     display: flex;
     align-items: center;
@@ -324,6 +358,102 @@ input:checked + .slider:before {
     font-family: "Gotham", "Arial", sans-serif;
 }
 
+.filters-grid { 
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr; /* 4 equal columns */
+    grid-template-rows: auto auto;          /* 2 rows, height auto */
+    gap: 20px;
+    align-items: end;
+    transition: grid-template-columns 0.3s ease;
+}
+
+.span-2 {
+    grid-column: span 2;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.filter-apply {
+    grid-column: 4;
+    display: flex;
+    /* justify-content: flex-end; */
+    justify-content: left;
+    align-items: flex-end;
+    height: 100%;
+}
+
+.filters-grid:has(#political-filter-group.hidden) {
+    /* Reviewer | Reviewed | Period | Category */
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+/* Button that apply the filters */
+.btn-apply {    
+    width: 70%;
+    padding: 10px;
+    background-color: var(--fgv-aux-blue);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-family: "Gotham", Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    min-height: 38px;
+}
+
+.btn-apply:hover {
+    background-color: #006da3;
+    transform: translateY(-1px);
+}
+
+.btn-apply:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.btn-apply:disabled {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: default;
+    box-shadow: none;
+    pointer-events: none; /* button invisible for the mouse */
+}
+
+/* Aggregation input box */
+.input-aggregation {
+    width: 80px;
+    text-align: center;
+    box-sizing: border-box;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    background-color: white;
+    padding: 7px 8px;
+    min-height: 38px;
+    font-size: 13px;
+    color: var(--fgv-gray-dark);
+    font-family: "Gotham", Arial, sans-serif;
+    outline: none;
+    transition: border 0.2s;
+}
+
+.input-aggregation:focus {
+    border: 1px solid var(--fgv-blue-light);
+    box-shadow: 0 0 0 2px rgba(0, 139, 201, 0.2);
+}
+
+.filter-group input[type=number] {
+    margin: 0;
+}
+
 /* Category choice box and other Selects with the same style */
 
 .filter-group .choices {
@@ -332,6 +462,7 @@ input:checked + .slider:before {
     margin-bottom: 0 !important;
 }
 
+/* Select box */
 .filter-group select, 
 .filter-group .choices__inner {
     border: 1px solid rgba(255,255,255,0.3)  !important;
@@ -347,19 +478,20 @@ input:checked + .slider:before {
     font-family: "Gotham", Arial, sans-serif !important;
 }
 
-/* itens do dropdown */
+/* dropdown items*/
 .filter-group, .choices__list--dropdown .choices__item {
     color: var(--fgv-gray-dark) !important;
     font-size: 13px !important;    
     font-family: "Gotham", Arial, sans-serif !important;
 }
 
+/* Selected items/categories */
 .filter-group .choices__list--multiple {
     margin: 0 !important;
     padding: 0 !important;
 }
 
-/* Itens/categorias selecionadas */
+/* Selected items/categories */
 .filter-group .choices__list--multiple .choices__item {
     background-color: var(--fgv-blue) !important;
     border: 1px solid var(--fgv-blue) !important;
@@ -403,18 +535,18 @@ input:checked + .slider:before {
 }
 
 .info-icon {
-    display: inline-flex;  /* essas 3 linhas alinham no centro do circulo*/
+    display: inline-flex;               /* these lines align at the center of the circle*/
     align-items: center;
     justify-content: center;
     width: 14px;
     height: 14px;
-    background-color: #e2e8f0;      /* cor de fundo do círculo */
+    background-color: #e2e8f0;        /* cor de fundo do círculo */
     border: 1px solid var(--fgv-blue);
-    border-radius: 50%;               /* arredondamento das bordas */
+    border-radius: 50%;                 /* arredondamento das bordas */
     text-align: center;
     font-size: 10px;;
     font-weight: bold;
-    color: #64748b;                 /* cor da ? */
+    color: #64748b;                   /* cor da ? */
     cursor: pointer;
     margin-left: 6px;
     transition: all 0.2s ease;
@@ -689,30 +821,26 @@ input:checked + .slider:before {
 
 
 .chart-popup {
-    position: fixed; /* Essencial para funcionar com as coordenadas X/Y do mouse */
-    z-index: 9999;   /* Garante que flutue acima de qualquer gráfico ou menu */
+    position: fixed; /* to work with the mouse X/Y coordinates */
+    z-index: 9999;   /* Guarantee that it floats above any chart or menu */
     background-color: var(--white);
-    border: 1px solid var(--fgv-blue); /* Borda fina azul para destaque */
+    border: 1px solid var(--fgv-blue); /* Thin blue border for emphasis */
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     min-width: 220px;
-    
-    /* Centraliza horizontalmente em relação ao clique e joga para cima */
-    transform: translate(-50%, -15px); 
-    
-    /* Transição suave de opacidade (opcional) */
-    transition: opacity 0.2s ease, visibility 0.2s;
+    transform: translate(-50%, -15px);                  /* Centers horizontally relative to the click and moves upwards */
+    transition: opacity 0.2s ease, visibility 0.2s;     /* Smooth opacity transition */
 }
 
-/* Estado oculto controlado pelo JS */
+/* Hidden state controlled by JS */
 .chart-popup.hidden {
     display: none;
     opacity: 0;
     pointer-events: none;
 }
 
-/* Conteúdo interno */
+/* Internal content */
 .popup-content p {
     margin: 0 0 12px 0;
     font-family: "Gotham", sans-serif;
@@ -722,7 +850,7 @@ input:checked + .slider:before {
     text-align: center;
 }
 
-/* Área dos botões */
+/* Area of the buttons */
 .popup-actions {
     display: flex;
     gap: 10px;
@@ -739,7 +867,7 @@ input:checked + .slider:before {
     transition: background-color 0.2s;
 }
 
-/* Botão Confirmar (Ver Detalhes) */
+/* Confirm Button (View Details) */
 .btn-confirm {
     background-color: var(--fgv-blue);
     color: white;
@@ -750,7 +878,7 @@ input:checked + .slider:before {
     background-color: var(--fgv-blue-dark);
 }
 
-/* Botão Cancelar */
+/* Cancel Button */
 .btn-cancel {
     background-color: white;
     color: var(--text-secondary);
@@ -762,7 +890,7 @@ input:checked + .slider:before {
     color: var(--text-primary);
 }
 
-/* Pequena seta decorativa apontando para baixo (indicando o ponto clicado) */
+/* arrow pointing downwards (indicating the clicked point) */
 .popup-arrow {
     position: absolute;
     bottom: -6px;
@@ -775,7 +903,9 @@ input:checked + .slider:before {
     border-bottom: 1px solid var(--fgv-blue);
 }
 
-/* Rodapé */
+
+
+/* Footer */
 .dashboard-footer { 
     text-align: center; 
     padding: 40px 0; 

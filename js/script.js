@@ -1,10 +1,25 @@
 import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData } from "./api_adapter.js";
 import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, resetLineChartZoom } from "./charts.js";
+import { DICTIONARY } from "./i18n.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     
-    //// Inicialização de UI ////
+    let CURRENT_LANG = "pt-BR";
+    function translateUI() {
+        const texts = DICTIONARY[CURRENT_LANG];
+        if (!texts) return; // language does not exist
 
+        document.querySelectorAll("[data-i18n]").forEach(el => {
+            const key = el.getAttribute("data-i18n");
+            if (texts[key]) {
+                el.textContent = texts[key];
+            }
+        });
+    }
+
+
+    //// UI Initialization ////
+    
     if (typeof lucide !== "undefined") {
         lucide.createIcons();
     };
@@ -23,6 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
             allowHTML: true,
         });
     }
+
 
     // Scroll: compact header; update side menu
     const filterSection = document.getElementById("filters-container");
@@ -58,18 +74,26 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+
     //// Default config ////
 
     // SINGLE SOURCE OF TRUTH
     const DEFAULT_CONFIG = {
         isDynamic: false,
         period: "year_2025",
-        reviewer: "Argentina",
-        reviewedEntity: "Brasil",
+        customStartDate: "2025-01-01",
+        customEndDate: "2025-06-30",
+        reviewer: ["Argentina"],
+        reviewedEntity: ["Brasil"],
         category: ["Todas"],
-        politicalAlignment: ["Independentes"],
-        aggregation: "daily"
+        politicalAlignment: null,
+        aggregation: 1
     };
+
+    let appState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+
+    let pendingState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+
 
     // Static data for dropdowns
     const PERIODS_CONFIG = {
@@ -114,14 +138,6 @@ document.addEventListener("DOMContentLoaded", function () {
         "Trabalho" 
     ];
 
-    const AGGREGATIONLIST = [
-        { label: "1 minuto", value: "minutely" },
-        { label: "30 minutos", value: "half_hourly" },
-        { label: "1 hora", value: "hourly" },
-        { label: "6 horas", value: "six_hourly" },
-        { label: "24 horas", value: "daily" },
-    ];
-
     const reviewersList = [ 
         { label: "Argentina", value: "Argentina" },
         { label: "Estados Unidos", value: "EUA" }
@@ -132,33 +148,24 @@ document.addEventListener("DOMContentLoaded", function () {
         { label: "Presidente Trump", value: "Presidente Trump" }
     ];
 
-    const politicalList = [
-        "Democratas", "Republicanos", "Independentes"
-    ];
-
-    // Currents filters applied
-    let appState = {
-        isDynamic: DEFAULT_CONFIG.isDynamic,
-        periodValue: DEFAULT_CONFIG.period,
-        customStartDate: "2025-01-01",      // Default values for fallback
-        customEndDate: "2025-12-31",
-        reviewer: DEFAULT_CONFIG.reviewer,
-        reviewedEntity: DEFAULT_CONFIG.reviewedEntity,
-        category: DEFAULT_CONFIG.category,
-        politicalAlignment: DEFAULT_CONFIG.politicalAlignment,
-        aggregation: DEFAULT_CONFIG.aggregation
+    const RELATIONSHIPS = {
+        "Argentina": ["Brasil"],
+        "EUA": ["Presidente Trump"]
     };
+    
 
-    // DOM SELECTORS
-    const periodSelect = document.getElementById("period");
+    // SELECTORS
     const reviewerSelect = document.getElementById("reviewer");
-    const reviewedEntitySelect = document.getElementById("reviewedEntity");
-    const categorySelect = document.getElementById("category");
     const politicalSelect = document.getElementById("politicalAlignment");
     const politicalGroup = document.getElementById("political-filter-group");
+    const reviewedEntitySelect = document.getElementById("reviewedEntity");
+    const periodSelect = document.getElementById("period");
+    const aggregationInput = document.getElementById("aggregation");
+    const categorySelect = document.getElementById("category");
     const dynamicToggle = document.getElementById("dynamic-mode");
     const toggleLabel = document.getElementById("mode-label");
-
+    const btnApply = document.getElementById("btn-apply");
+    // GRAPHS
     const gradesChartCanvas = document.getElementById("gradesChart");
 
     const volumeChartCanvas = document.getElementById("volumeChart");
@@ -180,151 +187,310 @@ document.addEventListener("DOMContentLoaded", function () {
     let choicesPeriod, choicesCategory, choicesReviewer, choicesReviewedEntity, choicesPolitical;
     let pollingInterval = null;
 
-    // UI INITIALIZATION
-    function initializeUI() {
-        // config padrão para Choices com single select
-        const singleOpts = {
-            searchEnabled: false,
-            itemSelectText: "",
-            shouldSort: false,
+    async function fetchOptionsFromDB(targetType, filterValue) {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                let options = [];
+                if (targetType === 'evaluated') {
+                    if (!filterValue || filterValue.length === 0) {
+                        options = [...new Set(Object.values(RELATIONSHIPS).flat())];
+                    } else {
+                        const allowed = new Set();
+                        filterValue.forEach(rev => {
+                            if (RELATIONSHIPS[rev]) RELATIONSHIPS[rev].forEach(item => allowed.add(item));
+                        });
+                        options = [...allowed];
+                    }
+                } else if (targetType === 'evaluator') {
+                    if (!filterValue || filterValue.length === 0) {
+                        options = Object.keys(RELATIONSHIPS);
+                    } else {
+                        const evaluators = [];
+                        Object.keys(RELATIONSHIPS).forEach(rev => {
+                            const targets = RELATIONSHIPS[rev];
+                            if (filterValue.some(val => targets.includes(val))) {
+                                evaluators.push(rev);
+                            }
+                        });
+                        options = evaluators;
+                    }
+                }
+                
+                resolve(options.map(label => ({ value: label, label: label })));
+            }, 50); 
+        });
+    }
+
+
+    async function initializeFilters() {
+        const multiOpts = {
+            removeItemButton: true, 
+            searchEnabled: true, 
+            placeholderValue: "Selecione...", 
+            itemSelectText: "", 
+            shouldSort: true, 
+            editItems: false, 
+            maxItemCount: 5,
+            maxItemText: "",
             position: "bottom"
+        };
+        const singleOpts = { 
+            searchEnabled: false, 
+            placeholderValue: "Selecione...", 
+            itemSelectText: "", 
+            shouldSort: false, 
+            position: "bottom" 
         };
 
         if (typeof Choices !== "undefined") {
-            // Reviewer
-            choicesReviewer = new Choices("#reviewer", singleOpts);
-            choicesReviewer.setChoices(reviewersList.map(c => ({
-                value: c.value, label: c.label, selected: c.value === appState.reviewer
-            })), "value", "label", true);
+            // Reviewer (Multi)
+            choicesReviewer = new Choices("#reviewer", multiOpts);
+            const initialReviewers = await fetchOptionsFromDB("evaluator", []); 
+            choicesReviewer.setChoices(initialReviewers, "value", "label", true);
+            choicesReviewer.setChoiceByValue(appState.reviewer);    // set initial value
 
-            // Reviewed Entity
-            choicesReviewedEntity = new Choices("#reviewedEntity", singleOpts);
-            choicesReviewedEntity.setChoices(reviewedEntityList.map(c => ({
-                value: c.value, label: c.label, selected: c.value === appState.reviewedEntity
-            })), "value", "label", true);
+            
+            // Political (Multi)
+            choicesPolitical = new Choices("#politicalAlignment", multiOpts);
+            const polList = ["Democratas", "Republicanos", "Independentes"];
+            choicesPolitical.setChoices(polList.map(p => ({ value: p, label: p, selected: p === "Independentes" })), "value", "label", true);
+
+            // Reviewed (Multi)
+            choicesReviewedEntity = new Choices("#reviewedEntity", multiOpts);
+            const initialReviewed = await fetchOptionsFromDB("evaluated", appState.reviewer);
+            choicesReviewedEntity.setChoices(initialReviewed, "value", "label", true);
+            choicesReviewedEntity.setChoiceByValue(appState.reviewedEntity);
 
             // Period
             choicesPeriod = new Choices("#period", singleOpts);
-            // Initial options based on the mode configured in DEFAULT_CONFIG
             updatePeriodDropdown(appState.isDynamic);
 
-            // Multi categories
-            choicesCategory = new Choices("#category", {
-                removeItemButton: true,
-                searchEnabled: true,
-                placeholderValue: "Selecione...",
-                itemSelectText: "",
-                shouldSort: true,
-                editItems: true,
-                maxItemCount: 5,
-                maxItemText: "",
-                position: "bottom"
-            });
-            choicesCategory.setChoices(CATEGORIESLIST.map(c => ({ 
-                value: c, label: c, selected: c === "Todas" 
-            })), "value", "label", true); /* Select todas by default; true := remove everything that exists */
+            // Aggregation (Input)
+            if (aggregationInput) {
+                aggregationInput.value = appState.aggregation;
+            }
 
-            choicesPolitical = new Choices("#politicalAlignment", {
-                removeItemButton: true, 
-                searchEnabled: false, 
-                placeholderValue: "Selecione...",
-                itemSelectText: "", 
-                position: "bottom", 
-                maxItemCount: 3,
-                maxItemText: ""
-            });
-            choicesPolitical.setChoices(politicalList.map(p => ({ 
-                value: p, label: p, selected: p === "Independentes" 
-            })), "value", "label", true);
+            // Category (Multi)
+            choicesCategory = new Choices("#category", multiOpts);
+            choicesCategory.setChoices(CATEGORIESLIST.map(c => ({ value: c, label: c, selected: c === "Todas" })), "value", "label", true);
 
-
-            const setupCollapse = (choiceInstance) => {
-                const container = choiceInstance.containerOuter.element;
-                container.classList.add("collapsed");
-                container.addEventListener("showDropdown", () => container.classList.remove("collapsed"));
-                container.addEventListener("hideDropdown", () => container.classList.add("collapsed"));
-            };
-            setupCollapse(choicesCategory);
-            setupCollapse(choicesPolitical);
+            setupFilterListeners();     // listeners for update pending filters state and UI
         }
+        
+        translateUI();
         updateToggleVisual(appState.isDynamic);
-        checkEvaluatorContext(appState.reviewer);
+        checkEvaluatorContext(appState.reviewer);   // check for political alignement
+        checkApplyButtonState();                    // Initialize apply button
+        
+        // Listeners for Language Buttons
+        document.querySelectorAll(".lang-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                document.querySelectorAll(".lang-btn").forEach(b => b.classList.remove("active"));
+                e.target.classList.add("active");
+                
+                CURRENT_LANG = e.target.getAttribute("data-lang");
+                translateUI();
+                
+                updateToggleVisual(appState.isDynamic);
+                updateEvolutionHeader(parseInt(totalNewsEl.textContent.replace(/\D/g, "")) || 0);   // \D removes non-digit 
+            });
+        });
+    }
 
-        // is dinamic? then, PULLING
-        if (appState.isDynamic) {
-            pollingInterval = setInterval(updateDashboard, 600000);
+    function setupFilterListeners() {
+        const onFilterChange = (key, valueInstance, isMulti = false) => {
+            let val;
+            if (valueInstance.getValue && typeof valueInstance.getValue === "function") {
+                val = valueInstance.getValue(true);
+            } else {
+                val = valueInstance.value; // HTML input
+            }
+
+            if (isMulti && !Array.isArray(val)) {
+                val = [val];
+            }
+
+            pendingState[key] = val;
+            
+            if (isMulti) {
+                enforceMultiSelectConstraints(key);
+            }
+
+            checkApplyButtonState();
+        };
+
+        reviewerSelect.addEventListener("change", async () => {
+            onFilterChange('reviewer', choicesReviewer, true);
+            checkEvaluatorContext(pendingState.reviewer);
+            
+            const newOptions = await fetchOptionsFromDB('evaluated', pendingState.reviewer);
+            const currentSelected = choicesReviewedEntity.getValue(true);
+            choicesReviewedEntity.clearStore();
+            choicesReviewedEntity.setChoices(newOptions, 'value', 'label', true);
+            const validSelection = currentSelected.filter(s => newOptions.find(o => o.value === s));
+            if(validSelection.length > 0) {
+                choicesReviewedEntity.setChoiceByValue(validSelection);
+            }
+
+            pendingState.reviewedEntity = choicesReviewedEntity.getValue(true); 
+        });
+
+        reviewedEntitySelect.addEventListener("change", async () => {
+            onFilterChange('reviewedEntity', choicesReviewedEntity, true);
+        });
+
+        periodSelect.addEventListener("change", () => {
+            const val = periodSelect.value;
+            pendingState.periodValue = val;
+            
+            if (!pendingState.isDynamic) {
+                const config = PERIODS_CONFIG.static.find(p => p.value === val);
+                if (config) { 
+                    pendingState.customStartDate = config.start; 
+                    pendingState.customEndDate = config.end; 
+                }
+            }
+            checkApplyButtonState();
+        });
+
+        categorySelect.addEventListener("change", () => onFilterChange('category', choicesCategory, true));
+        politicalSelect.addEventListener("change", () => onFilterChange('politicalAlignment', choicesPolitical, true));
+        
+        if (aggregationInput) {
+            aggregationInput.addEventListener("input", () => {
+                const val = parseFloat(aggregationInput.value);
+                if (!isNaN(val) && val > 0) {
+                    onFilterChange('aggregation', aggregationInput, false);
+                }
+            });
         }
-    };
+
+        dynamicToggle.addEventListener("change", (e) => {
+            pendingState.isDynamic = e.target.checked;
+            updateToggleVisual(pendingState.isDynamic);
+            updatePeriodDropdown(pendingState.isDynamic); 
+            checkApplyButtonState();
+        });
+
+        btnApply.addEventListener("click", () => {
+            if (!btnApply.classList.contains("disabled")) {
+                applyFilters();
+            }
+        });
+    }
+
+
+    function enforceMultiSelectConstraints(changedKey) {
+        const keys = ['reviewer', 'reviewedEntity', 'category'];
+        const changedVal = pendingState[changedKey];
+
+        if (Array.isArray(changedVal) && changedVal.length > 1) {
+            keys.forEach(k => {
+                if (k !== changedKey) {
+                    const otherVal = pendingState[k];
+                    if (Array.isArray(otherVal) && otherVal.length > 1) {
+                        const first = otherVal[0];
+                        pendingState[k] = [first];
+                        
+                        if (k === 'reviewer') { choicesReviewer.removeActiveItems(); choicesReviewer.setChoiceByValue(first); }
+                        if (k === 'reviewedEntity') { choicesReviewedEntity.removeActiveItems(); choicesReviewedEntity.setChoiceByValue(first); }
+                        if (k === 'category') { choicesCategory.removeActiveItems(); choicesCategory.setChoiceByValue(first); }
+                    }
+                }
+            });
+        }
+    }
+
+    function checkApplyButtonState() {
+        const normalize = (s) => {
+            const copy = JSON.parse(JSON.stringify(s));
+            if(Array.isArray(copy.reviewer)) copy.reviewer.sort();
+            if(Array.isArray(copy.reviewedEntity)) copy.reviewedEntity.sort();
+            if(Array.isArray(copy.category)) copy.category.sort();
+            if(Array.isArray(copy.politicalAlignment)) copy.politicalAlignment.sort();
+            copy.aggregation = parseFloat(copy.aggregation);
+            return JSON.stringify(copy);
+        };
+
+        const isDifferent = normalize(appState) !== normalize(pendingState);
+
+        if (isDifferent) {
+            btnApply.classList.remove("disabled");
+            btnApply.removeAttribute("disabled");
+        } else {
+            btnApply.classList.add("disabled");
+            btnApply.setAttribute("disabled", "true");
+        }
+    }
+
+    function applyFilters() {
+        appState = JSON.parse(JSON.stringify(pendingState));
+        checkApplyButtonState();
+        updateDashboard();
+
+        if (appState.isDynamic) {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(updateDashboard, 600000);
+        } else {
+            if (pollingInterval) clearInterval(pollingInterval);
+        }
+    }
+
 
     function updatePeriodDropdown(isDynamic) {
         if (!choicesPeriod) return;
-        
+
         const options = isDynamic ? PERIODS_CONFIG.dynamic : PERIODS_CONFIG.static;
-        choicesPeriod.clearStore(); // Clear all options
+        choicesPeriod.clearStore();
         choicesPeriod.setChoices(options, "value", "label", true);
         
-        // Set first option as default selected
-        const defaultOption = options[0];
-        choicesPeriod.setChoiceByValue(defaultOption.value);
-        handlePeriodChange(defaultOption.value);
+        const currentVal = pendingState.periodValue;
+        const exists = options.find(o => o.value === currentVal);
+        if (exists) {
+            choicesPeriod.setChoiceByValue(currentVal);
+        } else {
+            const def = options[0].value;
+            choicesPeriod.setChoiceByValue(def);
+            pendingState.periodValue = def;
+            if (!isDynamic) {
+                const config = options[0];
+                pendingState.customStartDate = config.start;
+                pendingState.customEndDate = config.end;
+            }
+        }
     }
 
     function updateToggleVisual(isDynamic) {
-        if (toggleLabel) {
-            if(isDynamic) {
-                toggleLabel.textContent = "Modo dinâmico: atualização em tempo real";
-                toggleLabel.style.color = "#008BC9";
-                toggleLabel.style.fontWeight = "700";
-            } else {
-                toggleLabel.textContent = "Modo estático: 2025";
-                toggleLabel.style.color = "white";
-                toggleLabel.style.fontWeight = "700";
-            }
+        const label = document.getElementById("mode-label");
+        const texts = DICTIONARY[CURRENT_LANG];
+        if (label) {
+            label.textContent = isDynamic ? texts.mode_dynamic : texts.mode_static;
+            label.style.color = isDynamic ? "#008BC9" : "white";
         }
-
-        // Visibility of gauge footer
-        if (gaugeFooter) {
-            // dynamic = flex (visible) | static = none (hidden)
-            gaugeFooter.style.display = isDynamic ? "flex" : "none";
-        }
-
-        if (dynamicToggle) {
-            dynamicToggle.checked = isDynamic;
-            //dynamicToggle.disabled = true;
-        }
+        if (gaugeFooter) gaugeFooter.style.display = isDynamic ? "flex" : "none";   // dynamic = flex (visible) | static = none (hidden)
+        if (dynamicToggle) dynamicToggle.checked = isDynamic;
     }
 
     // Show/hide political alignemnt filter
-    function checkEvaluatorContext(reviewer) {
-        if (!politicalGroup) return;
-        if (reviewer === "EUA") {
+    function checkEvaluatorContext(reviewers) {
+        const hasUS = Array.isArray(reviewers) ? reviewers.includes("EUA") : reviewers === "EUA";
+        
+        if (hasUS) {
             politicalGroup.classList.remove("hidden");
+                pendingState.politicalAlignment = ["Independentes"];
+
         } else {
             politicalGroup.classList.add("hidden");
-            // Reset to "Independentes" when hidden
-            if (choicesPolitical) {
+            pendingState.politicalAlignment = null;
+            
+            if(choicesPolitical) {
+                choicesPolitical.removeActiveItems();
                 choicesPolitical.setChoiceByValue("Independentes");
-                appState.politicalAlignment = null;
+                pendingState.politicalAlignment = null;
             }
         }
     }
 
-    function handlePeriodChange(value) {
-        appState.periodValue = value;
-        // If dynamic, no custom dates
-        if (appState.isDynamic) {
-            appState.customStartDate = null;
-            appState.customEndDate = null;
-        } 
-        // If static, get the dates from config
-        else {
-            const config = PERIODS_CONFIG.static.find(p => p.value === value);
-            if (config) {
-                appState.customStartDate = config.start;
-                appState.customEndDate = config.end;
-            }
-        }
-    }
 
     function processAndUpdateHistogramChart(apiData) {
         // apiData expected: [{ bucket: 1, count: 10 }, { bucket: 2, count: 5 }, ...]
@@ -356,24 +522,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const sortedData = apiData.sort((a, b) => new Date(a.time_period) - new Date(b.time_period));
 
+        const aggHours = parseFloat(appState.aggregation);
+
         sortedData.forEach(row => {
             const date = new Date(row.time_period);
-            
-            let labelStr = "";
-            if (['hourly', 'half_hourly', 'minutely'].includes(appState.aggregation)) {
-                labelStr = date.toLocaleString('pt-BR', { 
-                    day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' 
-                });
+            // show time if < 24h, else date only
+            let labelStr;
+            if (aggHours < 24) {
+                labelStr = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' });
             } else {
-                labelStr = date.toLocaleDateString('pt-BR', { 
-                    day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' 
-                });
+                labelStr = date.toLocaleDateString('pt-BR');
             }
             labels.push(labelStr);
-            
+
             let count = parseInt(row.news_count, 10);
             count = Math.round(count / divisor);
-            
+
             values.push(count);
             total += count;
         });
@@ -509,28 +673,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const sortedDates = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));
 
+        const aggHours = parseFloat(appState.aggregation);
+
         const formattedLabels = sortedDates.map(dateStr => {
             const date = new Date(dateStr);
-            
-            // Se for horária (hourly) ou menor, mostra a hora
-            if (appState.aggregation === 'hourly' || appState.aggregation === 'half_hourly') {
-                return date.toLocaleString('pt-BR', { 
-                    day: '2-digit', 
-                    month: '2-digit', 
-                    year: '2-digit', 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    timeZone: 'UTC' 
-                });
+            if (aggHours < 24) {
+                return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' });
+            } else {
+                return date.toLocaleDateString('pt-BR');
             }
-            
-            // Padrão Diário/Mensal
-            return date.toLocaleDateString('pt-BR', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: '2-digit', 
-                timeZone: 'UTC' 
-            });
         });
 
         // Prepare datasets based on the series returned (categories or political alignments)
@@ -575,157 +726,54 @@ document.addEventListener("DOMContentLoaded", function () {
         drawLineChart(lineChartCanvas, formattedLabels, datasets, handlePointClick);
     }
 
+
     async function updateDashboard() {
         const apiFilters = {
-            reviewer: appState.reviewer,
-            reviewedEntity: appState.reviewedEntity,
+            reviewer: appState.reviewer, 
+            reviewedEntity: appState.reviewedEntity, 
             category: appState.category,
-            politicalAlignment: appState.politicalAlignment,
+            politicalAlignment: appState.politicalAlignment, 
             aggregation: appState.aggregation
         };
-
+        
         if (appState.isDynamic) {
-            apiFilters.period = appState.periodValue;
-            apiFilters.startDate = null;
+            apiFilters.period = appState.periodValue; 
+            apiFilters.startDate = null; 
             apiFilters.endDate = null;
         } else {
-            apiFilters.startDate = appState.customStartDate;
-            apiFilters.endDate = appState.customEndDate;
+            apiFilters.startDate = appState.customStartDate; 
+            apiFilters.endDate = appState.customEndDate; 
             apiFilters.period = null;
         }
 
+        totalNewsEl.textContent = "...";
+
         try {
             console.log("[Dashboard] Buscando dados...", apiFilters);
-            const [gradesData, gaugeVal, volumeData, lineData] = await Promise.all([
+            const [histogramData, volumeData, gaugeVal, lineData] = await Promise.all([
                 fetchGradesHistogramData(apiFilters),
-                fetchGaugeData(apiFilters),
                 fetchVolumeChartData(apiFilters),
+                fetchGaugeData(apiFilters),
                 fetchLineChartData(apiFilters)
             ]);
-
-            processAndUpdateHistogramChart(gradesData);
-            processAndUpdateGaugeDisplay(gaugeVal); 
+            console.log("Dados do histograma", histogramData);
+            console.log("Dados do volume", volumeData);
+            console.log("Dados do gauge", gaugeVal);
+            console.log("Dados do gráfico de linha", lineData);
+            processAndUpdateHistogramChart(histogramData);
             const totalNewsCount = processAndUpdateVolumeChart(volumeData);
-            processAndUpdateLineChart(lineData);
+            processAndUpdateGaugeDisplay(gaugeVal); 
             updateEvolutionHeader(totalNewsCount);
+            processAndUpdateLineChart(lineData);
+
         } catch (err) {
             console.error("Erro dashboard:", err);
             totalNewsEl.textContent = "Erro";
         }
     }
-    
-    // LISTENERS 
 
-    // Dynamic toggle listener
-    if (dynamicToggle) {
-        dynamicToggle.addEventListener("change", (e) => {
-            appState.isDynamic = e.target.checked;
-            updateToggleVisual(appState.isDynamic);
-            updatePeriodDropdown(appState.isDynamic);
-            updateDashboard();
 
-            if (appState.isDynamic) {
-                pollingInterval = setInterval(updateDashboard, 600000); // 10  min
-            } else {
-                if (pollingInterval) clearInterval(pollingInterval);
-            }
-        });
-    }
-    
-    // Choices listeners
-    if (periodSelect) {
-        periodSelect.addEventListener("change", (e) => { handlePeriodChange(e.target.value); 
-        updateDashboard(); 
-        });
-    };
-
-    // Political alignment
-    if (politicalSelect) {
-        politicalSelect.addEventListener("change", () => {
-            const selectedPol = Array.from(politicalSelect.selectedOptions).map(o => o.value);
-            
-            const currentCategories = choicesCategory ? choicesCategory.getValue(true) : [];
-            const catsArr = Array.isArray(currentCategories) ? currentCategories : [currentCategories];
-
-            // if more than 1 political alignment selected AND more than 1 category selected
-            if (selectedPol.length > 1 && catsArr.length > 1) {
-                if (choicesCategory) {
-                    // Remove multiple selections and revert to default
-                    choicesCategory.removeActiveItems(); 
-                    choicesCategory.setChoiceByValue("Todas"); 
-                }
-                appState.category = ["Todas"];
-            } 
-            
-            appState.politicalAlignment = selectedPol.length > 0 ? selectedPol : ["Independentes"];
-            updateDashboard();
-        });
-    }
-
-    if (categorySelect) {
-        categorySelect.addEventListener("change", () => {
-            const selectedCat = Array.from(categorySelect.selectedOptions).map(o => o.value);
-            
-            const currentPol = choicesPolitical ? choicesPolitical.getValue(true) : [];
-            const polArr = Array.isArray(currentPol) ? currentPol : [currentPol];
-
-            // If selecting more than 1 category AND more than 1 political alignment
-            if (selectedCat.length > 1 && polArr.length > 1) {
-                // Check if the political filter is active (visible)
-                if (choicesPolitical && !politicalGroup.classList.contains("hidden")) {
-                    // Remove multiple political alignment selections and revert to default
-                    choicesPolitical.removeActiveItems();
-                    choicesPolitical.setChoiceByValue("Independentes");
-                    appState.politicalAlignment = ["Independentes"];
-                }
-            }
-
-            appState.category = selectedCat.length > 0 ? selectedCat : ["Todas"];
-            updateDashboard();
-        });
-    }
-    
-    if (reviewedEntitySelect) reviewedEntitySelect.addEventListener("change", (e) => { 
-        appState.reviewedEntity = e.target.value; 
-        updateDashboard(); 
-    });
-
-    if (reviewerSelect) {
-        reviewerSelect.addEventListener("change", (e) => { 
-            appState.reviewer = e.target.value; 
-            
-            checkEvaluatorContext(appState.reviewer);
-            
-            if (choicesPolitical) {
-                choicesPolitical.removeActiveItems();
-                choicesPolitical.setChoiceByValue("Independentes");
-                appState.politicalAlignment = ["Independentes"];
-            }
-            if (choicesCategory) {
-                choicesCategory.removeActiveItems(); 
-                choicesCategory.setChoiceByValue("Todas"); 
-                appState.category = ["Todas"];
-            }
-            
-            updateDashboard(); 
-        });
-    }
-
-    resetZoomBtn.addEventListener("click", () => {
-        resetLineChartZoom();
-        
-        // Reset aggregation to default weekly
-        appState.aggregation = DEFAULT_CONFIG.aggregation;
-        
-        // Reset buttons visual
-        document.querySelectorAll(".avg-btn").forEach(b => b.classList.remove("active", "bg-white", "shadow-sm"));
-        const defaultBtn = document.querySelector(`.avg-btn[data-period="${DEFAULT_CONFIG.aggregation}"]`);
-        if(defaultBtn) defaultBtn.classList.add("active", "bg-white", "shadow-sm");
-        
-        updateDashboard();
-    });
-
-    initializeUI();
+    initializeFilters();
     setTimeout(updateDashboard, 100);
 });
 

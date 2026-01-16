@@ -36,8 +36,6 @@ function buildCommonFilters(query, params) {
   // Dynamic time mode
   if (period && period.startsWith("Last")) {
     let interval;
-    // if (period === "Last24h") interval = "24 hours";
-    // else if (period === "Last7d") interval = "7 days";
     if (period === "Last30d") interval = "30 days";
     else if (period === "Last120d") interval = "120 days";
     else if (period === "Last180d") interval = "180 days";
@@ -87,22 +85,18 @@ async function getVolumeChartData(request) {
   const params = [];
   const conditions = buildCommonFilters(request.query, params);
   const { aggregation } = request.query;
+  let hours = parseFloat(aggregation); 
 
-  let dateTrunc = "day"; 
-  switch (aggregation) {
-    case "yearly": dateTrunc = "year"; break;
-    case "quarterly": dateTrunc = "quarter"; break;
-    case "monthly": dateTrunc = "month"; break;
-    case "daily": dateTrunc = "day"; break;
-    case "hourly": dateTrunc = "hour"; break;
-    case "minutely": dateTrunc = "minute"; break;
-    case "half_hourly": dateTrunc = "minute"; break;
-    default: dateTrunc = "day";
+  if (isNaN(hours) || hours <= 0) {
+      hours = 1;
   }
+
+  params.push(`${hours} hours`);
+  const intervalParam = `$${params.length}`;
 
   const query = `
     SELECT 
-      DATE_TRUNC('${dateTrunc}', date) AS time_period,
+      date_bin(${intervalParam}::interval, date, TIMESTAMP '2025-01-01') AS time_period,
       COUNT(*) AS news_count
     FROM noticias
     ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
@@ -112,6 +106,8 @@ async function getVolumeChartData(request) {
       time_period ASC;
   `;
   const { rows } = await sql.query(query, params);  
+
+  console.log("Volume Chart Query:", query, params);
   return rows;
 }
 
@@ -130,14 +126,24 @@ async function getGaugeData(request) {
   let timeCondition = "";
   //console.log("isStaticMode:", isStaticMode);
   if (!isStaticMode) {
+
+      let hours = parseFloat(gaugeQuery.aggregation);
+      if (isNaN(hours) || hours <= 0) {
+        hours = 1;
+      }
+      params.push(`${hours} hours`);
+      const intervalParam = `$${params.length}`;
+
       const whereClauseBase = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
+
       timeCondition = `
-        AND DATE_TRUNC('day', date) = (
-          SELECT DATE_TRUNC('day', MAX(date))
+        AND date_bin(${intervalParam}::interval, date, TIMESTAMP '2025-01-01') = (
+          SELECT date_bin(${intervalParam}::interval, MAX(date), TIMESTAMP '2025-01-01')
           FROM noticias
           ${whereClauseBase}
         )
       `;
+
       // calculate IMíd.IA for 30 minutes window
       /*
       timeCondition = `
@@ -171,30 +177,24 @@ async function getLineChartData(request) {
   const conditions = buildCommonFilters(request.query, params);
   const { aggregation, category, politicalAlignment } = request.query;
 
-  // Listas de seleção
+  // listas de seleção
   const categories = category ? (Array.isArray(category) ? category : [category]) : [];
   const alignments = politicalAlignment ? (Array.isArray(politicalAlignment) ? politicalAlignment : [politicalAlignment]) : [];
 
-  // Flags de "Todos"
+  // flags de "Todos"
   const catHasAll = categories.includes("Todas");
   const polHasAll = alignments.includes("Consolidado");
 
-  // DECISÃO DE AGRUPAMENTO:
   // Se tivermos mais de 1 viés político selecionado, a prioridade é comparar os vieses.
   // Nesse caso, o gráfico deve mostrar uma linha para cada viés (Ex: Democrata, Republicano).
   const isMultiPolitical = alignments.length > 1;
 
-  let dateTrunc = "week"; 
-  switch (aggregation) {
-    case "yearly": dateTrunc = "year"; break;
-    case "quarterly": dateTrunc = "quarter"; break;
-    case "monthly": dateTrunc = "month"; break;
-    case "daily": dateTrunc = "day"; break;
-    case "hourly": dateTrunc = "hour"; break;
-    case "minutely": dateTrunc = "minute"; break;
-    case "half_hourly": dateTrunc = "minute"; break;
-    default: dateTrunc = "week";
-  }
+  let hours = parseFloat(aggregation);
+  if (isNaN(hours) || hours <= 0) {
+      hours = 1;
+    }
+  params.push(`${hours} hours`);
+  const intervalParam = `$${params.length}`;
 
   let selectClause = "";
   let groupClause = "";
@@ -241,7 +241,7 @@ async function getLineChartData(request) {
 
   const query = `
     SELECT 
-      DATE_TRUNC('${dateTrunc}', date) AS time_period${selectClause},
+      date_bin(${intervalParam}::interval, date, TIMESTAMP '2025-01-01') AS time_period${selectClause},
       AVG(grade) AS average_grade
     FROM noticias
     ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
@@ -341,7 +341,7 @@ export default async function handler(request, response) {
     switch (widget) {
       case "grade":
         data = await getGradesChartData(request);
-        console.log("Grades Data:", data);
+        //console.log("Grades Data:", data);
         break;
       case "volume":
         data = await getVolumeChartData(request);

@@ -8,12 +8,12 @@ let volumeInstance = null;
 let lineInstance = null;
 
 const COLORS = {
-    bluePrimary: '#003A79',
-    blueLight: '#008BC9'
+    bluePrimary: "#003A79",
+    blueLight: "#008BC9",
 };
 
 // Global plugins
-if (typeof Chart !== 'undefined' && typeof ChartZoom !== 'undefined') {
+if (typeof Chart !== "undefined" && typeof ChartZoom !== "undefined") {
     Chart.register(ChartZoom);
 }
 
@@ -104,7 +104,7 @@ export function drawGaugeChart(canvasElement, value) {
     const gaugeSegmentDescriptions = [
         "Imagem extremamente negativa (1.0 a 1.5)",
         "Imagem negativa (1.51 a 2.5)",
-        "Imagem levemente negativa (2,51 a 3.5)",
+        "Imagem levemente negativa (2.51 a 3.5)",
         "Imagem neutra (3.51 a 4.49)",
         "Imagem levemente positiva (4.5 a 5.49)",
         "Imagem positiva (5.5 a 6.49)",

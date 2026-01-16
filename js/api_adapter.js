@@ -19,12 +19,20 @@ function buildApiUrl(filters, widgetType) {
         url_params.append("end_date", filters.endDate);
     };
 
-    if (filters.reviewer) {
-        url_params.append("reviewer", filters.reviewer);
+     if (filters.reviewer) {
+        if (Array.isArray(filters.reviewer)) {
+            filters.reviewer.forEach(rev => url_params.append("reviewer", rev));
+        } else {
+            url_params.append("reviewer", filters.reviewer);
+        }
     };
 
     if (filters.reviewedEntity) {
-        url_params.append("reviewed_entity", filters.reviewedEntity);
+        if (Array.isArray(filters.reviewedEntity)) {
+            filters.reviewedEntity.forEach(ent => url_params.append("reviewed_entity", ent));
+        } else {
+            url_params.append("reviewed_entity", filters.reviewedEntity);
+        }
     };
 
     if (filters.aggregation) {
@@ -91,7 +99,7 @@ export async function fetchGradesHistogramData(filters) {
 }
 
 export async function fetchVolumeChartData(filters) {
-    const safeFilters = { ...filters, aggregation: filters.aggregation || "daily" }
+    const safeFilters = { ...filters, aggregation: filters.aggregation || 1 }
     return await fetchFromApi(safeFilters, "volume");
 }
 
@@ -104,7 +112,7 @@ export async function fetchGaugeData(filters) {
 }
 
 export async function fetchLineChartData(filters) {
-    const safeFilters = { ...filters, aggregation: filters.aggregation || "daily" }
+    const safeFilters = { ...filters, aggregation: filters.aggregation || 1 }
     return await fetchFromApi(safeFilters, "line");
 }
 
