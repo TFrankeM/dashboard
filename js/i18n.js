@@ -2,7 +2,7 @@
 export const DICTIONARY = {
     "pt-BR" : {
         // General
-        app_title: "FGV IMídIA)",
+        app_title: "FGV IMídIA",
         app_subtitle: "Indicador de Imagem na Mídia Digital",
         filter_section_title: "Filtros",
         mode_static: "Modo estático",
