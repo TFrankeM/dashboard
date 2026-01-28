@@ -89,7 +89,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    z-index: 1000;                   /* Ensures it stays above other elements */
+    z-index: 100;                   /* Ensures it stays above other elements */
 }
 
 .nav-dot {
@@ -201,7 +201,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    z-index: 600; /* above filters */
+    z-index: 200; /* above filters */
 
     background-color: white;
     border-radius: 4px;
@@ -296,7 +296,7 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     border-radius: 4px !important;
     text-align: center !important;
-    z-index: 700 !important; /* above filters */
+    z-index: 200 !important; /* above filters */
 }
 
 .lang-dropdown-wrapper .choices__list--dropdown .choices__item {
@@ -322,7 +322,7 @@ body {
     color: white;
     padding: 20px 40px;
     box-shadow: var(--shadow-sm);
-    z-index: 500;                   /* above content, but below side menu */
+    z-index: 50;                   /* above content, but below side menu */
     transition: all 0.3s ease;
     border-bottom: 1px solid var(--fgv-blue-light);
 }
@@ -618,11 +618,12 @@ input:checked + .slider:before {
 }
 
 .info-icon {
-    display: inline-flex;               /* these lines align at the center of the circle*/
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center;    
+    line-height: 1.5;
     width: 14px;
     height: 14px;
+    padding-top: 1px;
     background-color: #e2e8f0;        /* cor de fundo do círculo */
     border: 1px solid var(--fgv-blue);
     border-radius: 50%;                 /* arredondamento das bordas */
@@ -633,7 +634,7 @@ input:checked + .slider:before {
     cursor: pointer;
     margin-left: 6px;
     transition: all 0.2s ease;
-    z-index: 1000;
+    z-index: 40;
 }
 
 .info-icon:hover {
@@ -649,6 +650,8 @@ input:checked + .slider:before {
     border-radius: 6px;
     text-align: center;
     padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0 , 0, 0.1);
 }
 
 /* Resumo executivo */
@@ -905,7 +908,7 @@ input:checked + .slider:before {
 
 .chart-popup {
     position: fixed; /* to work with the mouse X/Y coordinates */
-    z-index: 9999;   /* Guarantee that it floats above any chart or menu */
+    z-index: 200;   /* Guarantee that it floats above any chart or menu */
     background-color: var(--white);
     border: 1px solid var(--fgv-blue); /* Thin blue border for emphasis */
     border-radius: 8px;

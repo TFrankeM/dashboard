@@ -25,17 +25,18 @@ document.addEventListener("DOMContentLoaded", function () {
     };
     if (typeof tippy !== "undefined") {
         tippy(".info-icon", {
-            placement: "top",
+            placement: "auto-end",
             animation: "shift-away",
             theme: "dark",
             delay: [100, 100],
-            arrow: true,
+            arrow: false,
             arrowType: "round",
             size: "small",
             trigger: "mouseenter focus click",
             maxWidth: 250,
             interactive: true,
             allowHTML: true,
+            appendTo: () => document.body,
         });
     }
 
