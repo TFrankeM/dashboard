@@ -185,6 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Referências para instâncias do Choices
     let choicesPeriod, choicesCategory, choicesReviewer, choicesReviewedEntity, choicesPolitical;
+    let choicesLanguage;
     let pollingInterval = null;
 
     async function fetchOptionsFromDB(targetType, filterValue) {
@@ -243,6 +244,20 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         if (typeof Choices !== "undefined") {
+            // Language
+            choicesLanguage = new Choices("#language-select", {
+                searchEnabled: false,
+                itemSelectText: "",
+                shouldSort: false,
+                position: "bottom",
+                // Passamos as opções diretamente na inicialização para garantir que carreguem
+                choices: [
+                    { value: "pt-BR", label: "PT", selected: true },
+                    { value: "en-US", label: "EN" },
+                    { value: "es-ES", label: "ES" }
+                ]
+            });
+
             // Reviewer (Multi)
             choicesReviewer = new Choices("#reviewer", multiOpts);
             const initialReviewers = await fetchOptionsFromDB("evaluator", []); 
@@ -283,18 +298,25 @@ document.addEventListener("DOMContentLoaded", function () {
         checkApplyButtonState();                    // Initialize apply button
         
         // Listeners for Language Buttons
-        document.querySelectorAll(".lang-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                document.querySelectorAll(".lang-btn").forEach(b => b.classList.remove("active"));
-                e.target.classList.add("active");
-                
-                CURRENT_LANG = e.target.getAttribute("data-lang");
+        const langElement = document.getElementById("language-select");
+        if (langElement) {
+            langElement.addEventListener("change", (e) => {
+                CURRENT_LANG = e.target.value;
                 translateUI();
-                
                 updateToggleVisual(appState.isDynamic);
-                updateEvolutionHeader(parseInt(totalNewsEl.textContent.replace(/\D/g, "")) || 0);   // \D removes non-digit 
+                updateEvolutionHeader(parseInt(totalNewsEl.textContent.replace(/\D/g,'')) || 0);
             });
-        });
+        }
+
+        // Dropdown if clicked in the wrapper
+        const langWrapper = document.querySelector(".lang-dropdown-wrapper");
+        if (langWrapper && choicesLanguage) {
+            langWrapper.addEventListener("click", (e) => {
+                if (!e.target.closest(".choices")) {
+                    choicesLanguage.showDropdown();
+                }
+            });
+        }
     }
 
     function setupFilterListeners() {
@@ -527,12 +549,14 @@ document.addEventListener("DOMContentLoaded", function () {
         sortedData.forEach(row => {
             const date = new Date(row.time_period);
             // show time if < 24h, else date only
+            // let labelStr;
+            // if (aggHours < 24) {
+            //     labelStr = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' });
+            // } else {
+            //     labelStr = date.toLocaleDateString('pt-BR');
+            // }
             let labelStr;
-            if (aggHours < 24) {
-                labelStr = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' });
-            } else {
-                labelStr = date.toLocaleDateString('pt-BR');
-            }
+            labelStr = date.toLocaleDateString("pt-BR");
             labels.push(labelStr);
 
             let count = parseInt(row.news_count, 10);
@@ -677,11 +701,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const formattedLabels = sortedDates.map(dateStr => {
             const date = new Date(dateStr);
-            if (aggHours < 24) {
-                return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' });
-            } else {
-                return date.toLocaleDateString('pt-BR');
-            }
+            // if (aggHours < 24) {
+            //     return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' });
+            // } else {
+            //     return date.toLocaleDateString('pt-BR');
+            // }
+            return date.toLocaleDateString("pt-BR");
         });
 
         // Prepare datasets based on the series returned (categories or political alignments)
@@ -706,18 +731,17 @@ document.addEventListener("DOMContentLoaded", function () {
         const handlePointClick = (formattedDateStr, index, event) => {
             const rawDateISO = sortedDates[index];
             console.log("Data clicada (ISO):", rawDateISO);
-            // Atualiza visual do popup
+
             if (formattedDateStr && popupDateSpan) {
                 popupDateSpan.textContent = formattedDateStr;
             }
             
-            // Guarda dado bruto para a navegação
+            // Keep clicked date for details navigation
             currentClickedDate = { date: rawDateISO };
 
             const x = event.native.clientX;
             const y = event.native.clientY;
             
-            // Posiciona e mostra
             confirmPopup.style.left = `${x}px`;
             confirmPopup.style.top = `${y - 90}px`;
             confirmPopup.classList.remove("hidden");

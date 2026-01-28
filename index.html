@@ -35,29 +35,29 @@
 
     <div class="dashboard-wrapper">
         
-        <!-- Languages -->
-        <div class="top-language-bar">
-            <div class="language-buttons">
-                <button class="lang-btn active" data-lang="pt-BR">PT</button>
-                <button class="lang-btn" data-lang="en-US">EN</button>
-                <button class="lang-btn" data-lang="es-ES">ES</button>
-            </div>
-        </div>
-
-        <!-- Faixa de marca -->
         <header class="brand-header" id="top">
             <div class="header-content">
+                <!-- FGV logo -->
+                <div class="logo-wrapper">
+                    <img src="assets/logodint.svg" alt="Logo FGV" class="logo-fgv">
+                </div>
+
+                <!-- index name -->
                 <div class="brand-title">
-                    <i data-lucide="bar-chart-2" class="brand-icon"></i>
                     <div>
-                        <h1 data-i18n="app_title">Indicador da Imagem no Exterior (FGV IMíd.IA)</h1>
-                        <span class="subtitle" data-i18n="app_subtitle">Monitoramento longitudinal de imagem na mídia digital internacional</span>
+                        <h1 data-i18n="app_title">FGV IMídIA</h1>
+                        <span class="subtitle" data-i18n="app_subtitle">Indicador de Imagem na Mídia Digital</span>
                     </div>
                 </div>
-                <img src="assets/logodint.svg" alt="Logo FGV" class="logo-fgv">
+
+                <!-- Language dropdown -->
+                <div class="lang-dropdown-wrapper">
+                    <i data-lucide="languages" class="lang-icon"></i>
+                    <select id="language-select" class="lang-select"></select>
+                </div>
             </div>
         </header>
-        
+
         <!-- Barra de filtros -->
         <section class="sticky-filters" id="filters-container">
             <div class="filters-header">
@@ -146,7 +146,7 @@
                             <h3 data-i18n="chart_histogram_title">Frequência de notas</h3>
                             <span class="info-icon" data-tippy-content="Frequência de notícias agrupadas pela nota de 1 a 7 do IMíd.IA.">?</span>
                         </div>
-                    </div>    
+                    </div>
                     <i data-lucide="chart-no-axes-column" class="card-icon"></i>
                 </div>
                 <div class="card-desc">
@@ -218,13 +218,6 @@
                         </p>
                     </div>
                     <div class="chart-controls">
-                        <!-- <div class="average-buttons">
-                            <button class="avg-btn" data-period="monthly">Mensal</button>
-                            <button class="avg-btn active" data-period="weekly">Semanal</button>
-                            <button class="avg-btn" data-period="daily">Diária</button>
-                            <button class="avg-btn" data-period="hourly">Horária</button>
-                            <button class="avg-btn" data-period="half_hourly">30 min</button>
-                        </div> -->
                         <button id="resetZoomBtn" class="reset-btn">
                             <i data-lucide="rotate-ccw" class="icon-xs"></i> <span data-i18n="btn_reset">Redefinir</span>
                         </button>

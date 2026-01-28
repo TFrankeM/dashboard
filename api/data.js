@@ -107,7 +107,7 @@ async function getVolumeChartData(request) {
   `;
   const { rows } = await sql.query(query, params);  
 
-  console.log("Volume Chart Query:", query, params);
+  //console.log("Volume Chart Query:", query, params);
   return rows;
 }
 

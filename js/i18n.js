@@ -2,8 +2,8 @@
 export const DICTIONARY = {
     "pt-BR" : {
         // General
-        app_title: "Indicador da Imagem no Exterior (FGV IMíd.IA)",
-        app_subtitle: "Monitoramento longitudinal de imagem na mídia digital internacional",
+        app_title: "FGV IMídIA",
+        app_subtitle: "Indicador de Imagem na Mídia Digital",
         filter_section_title: "Filtros",
         mode_static: "Modo estático: 2025",
         mode_dynamic: "Modo dinâmico: atualização em tempo real",
@@ -31,8 +31,8 @@ export const DICTIONARY = {
     },
     "en-US": {
         // General
-        app_title: "Foreign Image Indicator (FGV IMíd.IA)",
-        app_subtitle: "Longitudinal monitoring of image in international digital media",
+        app_title: "FGV IMídIA",
+        app_subtitle: "Foreign Image Indicator",
         filter_section_title: "Filters",
         mode_static: "Static mode: 2025",
         mode_dynamic: "Dynamic mode: real-time update",
@@ -60,8 +60,8 @@ export const DICTIONARY = {
     },
     "es-ES": {
         // General
-        app_title: "Indicador de Imagen en el Exterior (FGV IMíd.IA)",
-        app_subtitle: "Monitoreo longitudinal de la imagen en medios digitales internacionales",
+        app_title: "FGV IMídIA",
+        app_subtitle: "Indicador de Imagen en Medios Digitales",
         filter_section_title: "Filtros",
         mode_static: "Modo estático: 2025",
         mode_dynamic: "Modo dinámico: actualización en tiempo real",
