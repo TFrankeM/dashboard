@@ -5,16 +5,16 @@ export const DICTIONARY = {
         app_title: "FGV IMídIA",
         app_subtitle: "Indicador de Imagem na Mídia Digital",
         filter_section_title: "Filtros",
-        mode_static: "Modo estático: 2025",
-        mode_dynamic: "Modo dinâmico: atualização em tempo real",
+        mode_static: "Modo estático",
+        mode_dynamic: "Modo dinâmico",
         
         // Filter labels
         label_period: "Período",
-        label_reviewer: "Ente avaliador",
-        label_political: "Alinhamento político",
-        label_reviewedEntity: "Ente em avaliação",
+        label_reviewer: "Quem avalia",
+        label_political: "Perfil",
+        label_reviewedEntity: "Quem será avaliado",
         label_category: "Categorias",
-        label_aggregation: "Agregação (em horas)",
+        label_aggregation: "Agregação (h)",
         
         // Buttons
         btn_apply: "Aplicar Filtros",
