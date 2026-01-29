@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="LOGO_x5F_ING" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 686.8 131">
+  <!-- Generator: Adobe Illustrator 30.1.0, SVG Export Plug-In . SVG Version: 2.1.1 Build 136)  -->
+  <defs>
+    <style>
+      .st0, .st1, .st2 {
+        fill: #008bcd;
+      }
+
+      .st1 {
+        letter-spacing: 0em;
+      }
+
+      .st1, .st2 {
+        font-family: Gotham-Black, Gotham;
+        font-size: 27px;
+        font-weight: 800;
+        isolation: isolate;
+      }
+
+      .st3, .st4 {
+        fill: #003e7e;
+      }
+
+      .st3, .st5 {
+        fill-rule: evenodd;
+      }
+
+      .st2 {
+        letter-spacing: 0em;
+      }
+
+      .st5 {
+        fill: #008fd0;
+      }
+    </style>
+  </defs>
+  <g id="Logo_fgv">
+    <g>
+      <path class="st4" d="M183.4,37.8h41.6v12.6h-27.2v8.8h24.6v12h-24.6v18.6h-14.4v-52h0Z"/>
+      <path class="st4" d="M257,90.8c-4.1,0-7.8-.7-11.3-2-3.4-1.3-6.4-3.2-8.9-5.5-2.5-2.4-4.5-5.2-5.9-8.5s-2.2-6.9-2.2-10.9h0c0-3.9.7-7.4,2.1-10.7,1.4-3.3,3.3-6.2,5.8-8.6,2.5-2.5,5.4-4.4,8.8-5.8,3.4-1.4,7.2-2.1,11.2-2.1s8.6.7,11.9,2c3.3,1.3,6.4,3.2,9.2,5.6l-8.5,10.2c-1.9-1.6-3.8-2.8-5.8-3.6s-4.2-1.3-6.8-1.3-3.6.4-5.2,1.1c-1.6.7-3,1.8-4.2,3-1.2,1.3-2.1,2.8-2.8,4.5s-1,3.6-1,5.6h0c0,2.2.3,4.2,1,5.9.7,1.8,1.7,3.3,2.9,4.6,1.3,1.3,2.8,2.3,4.5,3s3.6,1.1,5.7,1.1c3.4,0,6.2-.7,8.3-2.2v-6.3h-10.2v-10.5h23.9v23.4c-2.8,2.3-6,4.2-9.8,5.7s-8,2.3-12.8,2.3h0Z"/>
+      <path class="st4" d="M284.4,37.8h16.1l11.8,32.9,11.8-32.9h15.8l-21.1,52h-13.4l-21-52h0Z"/>
+    </g>
+    <g>
+      <polygon class="st5" points="109.8 54.6 127.7 37.8 168.1 37.8 133.9 69.6 109.8 54.6"/>
+      <polygon class="st3" points="35.7 37.8 77.2 37.8 122.3 89.7 80.8 89.7 35.7 37.8"/>
+    </g>
+  </g>
+  <rect class="st0" x="366.4" y="38.4" width="1.7" height="50.9"/>
+  <text class="st1" transform="translate(391.6 89.3)"><tspan x="0" y="0">AFFAIRS DIVISION</tspan></text>
+  <text class="st2" transform="translate(392.1 57.1)"><tspan x="0" y="0">INTERNACIONAL </tspan></text>
+</svg>

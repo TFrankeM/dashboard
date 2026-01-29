@@ -5,21 +5,76 @@ import { DICTIONARY } from "./i18n.js";
 document.addEventListener("DOMContentLoaded", function () {
     
     let CURRENT_LANG = "pt-BR";
+    function t(key) {
+        return DICTIONARY[CURRENT_LANG][key] || key;
+    }
+    function tEntity(val) {
+        return DICTIONARY[CURRENT_LANG].entity_options[val] || val;
+    }
+    function tPeriod(val) {
+        return DICTIONARY[CURRENT_LANG].period_options[val] || val;
+    }
+    function tCategory(val) {
+        return DICTIONARY[CURRENT_LANG].category_options[val] || val;
+    }
+    function tPolitical(val) {
+        return DICTIONARY[CURRENT_LANG].political_options[val] || val;
+    }
+
     function translateUI() {
         const texts = DICTIONARY[CURRENT_LANG];
-        if (!texts) return; // language does not exist
+        if (!texts) return;
 
+        // ordinary texts
         document.querySelectorAll("[data-i18n]").forEach(el => {
             const key = el.getAttribute("data-i18n");
             if (texts[key]) {
                 el.textContent = texts[key];
             }
         });
+
+        // imgs
+        document.querySelectorAll("[data-i18n-img]").forEach(el => {
+            const key = el.getAttribute("data-i18n-img");
+            if (texts[key]) {
+                el.src = texts[key];
+            }
+        });
+
+        // tooltips
+        document.querySelectorAll("[data-i18n-tooltip]").forEach(el => {
+            const key = el.getAttribute("data-i18n-tooltip");
+            if (el._tippy) {
+                el._tippy.setContent(texts[key]);
+            }
+            el.setAttribute("data-tippy-content", texts[key]);
+        });
+
+        // filters
+        updateChoicesLabels(choicesReviewer, tEntity);
+        updateChoicesLabels(choicesReviewedEntity, tEntity);
+        updateChoicesLabels(choicesPolitical, tPolitical);
+        updateChoicesLabels(choicesCategory, tCategory);
+        updateChoicesLabels(choicesPeriod, tPeriod);
+
+        updateEvolutionHeader(parseInt(totalNewsEl.textContent.replace(/\D/g,'')) || 0);
+        }
+
+    function updateChoicesLabels(choiceInstance, translatorFunc) {
+        if (!choiceInstance) return;
+        const currentChoices = choiceInstance._store.choices;
+        const newChoices = currentChoices.map(item => ({
+            value: item.value,
+            label: translatorFunc(item.value),
+            selected: item.selected,
+            disabled: item.disabled
+        }));
+        choiceInstance.clearStore();
+        choiceInstance.setChoices(newChoices, "value", "label", true);
     }
 
 
     //// UI Initialization ////
-    
     if (typeof lucide !== "undefined") {
         lucide.createIcons();
     };
@@ -40,16 +95,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-
     // Scroll: compact header; update side menu
     const filterSection = document.getElementById("filters-container");
     const navDots = document.querySelectorAll(".nav-dot");
     const sections = document.querySelectorAll("header, section, main");
-
     window.addEventListener("scroll", () => {
         const scrollY = window.scrollY;
 
-        // Compact Filters
+        // Compact cilters
         if (filterSection) {
             if (scrollY > 200) {
                 filterSection.classList.add("compact");
@@ -90,31 +143,28 @@ document.addEventListener("DOMContentLoaded", function () {
         politicalAlignment: null,
         aggregation: 1
     };
-
     let appState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-
     let pendingState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-
 
     // Static data for dropdowns
     const PERIODS_CONFIG = {
         static: [
-            { label: "2025 semestre 1 de 2", value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
-            { label: "2025 semestre 2 de 2", value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
-            { label: "2025 trimestre 1 de 4", value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
-            { label: "2025 trimestre 2 de 4", value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
-            { label: "2025 trimestre 3 de 4", value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
-            { label: "2025 trimestre 4 de 4", value: "q4_2025", start: "2025-10-01", end: "2025-12-31" },
-            { label: "2025", value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
-            { label: "2026", value: "year_2026", start: "2026-01-01", end: "2026-12-31" },
-            { label: "Dez de 2025 a Fev de 2026", value: "dec2025_jan2026", start: "2025-12-01", end: "2026-02-10" }
+            { value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
+            { value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
+            { value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
+            { value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
+            { value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
+            { value: "q4_2025", start: "2025-10-01", end: "2025-12-31" },
+            { value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
+            { value: "year_2026", start: "2026-01-01", end: "2026-12-31" },
+            { value: "dec2025_jan2026", start: "2025-12-01", end: "2026-02-10" }
 
         ],
         dynamic: [
-            { label: "Últimos 30 dias", value: "Last30d" },
-            { label: "Últimos 120 dias", value: "Last120d" },
-            { label: "Últimos 180 dias", value: "Last180d" },
-            { label: "Últimos 365 dias", value: "Last365d" }
+            { value: "Last30d" },
+            { value: "Last120d" },
+            { value: "Last180d" },
+            { value: "Last365d" }
         ]
     };
     
@@ -139,22 +189,12 @@ document.addEventListener("DOMContentLoaded", function () {
         "Trabalho" 
     ];
 
-    const reviewersList = [ 
-        { label: "Argentina", value: "Argentina" },
-        { label: "Estados Unidos", value: "EUA" }
-    ];
-
-    const reviewedEntityList = [ 
-        { label: "Brasil", value: "Brasil" },
-        { label: "Presidente Trump", value: "Presidente Trump" }
-    ];
-
     const RELATIONSHIPS = {
+        // Evaluator: [Evaluated]
         "Argentina": ["Brasil"],
         "EUA": ["Presidente Trump"]
     };
     
-
     // SELECTORS
     const reviewerSelect = document.getElementById("reviewer");
     const politicalSelect = document.getElementById("politicalAlignment");
@@ -179,21 +219,21 @@ document.addEventListener("DOMContentLoaded", function () {
     
     const lineChartCanvas = document.getElementById("lineChart");
     const resetZoomBtn = document.getElementById("resetZoomBtn");
-    // const averageButtonsContainer = document.querySelector(".average-buttons");
     const evolutionTitleEl = document.getElementById("evolution-title");
     const evolutionSubtitleEl = document.getElementById("evolution-subtitle");
 
 
     // Referências para instâncias do Choices
-    let choicesPeriod, choicesCategory, choicesReviewer, choicesReviewedEntity, choicesPolitical;
-    let choicesLanguage;
+    let choicesPeriod, choicesCategory, choicesReviewer, choicesReviewedEntity, choicesPolitical, choicesLanguage;
+    let currentClickedDate = null;
     let pollingInterval = null;
 
     async function fetchOptionsFromDB(targetType, filterValue) {
+        /* */
         return new Promise(resolve => {
             setTimeout(() => {
                 let options = [];
-                if (targetType === 'evaluated') {
+                if (targetType === "evaluated") {
                     if (!filterValue || filterValue.length === 0) {
                         options = [...new Set(Object.values(RELATIONSHIPS).flat())];
                     } else {
@@ -203,7 +243,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         });
                         options = [...allowed];
                     }
-                } else if (targetType === 'evaluator') {
+                } else if (targetType === "evaluator") {
                     if (!filterValue || filterValue.length === 0) {
                         options = Object.keys(RELATIONSHIPS);
                     } else {
@@ -218,7 +258,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
                 
-                resolve(options.map(label => ({ value: label, label: label })));
+                resolve(options.map(label => ({ value: label, label: tEntity(label) })));
             }, 50); 
         });
     }
@@ -301,11 +341,11 @@ document.addEventListener("DOMContentLoaded", function () {
         // Listeners for Language Buttons
         const langElement = document.getElementById("language-select");
         if (langElement) {
-            langElement.addEventListener("change", (e) => {
+            langElement.addEventListener("change", async (e) => {
                 CURRENT_LANG = e.target.value;
                 translateUI();
+                // await updateDashboard();
                 updateToggleVisual(appState.isDynamic);
-                updateEvolutionHeader(parseInt(totalNewsEl.textContent.replace(/\D/g,'')) || 0);
             });
         }
 
@@ -578,29 +618,29 @@ document.addEventListener("DOMContentLoaded", function () {
         const finalValue = value !== undefined && value !== null ? parseFloat(value) : 4.00;
         gaugeValueText.textContent = finalValue.toFixed(2);
 
-        let descText = "Sem dados";
+        let descText = t("no_data_found");
         let descColor = "#94a3b8";
 
         if (finalValue <= 1.50) { 
-            descText = "Extremamente negativa"; 
+            descText = t("gauge_extremely_negative"); 
             descColor = "#b91c1c";
         } else if (finalValue <= 2.50) { 
-            descText = "Muito negativa"; 
+            descText = t("gauge_very_negative"); 
             descColor = "#ef4444";
         } else if (finalValue <= 3.50) { 
-            descText = "Levemente negativa"; 
+            descText = t("gauge_slightly_negative"); 
             descColor = "#fdae61";
         } else if (finalValue <= 4.49) { 
-            descText = "Neutra"; 
+            descText = t("gauge_neutral"); 
             descColor = "#64748b";
         } else if (finalValue <= 5.49) { 
-            descText = "Levemente positiva"; 
+            descText = t("gauge_slightly_positive"); 
             descColor = "#84cc16";
         } else if (finalValue <= 6.49) { 
-            descText = "Muito positiva"; 
+            descText = t("gauge_very_positive"); 
             descColor = "#22c55e";
         } else { 
-            descText = "Extremamente positiva"; 
+            descText = t("gauge_extremely_positive"); 
             descColor = "#15803d";
         }
 
@@ -615,7 +655,6 @@ document.addEventListener("DOMContentLoaded", function () {
     //// POP-UP
     // Confirmation pop-up window for news roll down logic
     const confirmPopup = document.getElementById("chart-popup");
-    let currentClickedDate = null;
     const popupDateSpan = document.getElementById("popup-date")
     // Close popup when clicking outside line chart or popup
     document.addEventListener("click", (e) => {
@@ -657,9 +696,14 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateEvolutionHeader(totalNews) {
         if (!evolutionTitleEl || !evolutionSubtitleEl) return;
         
-        //title
-        evolutionTitleEl.innerHTML = `Indicador de Imagem na Mídia por IA (FGV IMíd.IA)<br><span style="font-size: 0.8em; font-weight: 500; opacity: 0.85;">Ente avaliador: ${appState.reviewer} | Ente em avaliação: ${appState.reviewedEntity}</span>`;
-
+        const revArr = Array.isArray(appState.reviewer) ? appState.reviewer : [appState.reviewer];
+        const entArr = Array.isArray(appState.reviewedEntity) ? appState.reviewedEntity : [appState.reviewedEntity];
+        const revStr = revArr.map(r => tEntity(r)).join(", ");
+        const entStr = entArr.map(e => tEntity(e)).join(", ");
+        
+        // title
+        evolutionTitleEl.innerHTML = `${t("app_title")}<br><span style="font-size: 0.8em; font-weight: 500; opacity: 0.85;">${t("evo_title_prefix")}${revStr}${t("evo_title_separator")}${entStr}</span>`;
+        
         let dateStr = "";
         if (appState.isDynamic) {
             dateStr = `nos ${PERIODS_CONFIG.dynamic.find(p => p.value === appState.periodValue)?.label?.replace("Ú", "ú") || appState.periodValue}`;
@@ -670,12 +714,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 const parts = isoDate.split('-');
                 return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`; // dd/mm/aa
             };
-            dateStr = `de ${formatDate(appState.customStartDate)} a ${formatDate(appState.customEndDate)}`;
+            dateStr = `${t("evo_date_connector_static")}${formatDate(appState.customStartDate)}${t("evo_date_connector_static_to")}${formatDate(appState.customEndDate)}`;
         }
 
-        //subtitle
-        const totalStr = totalNews ? totalNews.toLocaleString('pt-BR') : "0";
-        evolutionSubtitleEl.textContent = `Evolução do Indicador de Imagem no Exterior ${dateStr} | ${totalStr} notícias analisadas no período`;
+        // subtitle
+        const unit = totalNews === 1 ? t("chart_volume_unit_singular") : t("chart_volume_unit_plural");
+        const totalStr = totalNews ? totalNews.toLocaleString(CURRENT_LANG) : "0";
+        evolutionSubtitleEl.textContent = `${t("evo_subtitle_prefix")}${dateStr} | ${totalStr} ${unit}`;
     }
 
     function processAndUpdateLineChart(apiData) {
@@ -774,17 +819,13 @@ document.addEventListener("DOMContentLoaded", function () {
         totalNewsEl.textContent = "...";
 
         try {
-            console.log("[Dashboard] Buscando dados...", apiFilters);
             const [histogramData, volumeData, gaugeVal, lineData] = await Promise.all([
                 fetchGradesHistogramData(apiFilters),
                 fetchVolumeChartData(apiFilters),
                 fetchGaugeData(apiFilters),
                 fetchLineChartData(apiFilters)
             ]);
-            console.log("Dados do histograma", histogramData);
-            console.log("Dados do volume", volumeData);
-            console.log("Dados do gauge", gaugeVal);
-            console.log("Dados do gráfico de linha", lineData);
+
             processAndUpdateHistogramChart(histogramData);
             const totalNewsCount = processAndUpdateVolumeChart(volumeData);
             processAndUpdateGaugeDisplay(gaugeVal); 
@@ -801,6 +842,4 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeFilters();
     setTimeout(updateDashboard, 100);
 });
-
-
 

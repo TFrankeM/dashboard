@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="LOGO_ESP" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 686.8 131">
+  <defs>
+    <style>
+      .cls-1, .cls-2 {
+        fill: #008bcd;
+      }
+
+      .cls-3 {
+        letter-spacing: .04em;
+      }
+
+      .cls-4 {
+        letter-spacing: 0em;
+      }
+
+      .cls-5 {
+        letter-spacing: .04em;
+      }
+
+      .cls-6 {
+        letter-spacing: .04em;
+      }
+
+      .cls-7 {
+        letter-spacing: .02em;
+      }
+
+      .cls-8, .cls-9 {
+        fill: #003e7e;
+      }
+
+      .cls-8, .cls-10 {
+        fill-rule: evenodd;
+      }
+
+      .cls-2 {
+        font-family: Gotham-Black, Gotham;
+        font-size: 27px;
+        font-weight: 800;
+        isolation: isolate;
+      }
+
+      .cls-10 {
+        fill: #008fd0;
+      }
+    </style>
+  </defs>
+  <g id="Logo_fgv" data-name="Logo fgv">
+    <g>
+      <path class="cls-9" d="M183.4,36.88h41.6v12.6h-27.2v8.8h24.6v12h-24.6v18.6h-14.4v-52h0Z"/>
+      <path class="cls-9" d="M257,89.88c-4.1,0-7.8-.7-11.3-2-3.4-1.3-6.4-3.2-8.9-5.5-2.5-2.4-4.5-5.2-5.9-8.5s-2.2-6.9-2.2-10.9h0c0-3.9.7-7.4,2.1-10.7,1.4-3.3,3.3-6.2,5.8-8.6,2.5-2.5,5.4-4.4,8.8-5.8,3.4-1.4,7.2-2.1,11.2-2.1s8.6.7,11.9,2c3.3,1.3,6.4,3.2,9.2,5.6l-8.5,10.2c-1.9-1.6-3.8-2.8-5.8-3.6s-4.2-1.3-6.8-1.3-3.6.4-5.2,1.1c-1.6.7-3,1.8-4.2,3-1.2,1.3-2.1,2.8-2.8,4.5s-1,3.6-1,5.6h0c0,2.2.3,4.2,1,5.9.7,1.8,1.7,3.3,2.9,4.6,1.3,1.3,2.8,2.3,4.5,3s3.6,1.1,5.7,1.1c3.4,0,6.2-.7,8.3-2.2v-6.3h-10.2v-10.5h23.9v23.4c-2.8,2.3-6,4.2-9.8,5.7s-8,2.3-12.8,2.3h.1Z"/>
+      <path class="cls-9" d="M284.4,36.88h16.1l11.8,32.9,11.8-32.9h15.8l-21.1,52h-13.4l-21-52h0Z"/>
+    </g>
+    <g>
+      <polygon class="cls-10" points="109.79 53.68 127.69 36.88 168.09 36.88 133.89 68.68 109.79 53.68"/>
+      <polygon class="cls-8" points="35.69 36.88 77.19 36.88 122.29 88.78 80.79 88.78 35.69 36.88"/>
+    </g>
+  </g>
+  <rect class="cls-1" x="366.41" y="37.43" width="1.7" height="50.9"/>
+  <text class="cls-2" transform="translate(391.65 88.33)"><tspan class="cls-3" x="0" y="0">INTERN</tspan><tspan class="cls-4" x="113.29" y="0">A</tspan><tspan class="cls-3" x="134.67" y="0">CIONAL</tspan></text>
+  <text class="cls-2" transform="translate(392.14 56.17)"><tspan class="cls-5" x="0" y="0">DIR</tspan><tspan class="cls-6" x="52.33" y="0">E</tspan><tspan class="cls-7" x="71.36" y="0">C</tspan><tspan class="cls-3" x="91.69" y="0">CIÓN </tspan></text>
+</svg>

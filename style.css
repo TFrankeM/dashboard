@@ -999,13 +999,14 @@ input:checked + .slider:before {
     border-top: 1px solid var(--border-color); 
 }
 
-.footer-content a { 
+.link_dint_site { 
     color: var(--fgv-blue); 
     text-decoration: none; 
     font-weight: 700; 
 }
 
-.sub-footer { 
+.sub-footer,
+.link_to_email { 
     font-size: 12px; 
     color: #9ca3af; 
     margin-top: 5px; 
