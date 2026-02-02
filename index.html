@@ -79,60 +79,68 @@
                 </div>
             </div>
             
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label for="reviewer">
-                        <span data-i18n="label_reviewer">Quem avalia</span>
-                        <span class="info-icon" data-i18n-tooltip="tooltip_reviewer">?</span>
-                    </label>
-                    <select id="reviewer" multiple></select>
-                </div>
+            <button id="mobile-filter-toggle" class="mobile-filter-btn">
+                <i data-lucide="filter" class="icon-sm"></i>
+                <span id="mobile-filter-text" data-i18n="btn_show_filters">Mostrar filtros</span>
+                <i data-lucide="chevron-down" class="icon-sm chevron"></i>
+            </button>
 
-                <div class="filter-group">
-                    <label for="reviewedEntity">
-                        <span data-i18n="label_reviewedEntity">Quem é avaliado</span>
-                        <span class="info-icon" data-i18n-tooltip="tooltip_reviewedEntity">?</span>
-                    </label>
-                    <select id="reviewedEntity" multiple></select>
-                </div>
+            <div id="filters-wrapper" class="filters-collapse">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="reviewer">
+                            <span data-i18n="label_reviewer">Quem avalia</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_reviewer">?</span>
+                        </label>
+                        <select id="reviewer" multiple></select>
+                    </div>
 
-                <div class="filter-group">
-                    <label for="period">
-                        <span data-i18n="label_period">Período</span>
-                        <span class="info-icon" data-i18n-tooltip="tooltip_period">?</span>
-                    </label>
-                    <select id="period"></select>
-                </div>
-                
-                <div class="filter-group">
-                    <label for="aggregation">
-                        <span data-i18n="label_aggregation">Agregação (em horas)</span>
-                        <span class="info-icon" data-i18n-tooltip="tooltip_aggregation">?</span>
-                    </label>
-                    <input type="number" id="aggregation" min="0.25" step="0.5" class="input-aggregation">
-                </div>
-                
-                <div class="filter-group hidden" id="political-filter-group">
-                    <label for="politicalAlignment">
-                        <span data-i18n="label_political">Alinhamento político</span>
-                        <span class="info-icon" data-i18n-tooltip="tooltip_political">?</span>
-                    </label>
-                    <select id="politicalAlignment" multiple></select>
-                </div>
+                    <div class="filter-group">
+                        <label for="reviewedEntity">
+                            <span data-i18n="label_reviewedEntity">Quem é avaliado</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_reviewedEntity">?</span>
+                        </label>
+                        <select id="reviewedEntity" multiple></select>
+                    </div>
 
-                <div class="filter-group span-2">
-                    <label for="category">
-                        <span data-i18n="label_category">Categorias</span>
-                        <span class="info-icon" data-i18n-tooltip="tooltip_category">?</span>
-                    </label>
-                    <select id="category" multiple></select>
-                </div>
-                
-                <div class="filter-apply">
-                    <button class="btn-apply disabled" id="btn-apply" disabled>
-                        <i data-lucide="check-circle" class="icon-sm"></i>
-                        <span data-i18n="btn_apply">Aplicar mudanças</span>
-                    </button>
+                    <div class="filter-group">
+                        <label for="period">
+                            <span data-i18n="label_period">Período</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_period">?</span>
+                        </label>
+                        <select id="period"></select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="aggregation">
+                            <span data-i18n="label_aggregation">Agregação (em horas)</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_aggregation">?</span>
+                        </label>
+                        <input type="number" id="aggregation" min="0.25" step="0.5" class="input-aggregation">
+                    </div>
+                    
+                    <div class="filter-group hidden" id="political-filter-group">
+                        <label for="politicalAlignment">
+                            <span data-i18n="label_political">Alinhamento político</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_political">?</span>
+                        </label>
+                        <select id="politicalAlignment" multiple></select>
+                    </div>
+
+                    <div class="filter-group span-2">
+                        <label for="category">
+                            <span data-i18n="label_category">Categorias</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_category">?</span>
+                        </label>
+                        <select id="category" multiple></select>
+                    </div>
+                    
+                    <div class="filter-apply">
+                        <button class="btn-apply disabled" id="btn-apply" disabled>
+                            <i data-lucide="check-circle" class="icon-sm"></i>
+                            <span data-i18n="btn_apply">Aplicar mudanças</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>

@@ -4,6 +4,10 @@ import { DICTIONARY } from "./i18n.js";
 
 document.addEventListener("DOMContentLoaded", function () {
     
+    const mobileFilterBtn = document.getElementById("mobile-filter-toggle");
+    const mobileFilterText = document.getElementById("mobile-filter-text");
+    const filtersWrapper = document.getElementById("filters-wrapper");
+
     let CURRENT_LANG = "pt-BR";
     function t(key) {
         return DICTIONARY[CURRENT_LANG][key] || key;
@@ -32,6 +36,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 el.textContent = texts[key];
             }
         });
+
+        if (mobileFilterBtn && filtersWrapper) {
+            const isOpen = filtersWrapper.classList.contains("open");
+            mobileFilterText.textContent = isOpen ? t("btn_hide_filters") : t("btn_show_filters");
+        }
 
         // imgs
         document.querySelectorAll("[data-i18n-img]").forEach(el => {
@@ -92,6 +101,19 @@ document.addEventListener("DOMContentLoaded", function () {
             interactive: true,
             allowHTML: true,
             appendTo: () => document.body,
+        });
+    }
+
+    // filter toggle button for mobile
+    if (mobileFilterBtn && filtersWrapper) {
+        mobileFilterBtn.addEventListener("click", () => {
+            const isOpen = filtersWrapper.classList.toggle("open");
+            mobileFilterBtn.classList.toggle("expanded");
+            
+            const textKey = isOpen ? "btn_hide_filters" : "btn_show_filters";
+            mobileFilterText.textContent = t(textKey);
+            
+            if (typeof lucide !== "undefined") lucide.createIcons();
         });
     }
 
@@ -490,6 +512,12 @@ document.addEventListener("DOMContentLoaded", function () {
         appState = JSON.parse(JSON.stringify(pendingState));
         checkApplyButtonState();
         updateDashboard();
+
+        if (window.innerWidth < 1024 && filtersWrapper && filtersWrapper.classList.contains("open")) {
+            filtersWrapper.classList.remove("open");
+            mobileFilterBtn.classList.remove("expanded");
+            mobileFilterText.textContent = t("btn_show_filters");
+        }
 
         if (appState.isDynamic) {
             if (pollingInterval) clearInterval(pollingInterval);

@@ -17,6 +17,7 @@ if (typeof Chart !== "undefined" && typeof ChartZoom !== "undefined") {
     Chart.register(ChartZoom);
 }
 
+const isSmallScreen = () => window.innerWidth <= 1024;
 
 // Plugin to draw the Gauge needle (Velocímetro)
 const gaugeNeedlePlugin = {
@@ -309,10 +310,12 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
     const ctx = canvasElement.getContext("2d");
     if (lineInstance) lineInstance.destroy();
     
+    const smallScreen = isSmallScreen();
+
     const POLITICAL_COLORS = {
-        'Democratas': '#2563eb',
-        'Republicanos': '#dc2626',
-        'Independentes': '#d97706'
+        "Democratas": "#2563eb",
+        "Republicanos": "#dc2626",
+        "Independentes": "#d97706"
         };
 
     const LINE_COLORS = [
@@ -363,7 +366,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                 intersect: false,
             },
             layout: {
-                padding: { top: 15, bottom: 15, left: 10, right: 30 } 
+                padding: smallScreen ? { top: 15, bottom: 15, left: 5, right: 5 } : { top: 15, bottom: 15, left: 10, right: 10 } 
             },
             scales: {
                 y: { 
@@ -378,7 +381,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                         includeBounds: true,
                         autoSkip: true,     // skip labels if it doesn't fit
                         //autoSkipPadding: 15,
-                        maxTicksLimit: 10,   // max number of ticks to show
+                        maxTicksLimit: smallScreen ? 4 : 10,   // max number of ticks to show
                     }
                 }
             },
@@ -388,12 +391,19 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                     const firstPoint = points[0];
                     const index = firstPoint.index;
                     const dateClicked = lineInstance.data.labels[index];
-                    //console.log("Ponto clicado:", dateClicked);
                     onPointClicked(dateClicked, index, e);
                 }
             },
             plugins: { 
-                legend: { display: true, position: "top", onClick: (e) => { e.stopPropagation(); } },
+                legend: { 
+                    display: true, 
+                    position: "top", 
+                    onClick: (e) => { e.stopPropagation(); },
+                    labels: {
+                        font: { size: smallScreen ? 10 : 12 },
+                        boxWidth: smallScreen ? 10 : 40
+                    }
+                },
                 zoom: { 
                     pan: { enabled: true, mode: "x" }, 
                     zoom: { 
@@ -410,3 +420,4 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
 export function resetLineChartZoom() {
     if (lineInstance) lineInstance.resetZoom();
 }
+

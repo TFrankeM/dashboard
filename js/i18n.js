@@ -34,6 +34,8 @@ export const DICTIONARY = {
 
         // Buttons
         btn_apply: "Aplicar filtros",
+        btn_show_filters: "Mostrar filtros",
+        btn_hide_filters: "Ocultar filtros",
         btn_reset: "Redefinir zoom",
         btn_view_news: "Veja as notícias",
         btn_cancel: "Cancelar",
@@ -158,6 +160,8 @@ export const DICTIONARY = {
 
         // Buttons
         btn_apply: "Apply changes",
+        btn_show_filters: "Show filters",
+        btn_hide_filters: "Hide filters",        
         btn_reset: "Reset",
         btn_view_news: "View news",
         btn_cancel: "Cancel",
@@ -280,6 +284,8 @@ export const DICTIONARY = {
 
         // Buttons
         btn_apply: "Aplicar cambios",
+        btn_show_filters: "Mostrar filtros",
+        btn_hide_filters: "Ocultar filtros",    
         btn_reset: "Restablecer",
         btn_view_news: "Ver noticias",
         btn_cancel: "Cancelar",
