@@ -242,7 +242,8 @@ async function getLineChartData(request) {
   const query = `
     SELECT 
       date_bin(${intervalParam}::interval, date, TIMESTAMP '2025-01-01') AS time_period${selectClause},
-      AVG(grade) AS average_grade
+      AVG(grade) AS average_grade,
+      COUNT(*) AS news_count
     FROM noticias
     ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
     GROUP BY 

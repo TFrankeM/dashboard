@@ -1,5 +1,5 @@
 import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData } from "./api_adapter.js";
-import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, resetLineChartZoom } from "./charts.js";
+import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, resetLineChartZoom, clearLineChartSelection } from "./charts.js";
 import { DICTIONARY } from "./i18n.js";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -64,10 +64,10 @@ document.addEventListener("DOMContentLoaded", function () {
         updateChoicesLabels(choicesReviewedEntity, tEntity);
         updateChoicesLabels(choicesPolitical, tPolitical);
         updateChoicesLabels(choicesCategory, tCategory);
-        updateChoicesLabels(choicesPeriod, tPeriod);
+        updatePeriodDropdown(pendingState.isDynamic);
 
         updateEvolutionHeader(parseInt(totalNewsEl.textContent.replace(/\D/g,'')) || 0);
-        }
+    }
 
     function updateChoicesLabels(choiceInstance, translatorFunc) {
         if (!choiceInstance) return;
@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("scroll", () => {
         const scrollY = window.scrollY;
 
-        // Compact cilters
+        // compact filters
         if (filterSection) {
             if (scrollY > 200) {
                 filterSection.classList.add("compact");
@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
-        // Update side menu
+        // update side menu
         let current = "";
         sections.forEach(section => {
             const sectionTop = section.offsetTop;
@@ -148,6 +148,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 dot.classList.add("active");
             }
         });
+
+        // close popup and tooltips if scroll
+        if (popup && !popup.classList.contains("hidden")) {
+            popup.classList.add("hidden");
+        };
+        if (typeof tippy !== "undefined" && tippy.hideAll) {
+            tippy.hideAll();
+        };
+        clearLineChartSelection();
     });
 
 
@@ -168,6 +177,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let appState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     let pendingState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
+    let cachedApiData = {};
+    
     // Static data for dropdowns
     const PERIODS_CONFIG = {
         static: [
@@ -228,6 +239,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const dynamicToggle = document.getElementById("dynamic-mode");
     const toggleLabel = document.getElementById("mode-label");
     const btnApply = document.getElementById("btn-apply");
+
     // GRAPHS
     const gradesChartCanvas = document.getElementById("gradesChart");
 
@@ -243,6 +255,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const resetZoomBtn = document.getElementById("resetZoomBtn");
     const evolutionTitleEl = document.getElementById("evolution-title");
     const evolutionSubtitleEl = document.getElementById("evolution-subtitle");
+    const popup = document.getElementById("chart-popup");
 
 
     // Referências para instâncias do Choices
@@ -356,7 +369,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         
         translateUI();
-        updateToggleVisual(appState.isDynamic);
+        updateToggleVisual(pendingState.isDynamic);
         checkEvaluatorContext(appState.reviewer);   // check for political alignement
         checkApplyButtonState();                    // Initialize apply button
         
@@ -366,8 +379,9 @@ document.addEventListener("DOMContentLoaded", function () {
             langElement.addEventListener("change", async (e) => {
                 CURRENT_LANG = e.target.value;
                 translateUI();
-                // await updateDashboard();
-                updateToggleVisual(appState.isDynamic);
+                // instead of updateDashboard() that takes time, just refresh graphs
+                redrawCharts();
+                updateToggleVisual(pendingState.isDynamic);
             });
         }
 
@@ -531,7 +545,12 @@ document.addEventListener("DOMContentLoaded", function () {
     function updatePeriodDropdown(isDynamic) {
         if (!choicesPeriod) return;
 
-        const options = isDynamic ? PERIODS_CONFIG.dynamic : PERIODS_CONFIG.static;
+        const rawOptions = isDynamic ? PERIODS_CONFIG.dynamic : PERIODS_CONFIG.static;
+        const options = rawOptions.map(opt => ({
+            ...opt,
+            label: tPeriod(opt.value)
+        }));
+
         choicesPeriod.clearStore();
         choicesPeriod.setChoices(options, "value", "label", true);
         
@@ -584,7 +603,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     function processAndUpdateHistogramChart(apiData) {
-        // apiData expected: [{ bucket: 1, count: 10 }, { bucket: 2, count: 5 }, ...]
+        // apiData expected: [{ grade_bucket: 1, count: 10 }, { grade_bucket: 2, count: 5 }, ...]
         const fullBuckets = [1, 2, 3, 4, 5, 6, 7];
         const labels = fullBuckets.map(String);
         const dataMap = {};
@@ -596,13 +615,30 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         
         const values = fullBuckets.map(bucket => dataMap[bucket] || 0);
-        drawGradesHistogramChart(gradesChartCanvas, labels, values);
+
+        const gradeDescriptions = {
+            "1": t("image_extremely_negative"),
+            "2": t("image_very_negative"),
+            "3": t("image_slightly_negative"),
+            "4": t("image_neutral"),
+            "5": t("image_slightly_positive"),
+            "6": t("image_very_positive"),
+            "7": t("image_extremely_positive")
+        };
+
+        const texts = {
+            tooltipTitle: t("chart_histogram_tooltip_grade"),
+            tooltipUnitSingular: t("chart_histogram_tooltip_unit_singular"),
+            tooltipUnitPlural: t("chart_histogram_tooltip_unit_plural"),
+            gradeDescriptions: gradeDescriptions
+        };
+        drawGradesHistogramChart(gradesChartCanvas, labels, values, texts);
     }
     
     function processAndUpdateVolumeChart(apiData) {
         if (!apiData || apiData.length === 0) {
             totalNewsEl.textContent = "0";
-            drawVolumeChart(volumeChartCanvas, ["Nenhum dado"], []);
+            drawVolumeChart(volumeChartCanvas, [t("no_data_found")], []);
             return 0;
         }
 
@@ -613,17 +649,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const sortedData = apiData.sort((a, b) => new Date(a.time_period) - new Date(b.time_period));
 
-        const aggHours = parseFloat(appState.aggregation);
-
         sortedData.forEach(row => {
             const date = new Date(row.time_period);
-            // show time if < 24h, else date only
-            // let labelStr;
-            // if (aggHours < 24) {
-            //     labelStr = date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' });
-            // } else {
-            //     labelStr = date.toLocaleDateString('pt-BR');
-            // }
             let labelStr;
             labelStr = date.toLocaleDateString("pt-BR");
             labels.push(labelStr);
@@ -635,9 +662,16 @@ document.addEventListener("DOMContentLoaded", function () {
             total += count;
         });
 
-        drawVolumeChart(volumeChartCanvas, labels, values);
-        const sufixo = total === 1 ? "notícia analisada no período" : "notícias analisadas no período";
+        drawVolumeChart(volumeChartCanvas, labels, values, {
+            labelNews: t("chart_label_news"),
+            tooltipDay: t("chart_volume_tooltip_day"),
+            suffixSingular: t("chart_volume_tooltip_unit_singular"),
+            suffixPlural: t("chart_volume_tooltip_unit_plural")
+        });
+        
+        const sufixo = total === 1 ? t("chart_volume_desc_singular") : t("chart_volume_desc_plural");
         totalNewsEl.innerHTML = `<strong>${total.toLocaleString('pt-BR')}</strong> ${sufixo}`;
+        console.log(totalNewsEl.innerHTML);
         return total;
     }
 
@@ -650,25 +684,25 @@ document.addEventListener("DOMContentLoaded", function () {
         let descColor = "#94a3b8";
 
         if (finalValue <= 1.50) { 
-            descText = t("gauge_extremely_negative"); 
+            descText = t("image_extremely_negative"); 
             descColor = "#b91c1c";
         } else if (finalValue <= 2.50) { 
-            descText = t("gauge_very_negative"); 
+            descText = t("image_very_negative"); 
             descColor = "#ef4444";
         } else if (finalValue <= 3.50) { 
-            descText = t("gauge_slightly_negative"); 
+            descText = t("image_slightly_negative"); 
             descColor = "#fdae61";
         } else if (finalValue <= 4.49) { 
-            descText = t("gauge_neutral"); 
+            descText = t("image_neutral"); 
             descColor = "#64748b";
         } else if (finalValue <= 5.49) { 
-            descText = t("gauge_slightly_positive"); 
+            descText = t("image_slightly_positive"); 
             descColor = "#84cc16";
         } else if (finalValue <= 6.49) { 
-            descText = t("gauge_very_positive"); 
+            descText = t("image_very_positive"); 
             descColor = "#22c55e";
         } else { 
-            descText = t("gauge_extremely_positive"); 
+            descText = t("image_extremely_positive"); 
             descColor = "#15803d";
         }
 
@@ -677,7 +711,17 @@ document.addEventListener("DOMContentLoaded", function () {
             gaugeDescription.style.color = descColor;
         }
 
-        drawGaugeChart(gaugeChartCanvas, finalValue);
+        const segments = [
+            `${t("image_extremely_negative")} (1.0 - 1.5)`,
+            `${t("image_very_negative")} (1.51 - 2.5)`,
+            `${t("image_slightly_negative")} (2.51 - 3.5)`,
+            `${t("image_neutral")} (3.51 - 4.49)`,
+            `${t("image_slightly_positive")} (4.5 - 5.49)`,
+            `${t("image_very_positive")} (5.5 - 6.49)`,
+            `${t("image_extremely_positive")} (6.5 - 7.0)`
+        ];
+
+        drawGaugeChart(gaugeChartCanvas, finalValue, { segments });
     }
 
     //// POP-UP
@@ -746,19 +790,18 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // subtitle
-        const unit = totalNews === 1 ? t("chart_volume_unit_singular") : t("chart_volume_unit_plural");
         const totalStr = totalNews ? totalNews.toLocaleString(CURRENT_LANG) : "0";
-        evolutionSubtitleEl.textContent = `${t("evo_subtitle_prefix")}${dateStr} | ${totalStr} ${unit}`;
+        evolutionSubtitleEl.textContent = `${t("evo_subtitle_prefix")}${dateStr} | ${t("chart_line_tooltip_count")}: ${totalStr}`;
     }
 
     function processAndUpdateLineChart(apiData) {
         if (!apiData || apiData.length === 0) {
-            drawLineChart(lineChartCanvas, ["Nenhum dado encontrado."], [], null);
+            drawLineChart(lineChartCanvas, [t("no_data_found")], [], null);
             return;
         }
 
-        const allDates = new Set();
-        const allSeries = new Set();
+        const allDates = new Set();  // all unique time_period, ISO date 
+        const allSeries = new Set(); // category names
 
         apiData.forEach(row => {
             if (row.time_period) {
@@ -768,37 +811,77 @@ document.addEventListener("DOMContentLoaded", function () {
                 allSeries.add(row.series_label);
             }
         });
+        console.log("All Dates:", allDates);
+        console.log("All Series:", allSeries);
 
+        // default sort() treats items as strings; new Date creates timestamps
+        // (a - b) if negative, 'a' comes first; if positive, 'b' comes first
         const sortedDates = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));
+    
+        // Tooltip dates full format, with hours if aggregation < 24h
+        const agg = parseFloat(appState.aggregation);
+        const showHours = !isNaN(agg) && agg < 24;
 
-        const aggHours = parseFloat(appState.aggregation);
-
-        const formattedLabels = sortedDates.map(dateStr => {
+        // X-Axis Labels: dd/mm, hh:mm if needed
+        const axisLabels = sortedDates.map(dateStr => {
             const date = new Date(dateStr);
-            // if (aggHours < 24) {
-            //     return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' });
-            // } else {
-            //     return date.toLocaleDateString('pt-BR');
-            // }
-            return date.toLocaleDateString("pt-BR");
+            if (!showHours) {
+                return date.toLocaleDateString(CURRENT_LANG, { day: "2-digit", month: "2-digit" });
+            }
+            return date.toLocaleString(CURRENT_LANG, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+        });
+        
+        const tooltipDates = sortedDates.map(dateStr => {
+            const date = new Date(dateStr);
+            const options = { day: "2-digit", month: "2-digit", year: "numeric" };
+            if (showHours) {
+                options.hour = "2-digit";
+                options.minute = "2-digit";
+            }
+            return date.toLocaleString(CURRENT_LANG, options);
         });
 
         // Prepare datasets based on the series returned (categories or political alignments)
         const datasets = Array.from(allSeries).map(labelName => {
             const seriesRows = apiData.filter(row => row.series_label === labelName);
             // Fast access for date -> average grade
+            
+            // dataMap: time_period (ISO date) -> { grade: average_grade, count: news_count }
+            // if the category has no news in a date, that date will be undefined
             const dataMap = new Map();
 
             seriesRows.forEach(row => {
-                dataMap.set(row.time_period, parseFloat(row.average_grade));
+                dataMap.set(row.time_period, {
+                    grade: parseFloat(row.average_grade),
+                    count: parseInt(row.news_count || 0, 10)
+                });
             });
 
-            // Align average grades with
-            const alignedData = sortedDates.map(date => dataMap.get(date) || null);
-            return {
-                label: labelName,
-                data: alignedData
-            };
+            // final structure: [{ x: dateStr, y: average_grade, count: news_count }, ...]
+            const alignedData = sortedDates.map((date, i) => {
+                const info = dataMap.get(date);
+                if (!info) {
+                    return {
+                        x: axisLabels[i],
+                        y: null,
+                        count: 0
+                    }
+                }
+                return {
+                    x: axisLabels[i],
+                    y: info.grade,
+                    count: info.count
+                };
+            });
+
+            let translatedLabel = tEntity(labelName);
+            if (translatedLabel === labelName) {
+                translatedLabel = tCategory(labelName);
+            }
+            if (translatedLabel === labelName) {
+                translatedLabel = tPolitical(labelName);
+            }
+            return { label: translatedLabel, data: alignedData };
         });
 
         
@@ -807,7 +890,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Data clicada (ISO):", rawDateISO);
 
             if (formattedDateStr && popupDateSpan) {
-                popupDateSpan.textContent = formattedDateStr;
+                popupDateSpan.textContent = tooltipDates[index];
             }
             
             // Keep clicked date for details navigation
@@ -820,8 +903,13 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmPopup.style.top = `${y - 90}px`;
             confirmPopup.classList.remove("hidden");
         };
-
-        drawLineChart(lineChartCanvas, formattedLabels, datasets, handlePointClick);
+        console.log("Axis Labels:", datasets);
+        drawLineChart(lineChartCanvas, axisLabels, datasets, handlePointClick, {
+            yAxisTitle: t("chart_line_y_axis_title"),
+            tooltipGrade: t("chart_line_tooltip_avg"),
+            tooltipNews: t("chart_line_tooltip_count"),
+            originalDates: tooltipDates
+        });
     }
 
 
@@ -847,27 +935,57 @@ document.addEventListener("DOMContentLoaded", function () {
         totalNewsEl.textContent = "...";
 
         try {
-            const [histogramData, volumeData, gaugeVal, lineData] = await Promise.all([
-                fetchGradesHistogramData(apiFilters),
-                fetchVolumeChartData(apiFilters),
-                fetchGaugeData(apiFilters),
-                fetchLineChartData(apiFilters)
+            // allSettled prevents one failure from breaking the entire dashboard
+
+            const results = await Promise.allSettled([
+                // Expected: [{ grade_bucket: number, count: number }]
+                fetchGradesHistogramData(apiFilters),   // 0
+                // Expected: [{ time_period: string (ISO date), news_count: number }]
+                fetchVolumeChartData(apiFilters),       // 1
+                // Expected: number (average grade) or null
+                fetchGaugeData(apiFilters),             // 2
+                // Expected: [{ time_period: string (ISO date), series_label: string, average_grade: number, news_count: number }]
+                fetchLineChartData(apiFilters)          // 3
             ]);
 
-            processAndUpdateHistogramChart(histogramData);
-            const totalNewsCount = processAndUpdateVolumeChart(volumeData);
-            processAndUpdateGaugeDisplay(gaugeVal); 
-            updateEvolutionHeader(totalNewsCount);
-            processAndUpdateLineChart(lineData);
+            // Extract results or null if failed
+            const [histogramData, volumeData, gaugeVal, lineData] = results.map(res => 
+                res.status === "fulfilled" ? res.value : null
+            );
 
+            cachedApiData = { histogramData, volumeData, gaugeVal, lineData };
+
+            if (histogramData) processAndUpdateHistogramChart(histogramData);
+            const totalNewsCount = processAndUpdateVolumeChart(volumeData); // Handles null internally
+            processAndUpdateGaugeDisplay(gaugeVal); // Handles null internally
+            updateEvolutionHeader(totalNewsCount);
+            console.log("Total News Count:", totalNewsCount);
+            console.log("Line Data:", lineData);
+            
+            try {
+                if (lineData) {
+                    processAndUpdateLineChart(lineData);
+                } else if (results[3].status === "rejected") {
+                    console.error("Line chart error:", results[3].reason);
+                }
+            } catch (e) {
+                console.error("Error updating line chart:", e);
+            }
         } catch (err) {
             console.error("Erro dashboard:", err);
             totalNewsEl.textContent = "Erro";
         }
     }
 
+    function redrawCharts() {
+        if (!cachedApiData.histogramData) return;
+        processAndUpdateHistogramChart(cachedApiData.histogramData);
+        processAndUpdateVolumeChart(cachedApiData.volumeData);
+        processAndUpdateGaugeDisplay(cachedApiData.gaugeVal);
+        processAndUpdateLineChart(cachedApiData.lineData);
+    }
+
 
     initializeFilters();
     setTimeout(updateDashboard, 100);
 });
-

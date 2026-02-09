@@ -6,10 +6,24 @@ let histogramInstance = null;
 let gaugeInstance = null;
 let volumeInstance = null;
 let lineInstance = null;
+let lineChartFixedIndex = null;
 
 const COLORS = {
     bluePrimary: "#003A79",
     blueLight: "#008BC9",
+};
+
+const TOOLTIP_THEME = {
+    backgroundColor: "rgba(255, 255, 255, 0.95)", 
+    titleColor: "#003A79",
+    bodyColor: "#5C5B5F",
+    borderColor: "#D7D9DD",
+    borderWidth: 1,
+    titleFont: { size: 13, weight: "bold", family: "'Gotham', 'Arial', sans-serif" },
+    bodyFont: { size: 12, family: "'Gotham', 'Arial', sans-serif" },
+    padding: 10,
+    bodyPadding: 4,
+    displayColors: true,
 };
 
 // Global plugins
@@ -19,7 +33,7 @@ if (typeof Chart !== "undefined" && typeof ChartZoom !== "undefined") {
 
 const isSmallScreen = () => window.innerWidth <= 1024;
 
-// Plugin to draw the Gauge needle (Velocímetro)
+// Plugin to Gauge needle (Velocímetro)
 const gaugeNeedlePlugin = {
     id: "gaugeNeedle",
     afterDatasetDraw(chart, args, options) {
@@ -98,19 +112,14 @@ const gaugeLabelsPlugin = {
     }
 };
 
-export function drawGaugeChart(canvasElement, value) {
+export function drawGaugeChart(canvasElement, value, texts = {}) {
+    // value: number (1 to 7)
+    // texts is expected to be: { segments: [] }
+    // texts: { segments: [ "Extremely Negative", "Very Negative", "Slightly Negative", "Neutral", "Slightly Positive", "Positive", "Extremely Positive" ] }
     const ctx = canvasElement.getContext('2d');
     if (gaugeInstance) gaugeInstance.destroy();
     
-    const gaugeSegmentDescriptions = [
-        "Imagem extremamente negativa (1.0 a 1.5)",
-        "Imagem negativa (1.51 a 2.5)",
-        "Imagem levemente negativa (2.51 a 3.5)",
-        "Imagem neutra (3.51 a 4.49)",
-        "Imagem levemente positiva (4.5 a 5.49)",
-        "Imagem positiva (5.5 a 6.49)",
-        "Imagem extremamente positiva (6.5 a 7.0)"
-    ];
+    const gaugeSegmentDescriptions = texts.segments || [];
 
     const backgroundColor = [
         "#b91c1c", "#ef4444", /*"#f97316",*/ "#fdae61", "#cbd5e1", "#84cc16", "#22c55e", "#15803d"  
@@ -144,8 +153,7 @@ export function drawGaugeChart(canvasElement, value) {
             plugins: {
                 legend: { display: false },
                 tooltip: { 
-                    enabled: true,
-                    bodyFont: { weight: "bold" },
+                    ...TOOLTIP_THEME,
                     callbacks: {
                         title: () => null,
                         label: function(context) { 
@@ -159,18 +167,20 @@ export function drawGaugeChart(canvasElement, value) {
     });
 }
 
-export function drawGradesHistogramChart(canvasElement, labels, data) {
+export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}) {
+    // texts is expected to be: { labelFrequency: "", tooltipTitle: "", tooltipSuffix: "" }
+    
     const ctx = canvasElement.getContext("2d");
     if (histogramInstance) histogramInstance.destroy();
 
     const sentimentColors = [
-        "#b91c1c", // 1 (Extremamente Negativa)
-        "#ef4444", // 2 (Muito Negativa)
-        "#fdae61", // 3 (Levemente Negativa)
-        "#94a3b8", // 4 (Neutra - Cinza)
-        "#84cc16", // 5 (Levemente Positiva)
-        "#22c55e", // 6 (Positiva)
-        "#15803d"  // 7 (Extremamente Positiva)
+        "#b91c1c", // 1 Extremely negative
+        "#ef4444", // 2 Very negative
+        "#fdae61", // 3 Slightly negative
+        "#94a3b8", // 4 Neutral
+        "#84cc16", // 5 Slightly positive
+        "#22c55e", // 6 Positive    
+        "#15803d"  // 7 Extremely positive
     ];
 
     histogramInstance = new Chart(ctx, {
@@ -178,7 +188,7 @@ export function drawGradesHistogramChart(canvasElement, labels, data) {
         data: {
             labels: labels, // [1, 2, 3, 4, 5, 6, 7]
             datasets: [{
-                label: "Frequência",
+                label: texts.labelFrequency || "Frequência",
                 data: data,
                 backgroundColor: sentimentColors,
                 borderRadius: 4,
@@ -188,6 +198,9 @@ export function drawGradesHistogramChart(canvasElement, labels, data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout : { 
+                padding: { top: 5, bottom: 0, left: 0, right: 0 }
+            },
             scales: {
                 y: { 
                     beginAtZero: true, 
@@ -203,9 +216,20 @@ export function drawGradesHistogramChart(canvasElement, labels, data) {
             plugins: { 
                 legend: { display: false },
                 tooltip: {
+                    ...TOOLTIP_THEME,
                     callbacks: {
-                        title: (ctx) => `Nota: ${ctx[0].label}`,
-                        label: (ctx) => `${ctx.raw} notícias`
+                        // ctx := tooltip context
+                        title: (ctx) => {
+                            const grade = ctx[0].label;
+                            const desc = texts.gradeDescriptions ? texts.gradeDescriptions[grade] : "";
+                            const prefix = texts.tooltipTitle || "Nota";
+                            return desc ? `${prefix} ${grade}: ${desc}` : `${prefix} ${grade}`; // ex: "Nota 5: Image slightly positive"
+                        },
+                        label: (ctx) => {
+                            const count = ctx.raw;  // number of news
+                            const unit = count === 1 ? (texts.tooltipUnitSingular || "notícia") : (texts.tooltipUnitPlural || "notícias");
+                            return `${count} ${unit}`;
+                        }
                     }
                 }
             }
@@ -214,7 +238,7 @@ export function drawGradesHistogramChart(canvasElement, labels, data) {
 }
 
 
-export function drawVolumeChart(canvasElement, labels, data) {
+export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
     const ctx = canvasElement.getContext("2d");
     if (volumeInstance) volumeInstance.destroy();
 
@@ -226,20 +250,37 @@ export function drawVolumeChart(canvasElement, labels, data) {
         type: "line",
         data: {
             labels: labels,
-            datasets: [{
-                label: "Notícias",
-                data: data,
-                borderColor: COLORS.bluePrimary,
-                backgroundColor: gradient,
-                borderWidth: 1,
-                pointRadius: 0,
-                hitRadius: 1,
-                pointHoverRadius: 3,
-                pointBackgroundColor: COLORS.bluePrimary,
-                fill: true,
-                tension: 0.4,
-                clip: 5
-            }]
+            datasets: [
+                // Draw the blue line and the gradient background area clipped
+                {
+                    label: texts.labelNews || "Notícias",
+                    data: data,
+                    borderColor: COLORS.bluePrimary,
+                    backgroundColor: gradient,
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    hitRadius: 5,
+                    pointHoverRadius: 0,
+                    fill: true,
+                    tension: 0.4,
+                    clip: 0
+                },
+                // Invisible line with hoverable points unclipped
+                {
+                    label: texts.labelNews || "Notícias",
+                    data: data,
+                    borderColor: "transparent",
+                    backgroundColor: "transparent",
+                    borderWidth: 0,
+                    pointRadius: 0,
+                    hitRadius: 5,
+                    pointHoverRadius: 3,
+                    pointBackgroundColor: COLORS.bluePrimary,
+                    fill: false,
+                    tension: 0.4,
+                    clip: 5
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -252,7 +293,7 @@ export function drawVolumeChart(canvasElement, labels, data) {
                 // axis: "xy"
             },
             layout : { 
-                padding: { left: -4, right: 5 }
+                padding: { top: 5, bottom: 0, left: -4, right: 5}
             },
             scales: {
                 y: { 
@@ -280,35 +321,93 @@ export function drawVolumeChart(canvasElement, labels, data) {
             plugins: { 
                 legend: { display: false }, 
                 tooltip: { 
-                    backgroundColor: "rgba(30, 41, 59, 0.9)",
-                    titleFont: { size: 11 },
-                    bodyFont: { weight: "bold", size: 12 },
-                    cornerRadius: 6,
-                    displayColors: false,
+                    ...TOOLTIP_THEME,
                     titleAlign: "left",
                     labelAlign: "left",
+                    filter: (item) => item.datasetIndex === 0,
                     callbacks: { 
                         title: (ctx) => {
                             const label = Array.isArray(ctx) ? ctx[0].label : ctx.label;
-                            return `Dia ${label}`;
+                            return `${texts.tooltipDay || "Dia"} ${label}`;
                         },
                         label: (ctx) => {
                             const valor = ctx.raw;
-                            const sufixo = valor !== 1 ? 'notícias analisadas' : 'notícia analisada';
+                            const sufixo = valor !== 1 ? (texts.suffixPlural || 'notícias analisadas') : (texts.suffixSingular || 'notícia analisada');
                             return `${valor} ${sufixo}`;
                         }
-                    } 
+                    }
+                },
+                zoom: {
+                    pan: { enabled: true, mode: "x" },
+                    zoom: {
+                        wheel: { enabled: true },
+                        drag: { enabled: true },
+                        mode: "x"
+                    }
                 }
             }
         }
     });
 }
 
+const verticalLinePlugin = {
+    id: "verticalLine",
+    // myPlugin.afterDraw(actual version of the graph)
+    afterDraw: (chart) => {
+        let activeIndex = null;
 
-export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
-    //console.log("Desenhando gráfico de linhas com datasets:", datasets);
+        // Priority: fixed index defined by click > hover index
+        if (lineChartFixedIndex !== null) {
+            activeIndex = lineChartFixedIndex;
+        // "?" verifies if tooltip exists and has _active elements
+        } else if (chart.tooltip?._active?.length) {
+            activeIndex = chart.tooltip._active[0].element.index;
+        }
+
+        if (activeIndex !== null) {
+            // ctx := draw context
+            const ctx = chart.ctx;
+            
+            // Find a visible dataset to get the X coordinate
+            // This prevents crashes if dataset 0 has a gap (null) at this index
+            const visibleMetas = chart.getSortedVisibleDatasetMetas();
+            let x = null;
+
+            for (const meta of visibleMetas) {
+                const el = meta.data[activeIndex];
+                if (el && !el.skip) {
+                    x = el.x;
+                    break;
+                }
+            }
+            
+            // Fallback: calculate X from scale if no point is drawn
+            if (x === null) x = chart.scales.x.getPixelForValue(activeIndex);
+            if (x === undefined || x === null) return;
+
+            const topY = chart.scales.y.top;
+            const bottomY = chart.scales.y.bottom;          // ends at the bottom
+
+            ctx.save();
+            ctx.beginPath();        // new drawing path
+            ctx.moveTo(x, topY);    // move the pencil to the top of the line
+            ctx.lineTo(x, bottomY); // draw line to the bottom of the line
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#88868B";
+            ctx.setLineDash([10, 5]);
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+};
+
+export function drawLineChart(canvasElement, labels, datasets, onPointClicked, texts = {}) {
+    // datasets: array of { label: string, data: [{ x: dateStr, y: grade, count: number }, ...] }
+    // texts: { yAxisTitle: "", tooltipGrade: "", tooltipNews: "", originalDates: [] }
     const ctx = canvasElement.getContext("2d");
     if (lineInstance) lineInstance.destroy();
+
+    lineChartFixedIndex = null;
     
     const smallScreen = isSmallScreen();
 
@@ -351,7 +450,8 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
             clip: 5
         };
     });
-
+    console.log("Styled Datasets:", styledDatasets);
+    console.log("Labels:", labels);
     lineInstance = new Chart(ctx, {
         type: "line",
         data: {
@@ -372,29 +472,31 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                 y: { 
                     min: 1, 
                     max: 7,
-                    title: { display: true, text: "FGV IMíd.IA" }
+                    title: { display: true, text: texts.yAxisTitle || "FGV IMíd.IA" }
                 },
                 x: { 
                     grid: { display: false } ,
                     ticks: {
                         maxRotation: 0,
-                        includeBounds: true,
-                        autoSkip: true,     // skip labels if it doesn't fit
-                        //autoSkipPadding: 15,
-                        maxTicksLimit: smallScreen ? 4 : 10,   // max number of ticks to show
+                        autoSkip: true,
+                        maxTicksLimit: smallScreen ? 3 : 12,
+                        align: "inner"
                     }
                 }
             },
             onClick: (e) => {
                 const points = lineInstance.getElementsAtEventForMode(e, "index", { intersect: false }, true);
                 if (points.length && onPointClicked) {
+                    lineChartFixedIndex = points[0].index;
+                    lineInstance.update();
+
                     const firstPoint = points[0];
                     const index = firstPoint.index;
                     const dateClicked = lineInstance.data.labels[index];
                     onPointClicked(dateClicked, index, e);
                 }
             },
-            plugins: { 
+            plugins: {
                 legend: { 
                     display: true, 
                     position: "top", 
@@ -404,6 +506,36 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                         boxWidth: smallScreen ? 10 : 40
                     }
                 },
+                tooltip: {
+                    backgroundColor: "rgba(255, 255, 255, 0.95)", 
+                    titleColor: "#003A79",
+                    bodyColor: "#5C5B5F",
+                    borderColor: "#D7D9DD",
+                    borderWidth: 1,
+                    titleFont: { size: 13, weight: "bold" },
+                    bodyFont: { size: 12 },
+                    padding: 10,
+                    bodySpacing: 4,
+                    displayColors: true,
+                    callbacks: {
+                        title: (tooltipItems) => {
+                            const index = tooltipItems[0].dataIndex;
+                            return texts.originalDates ? texts.originalDates[index] : tooltipItems[0].label;
+                        },
+                        label: (context) => {
+                            // context.raw := { x: date, y: grade, count: number }
+                            const row = context.raw;
+                            const grade = row && row.y != null ? row.y.toFixed(2) : "N/A";
+                            const count = row && row.count != null ? row.count : "N/A";
+                            const label = context.dataset.label || "";
+                            return [
+                                label,
+                                `${texts.tooltipGrade || "Nota média"}: ${grade}`,
+                                `${texts.tooltipNews || "Qtd. notícias"}: ${count}`
+                            ];
+                        }
+                    }
+                },
                 zoom: { 
                     pan: { enabled: true, mode: "x" }, 
                     zoom: { 
@@ -411,13 +543,20 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked) {
                         drag: { enabled: true }, 
                         mode: "x" 
                     } 
-                }
+                },
+                verticalLine: true
             }
-        }
+        },
+        plugins: [verticalLinePlugin]
     });
 }
 
 export function resetLineChartZoom() {
     if (lineInstance) lineInstance.resetZoom();
+}
+
+export function clearLineChartSelection() {
+    lineChartFixedIndex = null;
+    if (lineInstance) lineInstance.update();
 }
 

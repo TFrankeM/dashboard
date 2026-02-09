@@ -18,7 +18,10 @@ export const DICTIONARY = {
         label_reviewedEntity: "Quem será avaliado",
         label_category: "Categorias",
         label_aggregation: "Agregação (h)",
-        
+        btn_apply: "Aplicar filtros",
+        btn_show_filters: "Mostrar filtros",
+        btn_hide_filters: "Ocultar filtros",
+
         // Tooltips
         tooltip_mode: "Modo Estático: calcula o FGV IMídIA no período definido. <br>Modo Dinâmico: atualiza o FGV IMídIA a cada 30 min.",
         tooltip_period: "Define o intervalo de tempo do FGV IMídIA.",
@@ -31,33 +34,34 @@ export const DICTIONARY = {
         tooltip_volume: "Total de publicações capturadas e processadas pelo motor de análise.",
         tooltip_gauge: "FGV IMídIA <br>Escala de 1 a 7.",
         tooltip_evolution: "Evolução do FGV IMídIA.",
-
-        // Buttons
-        btn_apply: "Aplicar filtros",
-        btn_show_filters: "Mostrar filtros",
-        btn_hide_filters: "Ocultar filtros",
-        btn_reset: "Redefinir zoom",
-        btn_view_news: "Veja as notícias",
-        btn_cancel: "Cancelar",
         
-        // Chart titles
+        // Image labels
+        image_extremely_negative: "Imagem extremamente negativa",
+        image_very_negative: "Imagem muito negativa",
+        image_slightly_negative: "Imagem levemente negativa",
+        image_neutral: "Imagem neutra",
+        image_slightly_positive: "Imagem levemente positiva",
+        image_very_positive: "Imagem muito positiva",
+        image_extremely_positive: "Imagem extremamente positiva",
+
+        // Histogram chart
         chart_histogram_title: "Distribuição de notas",
         chart_histogram_desc: "Sentimento das notícias",
+        chart_histogram_tooltip_grade: "Nota",
+        chart_histogram_tooltip_unit_singular: "notícia",
+        chart_histogram_tooltip_unit_plural: "notícias",
+
+        // Volume chart
         chart_volume_title: "Quantidade de notícias",
-        chart_volume_unit_singular: "notícia",
-        chart_volume_unit_plural: "notícias",
+        chart_volume_desc_singular: "notícia analisada no período",
+        chart_volume_desc_plural: "notícias analisadas no período",
+        chart_volume_tooltip_day: "Dia",
+        chart_volume_tooltip_unit_singular: "notícia analisada",
+        chart_volume_tooltip_unit_plural: "notícias analisadas",
+        
+        // Gauge chart
         chart_gauge_title: "FGV IMídIA",
         last_update: "Última atualização: ",
-        popup_text: "Entenda o IMídIA de ",
-
-        // Gauge labels
-        gauge_extremely_negative: "Extremamente negativa",
-        gauge_very_negative: "Muito negativa",
-        gauge_slightly_negative: "Levemente negativa",
-        gauge_neutral: "Neutra",
-        gauge_slightly_positive: "Levemente positiva",
-        gauge_very_positive: "Muito positiva",
-        gauge_extremely_positive: "Extremamente positiva",
 
         // Evolution chart
         evo_title_prefix: "Avaliador: ",
@@ -66,7 +70,16 @@ export const DICTIONARY = {
         evo_date_connector: " nos ",
         evo_date_connector_static: " de ",
         evo_date_connector_static_to: " a ",
+        chart_line_y_axis_title: "FGV IMídIA",
+        chart_line_tooltip_avg: "Nota média",
+        chart_line_tooltip_count: "Quantidade de notícias",
+        btn_reset: "Redefinir zoom",
 
+        // Popup see details
+        popup_text: "Entenda o IMídIA de ",
+        btn_view_news: "Veja as notícias",
+        btn_cancel: "Cancelar",
+        
         // Footer
         footer_copyright: "Diretoria Internacional da Fundação Getulio Vargas",
         footer_description: "Em desenvolvimento •",
@@ -134,7 +147,7 @@ export const DICTIONARY = {
         app_subtitle: "Foreign Image Indicator",
         filter_section_title: "Filters",
         mode_static: "Static mode: 2025",
-        mode_dynamic: "Dynamic mode: real-time update",
+        mode_dynamic: "Dynamic mode",
         no_data_found: "No data found",
         
         // Filter labels
@@ -143,8 +156,11 @@ export const DICTIONARY = {
         label_political: "Political alignment",
         label_reviewedEntity: "Evaluated entity",
         label_category: "Categories",
-        label_aggregation: "Aggregation (hours)",
-        
+        label_aggregation: "Aggregation (h)",
+        btn_apply: "Apply changes",
+        btn_show_filters: "Show filters",
+        btn_hide_filters: "Hide filters", 
+
         // Tooltips
         tooltip_mode: "Static Mode: calculates the FGV IMídIA for the defined period. <br>Dynamic Mode: updates the FGV IMídIA every 30 minutes.",
         tooltip_period : "Defines the time interval of the FGV IMídIA.",
@@ -158,44 +174,56 @@ export const DICTIONARY = {
         tooltip_gauge: "FGV IMídIA <br>Scale from 1 to 7.",
         tooltip_evolution: "Evolution of the FGV IMídIA.",
 
-        // Buttons
-        btn_apply: "Apply changes",
-        btn_show_filters: "Show filters",
-        btn_hide_filters: "Hide filters",        
-        btn_reset: "Reset",
-        btn_view_news: "View news",
-        btn_cancel: "Cancel",
+        // Image labels
+        image_extremely_negative: "Extremely negative image",
+        image_very_negative: "Very negative image",
+        image_slightly_negative: "Slightly negative image",
+        image_neutral: "Neutral image",
+        image_slightly_positive: "Slightly positive image",
+        image_very_positive: "Very positive image",
+        image_extremely_positive: "Extremely positive image",
         
-        // Chart titles
+        // Histogram chart
         chart_histogram_title: "Grade frequency",
         chart_histogram_desc: "Distribution of news sentiment",
+        chart_histogram_tooltip_grade: "Grade",
+        chart_histogram_tooltip_unit_singular: "news item",
+        chart_histogram_tooltip_unit_plural: "news items",
+
+        // Volume chart
         chart_volume_title: "News quantity",
-        chart_volume_unit_singular: "news item",
-        chart_volume_unit_plural: "news items",
+        chart_volume_desc_singular: "news item analyzed in the period",
+        chart_volume_desc_plural: "news items analyzed in the period",
+        chart_volume_tooltip_day: "Date",
+        chart_volume_tooltip_unit_singular: "news item analyzed",
+        chart_volume_tooltip_unit_plural: "news items analyzed",
+        
+        // Gauge chart
         chart_gauge_title: "FGV IMídIA",
         last_update: "Last update: ",
-        popup_text: "Understand the IMídIA of ",
 
-        // Gauge labels
-        gauge_extremely_negative: "Extremely negative",
-        gauge_very_negative: "Very negative",
-        gauge_slightly_negative: "Slightly negative",
-        gauge_neutral: "Neutral",
-        gauge_slightly_positive: "Slightly positive",
-        gauge_very_positive: "Very positive",
-        gauge_extremely_positive: "Extremely positive",
-
+        // Evolution chart
         evo_title_prefix: "Evaluator: ",
         evo_title_separator: " | Evaluated: ",
         evo_subtitle_prefix: "Evolution of Foreign Image Indicator ",
         evo_date_connector: " in the ",
         evo_date_connector_static: " from ",
         evo_date_connector_static_to: " to ",
+        chart_line_y_axis_title: "FGV IMíd.IA",
+        chart_line_tooltip_avg: "Average grade",
+        chart_line_tooltip_count: "News quantity",
+        btn_reset: "Reset",
+
+        // Popup see details
+        popup_text: "Understand the IMídIA of ",
+        btn_view_news: "View news",
+        btn_cancel: "Cancelar",
 
         // Footer
         footer_copyright: "FGV International Affairs Division",
         footer_description: "Under development • ",
 
+        // Filter options
         period_options: {
             // "key": "label"
             "sem1_2025": "2025 semester 1 of 2",
@@ -258,7 +286,7 @@ export const DICTIONARY = {
         app_subtitle: "Indicador de Imagen en Medios Digitales",
         filter_section_title: "Filtros",
         mode_static: "Modo estático: 2025",
-        mode_dynamic: "Modo dinámico: actualización en tiempo real",
+        mode_dynamic: "Modo dinámico",
         no_data_found: "Ningún dato encontrado",
         
         // Filter labels
@@ -267,8 +295,11 @@ export const DICTIONARY = {
         label_political: "Alineación política",
         label_reviewedEntity: "Entidad evaluada",
         label_category: "Categorías",
-        label_aggregation: "Agregación (horas)",
-        
+        label_aggregation: "Agregación (h)",
+        btn_apply: "Aplicar cambios",
+        btn_show_filters: "Mostrar filtros",
+        btn_hide_filters: "Ocultar filtros",    
+
         // Tooltips
         tooltip_mode: "Modo Estático: calcula el FGV IMídIA en el período definido. <br>Modo Dinámico: actualiza el FGV IMídIA cada 30 minutos.",
         tooltip_period: "Define el intervalo de tiempo del FGV IMídIA.",
@@ -282,44 +313,56 @@ export const DICTIONARY = {
         tooltip_gauge: "FGV IMídIA <br>Escala de 1 a 7.",
         tooltip_evolution: "Evolución del FGV IMídIA.",
 
-        // Buttons
-        btn_apply: "Aplicar cambios",
-        btn_show_filters: "Mostrar filtros",
-        btn_hide_filters: "Ocultar filtros",    
-        btn_reset: "Restablecer",
-        btn_view_news: "Ver noticias",
-        btn_cancel: "Cancelar",
+        // Image labels
+        image_extremely_negative: "Imagem extremadamente negativa",
+        image_very_negative: "Imagem muy negativa",
+        image_slightly_negative: "Imagem levemente negativa",
+        image_neutral: "Imagem neutra",
+        image_slightly_positive: "Imagem levemente positiva",
+        image_very_positive: "Imagem muy positiva",
+        image_extremely_positive: "Imagem extremadamente positiva",
         
-        // Chart titles
+        // Histogram chart
         chart_histogram_title: "Frecuencia de calificaciones",
         chart_histogram_desc: "Distribución del sentimiento noticioso",
+        chart_histogram_tooltip_grade: "Nota",
+        chart_histogram_tooltip_unit_singular: "noticia",
+        chart_histogram_tooltip_unit_plural: "noticias",
+
+        // Volume chart
         chart_volume_title: "Cantidad de noticias",
-        chart_volume_unit_singular: "noticia",
-        chart_volume_unit_plural: "noticias",
+        chart_volume_desc_singular: "noticia analizada en el período",
+        chart_volume_desc_plural: "noticias analizadas en el período",
+        chart_volume_tooltip_day: "Día",
+        chart_volume_tooltip_unit_singular: "noticia analizada",
+        chart_volume_tooltip_unit_plural: "noticias analizadas",
+        
+        // Gauge chart
         chart_gauge_title: "FGV IMídIA",
         last_update: "Última actualización: ",
-        popup_text: "Entienda el IMídIA de ",
-        
-        // Gauge labels
-        gauge_extremely_negative: "Extremadamente negativa",
-        gauge_very_negative: "Muy negativa",
-        gauge_slightly_negative: "Levemente negativa",
-        gauge_neutral: "Neutra",
-        gauge_slightly_positive: "Levemente positiva",
-        gauge_very_positive: "Muy positiva",
-        gauge_extremely_positive: "Extremadamente positiva",
 
+        // Evolution chart
         evo_title_prefix: "Evaluador: ",
         evo_title_separator: " | Evaluado: ",
         evo_subtitle_prefix: "Evolución del Indicador de Imagen en el Exterior ",
         evo_date_connector: " en los ",
         evo_date_connector_static: " de ",
         evo_date_connector_static_to: " a ",
+        chart_line_y_axis_title: "FGV IMíd.IA",
+        chart_line_tooltip_avg: "Nota media",
+        chart_line_tooltip_count: "Cantidad de noticias",
+        btn_reset: "Restablecer",
+
+        // Popup see details
+        popup_text: "Entienda el IMídIA de ",
+        btn_view_news: "Ver noticias",
+        btn_cancel: "Cancelar",
 
         // Footer
         footer_copyright: "Dirección Internacional de FGV",
         footer_description: "En desarrollo • ",
 
+        // Filter options
         period_options: {
             // "key": "label"
             "sem1_2025": "2025 semestre 1 de 2",
