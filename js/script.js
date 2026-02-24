@@ -745,10 +745,9 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        let dateISO = currentClickedDate.date;;
         // url for new handlePeriodChange
         const params = new URLSearchParams();
-        params.append("date", dateISO);
+        params.append("date", currentClickedDate.date);
         params.append("aggregation", appState.aggregation);
         params.append("reviewer", appState.reviewer);
         params.append("reviewedEntity", appState.reviewedEntity);
@@ -811,8 +810,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 allSeries.add(row.series_label);
             }
         });
-        console.log("All Dates:", allDates);
-        console.log("All Series:", allSeries);
+        //console.log("All Dates:", allDates);
+        //console.log("All Series:", allSeries);
 
         // default sort() treats items as strings; new Date creates timestamps
         // (a - b) if negative, 'a' comes first; if positive, 'b' comes first
@@ -885,25 +884,29 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         
-        const handlePointClick = (formattedDateStr, index, event) => {
+        const handlePointClick = (index, event, popupCoords) => {
+            // rawDateISO := e.g.: 2025-05-29T21:00:00.000Z
             const rawDateISO = sortedDates[index];
-            console.log("Data clicada (ISO):", rawDateISO);
-
-            if (formattedDateStr && popupDateSpan) {
-                popupDateSpan.textContent = tooltipDates[index];
-            }
-            
             // Keep clicked date for details navigation
             currentClickedDate = { date: rawDateISO };
 
-            const x = event.native.clientX;
-            const y = event.native.clientY;
+            console.log("popupCoords:", popupCoords);
             
+            // tooltipDates := Full date displayed in the tooltip | e.g.: 29/05/2025, 18:00
+            if (tooltipDates && popupDateSpan) {
+                popupDateSpan.textContent = tooltipDates[index];
+            }
+            
+            const x = popupCoords ? popupCoords.x : event.native.clientX;
             confirmPopup.style.left = `${x}px`;
-            confirmPopup.style.top = `${y - 90}px`;
             confirmPopup.classList.remove("hidden");
+
+            const popupHight = confirmPopup.offsetHeight;
+            const y = popupCoords ? popupCoords.y - popupHight : event.native.clientY - popupHight - 10;
+            confirmPopup.style.top = `${y}px`;
         };
-        console.log("Axis Labels:", datasets);
+
+        //console.log("Axis Labels:", datasets);
         drawLineChart(lineChartCanvas, axisLabels, datasets, handlePointClick, {
             yAxisTitle: t("chart_line_y_axis_title"),
             tooltipGrade: t("chart_line_tooltip_avg"),

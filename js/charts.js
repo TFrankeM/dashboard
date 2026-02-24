@@ -354,52 +354,50 @@ const verticalLinePlugin = {
     id: "verticalLine",
     // myPlugin.afterDraw(actual version of the graph)
     afterDraw: (chart) => {
-        let activeIndex = null;
+        const ctx = chart.ctx;
+        const topY = chart.scales.y.top;
+        const bottomY = chart.scales.y.bottom;
 
-        // Priority: fixed index defined by click > hover index
-        if (lineChartFixedIndex !== null) {
-            activeIndex = lineChartFixedIndex;
-        // "?" verifies if tooltip exists and has _active elements
-        } else if (chart.tooltip?._active?.length) {
-            activeIndex = chart.tooltip._active[0].element.index;
-        }
-
-        if (activeIndex !== null) {
-            // ctx := draw context
-            const ctx = chart.ctx;
-            
-            // Find a visible dataset to get the X coordinate
-            // This prevents crashes if dataset 0 has a gap (null) at this index
+        const drawLine = (index, color, width, dash) => {
             const visibleMetas = chart.getSortedVisibleDatasetMetas();
             let x = null;
-
+            // meta 
             for (const meta of visibleMetas) {
-                const el = meta.data[activeIndex];
+                const el = meta.data[index];
                 if (el && !el.skip) {
                     x = el.x;
                     break;
                 }
             }
-            
-            // Fallback: calculate X from scale if no point is drawn
-            if (x === null) x = chart.scales.x.getPixelForValue(activeIndex);
+            if (x === null) x = chart.scales.x.getPixelForValue(index);
             if (x === undefined || x === null) return;
 
-            const topY = chart.scales.y.top;
-            const bottomY = chart.scales.y.bottom;          // ends at the bottom
-
             ctx.save();
-            ctx.beginPath();        // new drawing path
-            ctx.moveTo(x, topY);    // move the pencil to the top of the line
-            ctx.lineTo(x, bottomY); // draw line to the bottom of the line
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = "#88868B";
-            ctx.setLineDash([10, 5]);
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.lineWidth = width;
+            ctx.strokeStyle = color;
+            ctx.setLineDash(dash);
             ctx.stroke();
             ctx.restore();
+        };
+
+        // fixed vertical line (click)
+        if (lineChartFixedIndex !== null) {
+            drawLine(lineChartFixedIndex, "#88868B", 2, [10, 5]);
+        }
+        // "?" verifies if tooltip exists and has _active elements
+        // mobile vertical line (hover)
+        if (chart.tooltip?._active?.length) {
+            const hoverIndex = chart.tooltip._active[0].index;
+            if (hoverIndex !== lineChartFixedIndex) {
+                drawLine(hoverIndex, "rgba(136, 134, 139, 0.5)", 1, [5, 5]);
+            }
         }
     }
 };
+
 
 export function drawLineChart(canvasElement, labels, datasets, onPointClicked, texts = {}) {
     // datasets: array of { label: string, data: [{ x: dateStr, y: grade, count: number }, ...] }
@@ -450,8 +448,8 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
             clip: 5
         };
     });
-    console.log("Styled Datasets:", styledDatasets);
-    console.log("Labels:", labels);
+    //console.log("Styled Datasets:", styledDatasets);
+    //console.log("Labels:", labels);
     lineInstance = new Chart(ctx, {
         type: "line",
         data: {
@@ -492,8 +490,21 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
 
                     const firstPoint = points[0];
                     const index = firstPoint.index;
-                    const dateClicked = lineInstance.data.labels[index];
-                    onPointClicked(dateClicked, index, e);
+
+                    // dimensions and position of the canvas on the user's screen
+                    const rect = lineInstance.canvas.getBoundingClientRect();
+                    // X position of the vertical line clicked day
+                    const pointX = lineInstance.scales.x.getPixelForValue(index);
+                    // Y position of the upper limit of the drawable area
+                    const chartAreaTop = lineInstance.chartArea.top;
+                    console.log("rect.left", rect.left)
+                    console.log("chartAreaTop", chartAreaTop)
+                    const popupCoords = {
+                        x: rect.left + pointX,
+                        y: rect.top + chartAreaTop
+                    };
+
+                    onPointClicked(index, e, popupCoords);
                 }
             },
             plugins: {
@@ -540,7 +551,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                     pan: { enabled: true, mode: "x" }, 
                     zoom: { 
                         wheel: { enabled: true }, 
-                        drag: { enabled: true }, 
+                        drag: { enabled: false }, 
                         mode: "x" 
                     } 
                 },

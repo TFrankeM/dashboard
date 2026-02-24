@@ -973,6 +973,8 @@ input:checked + .slider:before {
     font-weight: 500;
     color: var(--fgv-blue-dark);
     text-align: center;
+    word-wrap: break-word; 
+    line-height: 1.4;
 }
 
 /* Area of the buttons */
