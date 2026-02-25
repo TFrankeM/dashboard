@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FGV DINT | Monitoramento Geospacial</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* OFFICIAL FGV COLOR PALETTE */
+        :root {
+            --fgv-blue-navy: #002D4D;
+            --fgv-blue-dark: #003A79;
+            --fgv-blue-med:  #0C63AA;
+            --fgv-blue-light:#008BC9;
+            --fgv-gray-dark:  #5C5B5F;
+            --fgv-gray-med:   #88868B;
+            --fgv-gray-pale:  #D7D9DD;
+            --fgv-white:      #FFFFFF;
+            --fgv-aux-red:     #7F1343; /* Faction A */
+            --fgv-aux-gold:    #BDA132; /* Faction B */
+            --fgv-aux-green:   #164339; /* Faction C */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: "Gotham", "Arial", sans-serif;
+            background-color: var(--fgv-gray-pale);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LOGIN OVERLAY */
+        #login-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--fgv-blue-navy);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .login-card img {
+            height: 50px;
+            margin-bottom: 20px;
+        }
+
+        .login-card h2 {
+            color: var(--fgv-blue-dark);
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--fgv-gray-med);
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--fgv-gray-pale);
+            border-radius: 4px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: var(--fgv-blue-light);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .login-error {
+            color: var(--fgv-aux-red);
+            font-size: 12px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* MAIN LAYOUT */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            display: none; /* Hidden until login */
+        }
+
+        header {
+            background: white;
+            padding: 10px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--fgv-blue-dark);
+            z-index: 1000;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-brand img { height: 45px; }
+        
+        .header-title h1 {
+            font-size: 18px;
+            margin: 0;
+            color: var(--fgv-blue-dark);
+        }
+
+        .header-title span {
+            font-size: 11px;
+            color: var(--fgv-gray-med);
+            text-transform: uppercase;
+        }
+
+        .main-layout {
+            display: flex;
+            flex: 1;
+            position: relative;
+        }
+
+        /* SIDEBAR FILTERS */
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid var(--fgv-gray-pale);
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 900;
+        }
+
+        .filter-section {
+            margin-bottom: 25px;
+        }
+
+        .filter-section h3 {
+            font-size: 14px;
+            color: var(--fgv-blue-navy);
+            border-bottom: 1px solid var(--fgv-gray-pale);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .layer-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        /* MAP AREA */
+        #map {
+            flex: 1;
+            background: #aad3df;
+        }
+
+        footer {
+            background: white;
+            padding: 10px 40px;
+            font-size: 11px;
+            color: var(--fgv-gray-med);
+            border-top: 1px solid var(--fgv-gray-pale);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* CUSTOM MAP ELEMENTS */
+        .custom-popup .leaflet-popup-content-wrapper {
+            border-radius: 4px;
+            padding: 5px;
+        }
+        
+        .faction-label {
+            background: rgba(255,255,255,0.8);
+            border: 1px solid var(--fgv-blue-dark);
+            padding: 2px 5px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 3px;
+        }
+
+        .moving-marker-icon {
+            background: white;
+            border: 2px solid var(--fgv-blue-dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            header { padding: 10px 15px; }
+            .header-brand img { height: 35px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN PANEL -->
+    <div id="login-overlay">
+        <div class="login-card">
+            <img src="assets/logodint_pt.svg" alt="FGV Logo">
+            <h2>Sistema de Inteligência Territorial</h2>
+            <div class="input-group">
+                <label>USUÁRIO</label>
+                <input type="text" id="username" placeholder="Seu usuário">
+            </div>
+            <div class="input-group">
+                <label>SENHA</label>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
+            <button class="btn-login" onclick="handleLogin()">ACESSAR MAPA</button>
+            <div id="login-error" class="login-error">Credenciais inválidas ou acesso não autorizado.</div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div class="app-container" id="app">
+        <header>
+            <div class="header-brand">
+                <img src="assets/logodint_pt.svg" alt="FGV Logo">
+                <div class="header-title">
+                    <h1>SALA DE SITUAÇÃO</h1>
+                    <span>Dinâmica Territorial Urbana - RJ</span>
+                </div>
+            </div>
+            <div class="user-badge" style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--fgv-blue-dark);">
+                <i data-lucide="user" style="width: 18px;"></i>
+                <span id="display-user">Analista</span>
+                <button onclick="location.reload()" style="background: none; border: 1px solid var(--fgv-gray-pale); padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 10px;">Sair</button>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <aside class="sidebar">
+                <div class="filter-section">
+                    <h3><i data-lucide="layers"></i> Camadas Ativas</h3>
+                    <label class="layer-control">
+                        <input type="checkbox" checked onchange="toggleLayer('factions')"> 
+                        <div class="legend-color" style="background: var(--fgv-aux-red);"></div>
+                        Áreas de Domínio
+                    </label>
+                    <label class="layer-control">
+                        <input type="checkbox" checked onchange="toggleLayer('routes')"> 
+                        <div class="legend-color" style="background: var(--fgv-blue-dark);"></div>
+                        Rotas de Circulação
+                    </label>
+                </div>
+
+                <div class="filter-section">
+                    <h3><i data-lucide="info"></i> Legenda</h3>
+                    <div class="layer-control"><div class="legend-color" style="background: #7F1343;"></div> Fação A (CV)</div>
+                    <div class="layer-control"><div class="legend-color" style="background: #BDA132;"></div> Fação B (TCP)</div>
+                    <div class="layer-control"><div class="legend-color" style="background: #164339;"></div> Fação C (Milícia)</div>
+                </div>
+
+                <div style="margin-top: auto; padding: 15px; background: #f8fafc; border-radius: 6px; font-size: 11px;">
+                    <strong>Status da Automação:</strong><br>
+                    <span style="color: green;">● Conectado ao JSON Master</span><br>
+                    Última atualização: <span id="last-update">--:--</span>
+                </div>
+            </aside>
+
+            <div id="map"></div>
+        </div>
+
+        <footer>
+            <div>© 2024 FGV DINT - Todos os direitos reservados</div>
+            <div>Fonte: Dados Integrados de Segurança Pública</div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- CONFIGURAÇÃO E DADOS (MOCK) ---
+        // Em um cenário real, estes dados viriam de um fetch('dados.json')
+        const MOCK_DATA = {
+            factions: [
+                { 
+                    id: "area_1",
+                    name: "Complexo do Alemão", 
+                    faction: "CV", 
+                    color: "#7F1343", 
+                    coords: [
+                        [-22.860, -43.275], [-22.850, -43.280], [-22.845, -43.270], [-22.855, -43.265]
+                    ] 
+                },
+                { 
+                    id: "area_2",
+                    name: "Complexo da Maré", 
+                    faction: "TCP", 
+                    color: "#BDA132", 
+                    coords: [
+                        [-22.840, -43.245], [-22.830, -43.240], [-22.835, -43.230], [-22.845, -43.235]
+                    ] 
+                }
+            ],
+            routes: [
+                {
+                    id: "route_1",
+                    name: "Rota Logística Norte",
+                    color: "#003A79",
+                    points: [
+                        [-22.860, -43.275], [-22.850, -43.250], [-22.840, -43.245]
+                    ]
+                }
+            ]
+        };
+
+        let map;
+        let layers = {
+            factions: L.layerGroup(),
+            routes: L.layerGroup(),
+            movingMarkers: L.layerGroup()
+        };
+
+        // --- SISTEMA DE LOGIN ---
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const error = document.getElementById('login-error');
+
+            // Simulação de autenticação baseada em acesso
+            if (user === 'analista' && pass === 'fgv2024') {
+                document.getElementById('login-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-overlay').style.display = 'none';
+                    document.getElementById('app').style.display = 'flex';
+                    initApp();
+                }, 500);
+            } else {
+                error.style.display = 'block';
+            }
+        }
+
+        // --- INICIALIZAÇÃO DO MAPA ---
+        function initApp() {
+            lucide.createIcons();
+            
+            // Centralizado no Rio de Janeiro
+            map = L.map('map').setView([-22.9068, -43.1729], 12);
+
+            // Tile Layer - Estilo claro/corporativo
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            }).addTo(map);
+
+            layers.factions.addTo(map);
+            layers.routes.addTo(map);
+            layers.movingMarkers.addTo(map);
+
+            loadMapData();
+            updateClock();
+            
+            // Simular atualização automatizada a cada 30 segundos
+            setInterval(loadMapData, 30000);
+        }
+
+        // --- CARREGAMENTO DE DADOS (SIMULANDO API/JSON) ---
+        async function loadMapData() {
+            // No futuro: const response = await fetch('/data/map_status.json');
+            // const data = await response.json();
+            const data = MOCK_DATA; 
+
+            // Limpar camadas para "atualizar"
+            layers.factions.clearLayers();
+            layers.routes.clearLayers();
+            layers.movingMarkers.clearLayers();
+
+            // Desenhar Áreas
+            data.factions.forEach(area => {
+                const poly = L.polygon(area.coords, {
+                    color: area.color,
+                    fillColor: area.color,
+                    fillOpacity: 0.4,
+                    weight: 2
+                }).bindPopup(`<strong>${area.name}</strong><br>Domínio: ${area.faction}`);
+                layers.factions.addLayer(poly);
+            });
+
+            // Desenhar Rotas e Animadores
+            data.routes.forEach(route => {
+                const line = L.polyline(route.points, {
+                    color: route.color,
+                    weight: 3,
+                    dashArray: '5, 10'
+                });
+                layers.routes.addLayer(line);
+
+                // Criar Marcador Animado (Simulado)
+                createMovingMarker(route.points, route.color);
+            });
+
+            document.getElementById('last-update').innerText = new Date().toLocaleTimeString();
+        }
+
+        // --- ANIMAÇÃO DE MARCADORES (REPRESENTANDO FLUXO) ---
+        function createMovingMarker(path, color) {
+            const icon = L.divIcon({
+                className: 'moving-marker-icon',
+                html: `<div style="width:8px; height:8px; background:${color}; border-radius:50%"></div>`,
+                iconSize: [16, 16]
+            });
+
+            const marker = L.marker(path[0], { icon: icon }).addTo(layers.movingMarkers);
+            
+            let step = 0;
+            const duration = 5000; // 5 segundos para completar a rota
+            const startTime = Date.now();
+
+            function animate() {
+                const now = Date.now();
+                const progress = ((now - startTime) % duration) / duration;
+                
+                // Lógica simples de interpolação entre pontos da rota
+                const pointIndex = Math.floor(progress * (path.length - 1));
+                const nextIndex = (pointIndex + 1) % path.length;
+                const partProgress = (progress * (path.length - 1)) % 1;
+
+                const lat = path[pointIndex][0] + (path[nextIndex][0] - path[pointIndex][0]) * partProgress;
+                const lng = path[pointIndex][1] + (path[nextIndex][1] - path[pointIndex][1]) * partProgress;
+
+                marker.setLatLng([lat, lng]);
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        // --- CONTROLES DE INTERFACE ---
+        function toggleLayer(name) {
+            if (map.hasLayer(layers[name])) {
+                map.removeLayer(layers[name]);
+                if (name === 'routes') map.removeLayer(layers.movingMarkers);
+            } else {
+                map.addLayer(layers[name]);
+                if (name === 'routes') map.addLayer(layers.movingMarkers);
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            // Lógica adicional se necessário
+        }
+
+    </script>
+</body>
+</html>
