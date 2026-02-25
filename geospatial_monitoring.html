@@ -199,6 +199,17 @@
             background: #aad3df;
         }
 
+        .battalion-icon {
+            background: white; 
+            border: 2px solid var(--police-blue);
+            border-radius: 50%; /* Formato de pingo */
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            transition: transform 0.2s ease;
+        }
+
         footer {
             background: white;
             padding: 10px 40px;
@@ -247,7 +258,7 @@
     <div id="login-overlay">
         <div class="login-card">
             <img src="assets/logodint_pt.svg" alt="FGV Logo">
-            <h2>Sistema de Inteligência Territorial</h2>
+            <h2>Sistema de inteligência geoespacial</h2>
             <div class="input-group">
                 <label>USUÁRIO</label>
                 <input type="text" id="username" placeholder="Seu usuário">
@@ -281,29 +292,36 @@ https://imidia.vercel.app/geospatial_monitoring.html
         <div class="main-layout">
             <aside class="sidebar">
                 <div class="filter-section">
-                    <h3><i data-lucide="layers"></i> Camadas Ativas</h3>
+                    <h3><i data-lucide="layers"></i> Controle de camadas</h3>
                     <label class="layer-control">
                         <input type="checkbox" checked onchange="toggleLayer('factions')"> 
                         <div class="legend-color" style="background: var(--fgv-aux-red);"></div>
-                        Áreas de Domínio
+                        Áreas de domínio (facções)
+                    </label>
+                    <label class="layer-control">
+                        <input type="checkbox" checked onchange="toggleLayer('battalions')"> 
+                        <div style="width:14px; height:14px; background:white; border:2px solid var(--police-blue); border-radius:50%; display: flex; align-items: center; justify-content: center;">
+                            <div style="width: 4px; height: 4px; background: var(--police-blue); border-radius: 50%;"></div>
+                        </div>
+                        Batalhões de polícia (BPM)
                     </label>
                     <label class="layer-control">
                         <input type="checkbox" checked onchange="toggleLayer('routes')"> 
-                        <div class="legend-color" style="background: var(--fgv-blue-dark);"></div>
-                        Rotas de Circulação
+                        <i data-lucide="move-right" style="width:14px; color:var(--police-blue)"></i>
+                        Movimentação de tropas
                     </label>
                 </div>
 
                 <div class="filter-section">
                     <h3><i data-lucide="info"></i> Legenda</h3>
-                    <div class="layer-control"><div class="legend-color" style="background: #7F1343;"></div> Fação A (CV)</div>
-                    <div class="layer-control"><div class="legend-color" style="background: #BDA132;"></div> Fação B (TCP)</div>
-                    <div class="layer-control"><div class="legend-color" style="background: #164339;"></div> Fação C (Milícia)</div>
+                    <div class="layer-control"><div class="legend-color" style="background: #7F1343;"></div> Comando Vermelho (CV)</div>
+                    <div class="layer-control"><div class="legend-color" style="background: #BDA132;"></div> Terceiro Comando Puro (TCP)</div>
+                    <div class="layer-control"><div class="legend-color" style="background: #164339;"></div> Milícia</div>
                 </div>
 
                 <div style="margin-top: auto; padding: 15px; background: #f8fafc; border-radius: 6px; font-size: 11px;">
-                    <strong>Status da Automação:</strong><br>
-                    <span style="color: green;">● Conectado ao JSON Master</span><br>
+                    <strong>Status da automação:</strong><br>
+                    <span style="color: green;">● Conectado ao JSON master</span><br>
                     Última atualização: <span id="last-update">--:--</span>
                 </div>
             </aside>
@@ -327,30 +345,254 @@ https://imidia.vercel.app/geospatial_monitoring.html
                 { 
                     id: "area_1",
                     name: "Complexo do Alemão", 
-                    faction: "CV", 
+                    faction: "Comando Vermelho (CV)", 
                     color: "#7F1343", 
                     coords: [
-                        [-22.860, -43.275], [-22.850, -43.280], [-22.845, -43.270], [-22.855, -43.265]
+                        [-22.853604, -43.281915], [-22.853702, -43.275193], [-22.857433, -43.266115], [-22.856214, -43.263097],
+                        [-22.858067, -43.262171], [-22.859847, -43.267359], [-22.861997, -43.267777], [-22.862057, -43.259817],
+                        [-22.866663, -43.258164], [-22.865971, -43.264580], [-22.868838, -43.268249], [-22.862689, -43.275695],
+                        [-22.863441, -43.276918], [-22.868146, -43.274343], [-22.869056, -43.275824], [-22.865536, -43.281359],
+                        [-22.865232, -43.285810], [-22.857600, -43.285875]
                     ] 
                 },
                 { 
                     id: "area_2",
                     name: "Complexo da Maré", 
-                    faction: "TCP", 
+                    faction: "Terceiro Comando Puro (TCP)", 
                     color: "#BDA132", 
                     coords: [
-                        [-22.840, -43.245], [-22.830, -43.240], [-22.835, -43.230], [-22.845, -43.235]
+                        [-22.837836, -43.256226], [-22.836604, -43.254663], [-22.840493, -43.245071], [-22.867425, -43.232223],
+                        [-22.879787, -43.239423], [-22.873007, -43.244578], [-22.869853, -43.244115], [-22.869038, -43.246980],
+                        [-22.847680, -43.247127]
                     ] 
                 }
             ],
+            battalions: [
+                { id: "id1", name: "Polícia Militar", coords: [-22.864279, -43.239566] },
+                { id: "id2", name: "Polícia Militar", coords: [-22.860917, -43.233397] },
+                { id: "bvpe3", name: "Polícia Militar BVPE 3 Cia", coords: [-22.871673, -43.246766] },
+                { id: "21dp", name: "21ª DP Delegacia Policial", coords: [-22.872686, -43.258102] },
+                { id: "id3", name: "Polícia Militar", coords: [-22.865650, -43.254943] },
+                { id: "cpp", name: "Coordenadoria de Polícia Pacificadora", coords: [-22.867601, -43.268482] },
+                { id: "id4", name: "Polícia Militar", coords: [-22.873093, -43.267583] },
+                { id: "id5", name: "Polícia Militar", coords: [-22.875357, -43.272958] },
+                { id: "id6", name: "Polícia Militar", coords: [-22.853451, -43.252159] },
+                { id: "id7", name: "Polícia Militar", coords: [-22.852392, -43.247133] },
+                { id: "22bpm", name: "22º Batalhão de Polícia Militar", coords: [-22.853501, -43.239817] },
+                { id: "id8", name: "Viatura de Policiamento de Ação Preventiva", coords: [-22.847389, -43.243913] },
+                { id: "pmrj", name: "Comando de Operações Especiais - PMERJ", coords: [-22.845968, -43.245010] },
+                { id: "ppc22", name: "22º BPM; PPC 22/1 Ramos", coords: [-22.842085, -43.249659] },
+                { id: "id9", name: "Base UPP Alvorada", coords: [-22.861813, -43.277247] },
+                { id: "upp", name: "UPP Nova Brasília", coords: [-22.861338, -43.272173] },
+                { id: "id10", name: "Unidade de Polícia Pacificadora", coords: [-22.859789, -43.279284]}
+            ],
             routes: [
                 {
-                    id: "route_1",
-                    name: "Rota Logística Norte",
+                    id: "troop_mov_1",
+                    name: "Deslocamento no setor sul",
                     color: "#003A79",
                     points: [
-                        [-22.860, -43.275], [-22.850, -43.250], [-22.840, -43.245]
-                    ]
+[-22.864224, -43.239477],
+[-22.864429, -43.239547],
+[-22.864611, -43.239536],
+[-22.864908, -43.239645],
+[-22.866109, -43.240046],
+[-22.866195, -43.240087],
+[-22.866988, -43.240555],
+[-22.867484, -43.240927],
+[-22.868231, -43.241679],
+[-22.868496, -43.24202],
+[-22.868693, -43.242312],
+[-22.869339, -43.243404],
+[-22.869903, -43.244417],
+[-22.870105, -43.244778],
+[-22.870583, -43.245675],
+[-22.870655, -43.245795],
+[-22.87123, -43.246854],
+[-22.871472, -43.247337],
+[-22.87155, -43.24755],
+[-22.871616, -43.247785],
+[-22.871757, -43.248599],
+[-22.871943, -43.249946],
+[-22.872124, -43.251113],
+[-22.872147, -43.25137],
+[-22.872153, -43.251769],
+[-22.872121, -43.252171],
+[-22.872083, -43.252523],
+[-22.872077, -43.25259],
+[-22.871747, -43.255592],
+[-22.871704, -43.255981],
+[-22.871662, -43.256299],
+[-22.871613, -43.256548],
+[-22.871341, -43.257665],
+[-22.871244, -43.258123],
+[-22.871215, -43.258301],
+[-22.871194, -43.258478],
+[-22.871172, -43.258748],
+[-22.871156, -43.259032],
+[-22.871158, -43.259531],
+[-22.871182, -43.26003],
+[-22.871232, -43.261172],
+[-22.87125, -43.261684],
+[-22.871286, -43.262517],
+[-22.871328, -43.263195],
+[-22.871411, -43.263823],
+[-22.871478, -43.26431],
+[-22.87162, -43.264954],
+[-22.871772, -43.265542],
+[-22.871792, -43.265702],
+[-22.871794, -43.265809],
+[-22.871783, -43.265912],
+[-22.871749, -43.266069],
+[-22.871636, -43.266475],
+[-22.871581, -43.266729],
+[-22.871509, -43.267211],
+[-22.871415, -43.267907],
+[-22.871395, -43.268046],
+[-22.87138, -43.26811],
+[-22.871352, -43.268179],
+[-22.871313, -43.268244],
+[-22.871242, -43.2683],
+[-22.871187, -43.268306],
+[-22.871095, -43.268315],
+[-22.870844, -43.268342],
+[-22.870763, -43.268343],
+[-22.870693, -43.268344],
+[-22.870168, -43.268296],
+[-22.869887, -43.268252],
+[-22.869588, -43.268194],
+[-22.869405, -43.268147],
+[-22.869269, -43.268098],
+[-22.869084, -43.268001],
+[-22.868951, -43.267963],
+[-22.868903, -43.267949],
+[-22.868892, -43.268036],
+[-22.868883, -43.268067],
+[-22.868869, -43.26811],
+[-22.86883, -43.268177],
+[-22.868765, -43.268267],
+[-22.868648, -43.268396],
+[-22.868477, -43.268588],
+[-22.868063, -43.269034],
+[-22.867571, -43.269529],
+[-22.867364, -43.269645],
+[-22.867141, -43.269794],
+[-22.867058, -43.269742],
+[-22.866937, -43.269678],
+[-22.866869, -43.269633],
+[-22.86672, -43.269511],
+[-22.866581, -43.269382],
+[-22.86646, -43.269297],
+[-22.866359, -43.269258],
+[-22.8663, -43.269222],
+[-22.866242, -43.269197],
+[-22.866086, -43.269134],
+[-22.865867, -43.269063],
+[-22.865714, -43.269029],
+[-22.865622, -43.269008],
+[-22.865378, -43.268941],
+[-22.865082, -43.268864],
+[-22.864989, -43.268848],
+[-22.864835, -43.268833],
+[-22.864571, -43.268826],
+[-22.864247, -43.268822],
+[-22.864157, -43.268808],
+[-22.864101, -43.26879],
+[-22.863939, -43.268713],
+[-22.863792, -43.26861],
+[-22.863675, -43.268519],
+[-22.863469, -43.268367],
+[-22.863357, -43.268284],
+[-22.863065, -43.268132],
+[-22.862834, -43.268042],
+[-22.862451, -43.267972],
+[-22.862358, -43.267955],
+[-22.86195, -43.267882],
+[-22.861785, -43.267857],
+[-22.861736, -43.267849],
+[-22.861683, -43.267841],
+[-22.861098, -43.267754],
+[-22.860962, -43.267739],
+[-22.860598, -43.267706],
+[-22.860287, -43.267657],
+[-22.860186, -43.267634],
+[-22.859969, -43.267564],
+[-22.859872, -43.267532],
+[-22.859612, -43.26745],
+[-22.859565, -43.267442],
+[-22.85964, -43.26771],
+[-22.859672, -43.267789],
+[-22.859679, -43.267804],
+[-22.859774, -43.268047],
+[-22.859784, -43.268091],
+[-22.859801, -43.268264],
+[-22.859801, -43.268503],
+[-22.859784, -43.269176],
+[-22.859777, -43.269399],
+[-22.859774, -43.269552],
+[-22.859776, -43.269655],
+[-22.859776, -43.269758],
+[-22.859797, -43.27005],
+[-22.859816, -43.270161],
+[-22.859822, -43.270227],
+[-22.859824, -43.27026],
+[-22.859825, -43.270298],
+[-22.859822, -43.270612],
+[-22.859809, -43.270814],
+[-22.859787, -43.270985],
+[-22.859694, -43.27139],
+[-22.859681, -43.271487],
+[-22.859672, -43.271619],
+[-22.859663, -43.271687],
+[-22.859641, -43.27181],
+[-22.85961, -43.27192],
+[-22.859536, -43.272132],
+[-22.859499, -43.272247],
+[-22.85946, -43.27238],
+[-22.859452, -43.272461],
+[-22.859449, -43.272529],
+[-22.859473, -43.27278],
+[-22.859474, -43.272802],
+[-22.859498, -43.273048],
+[-22.859497, -43.273144],
+[-22.859433, -43.273456],
+[-22.859426, -43.273691],
+[-22.85942, -43.274021],
+[-22.859448, -43.274241],
+[-22.85945, -43.274289],
+[-22.859431, -43.274352],
+[-22.859353, -43.274552],
+[-22.859317, -43.27464],
+[-22.859311, -43.274688],
+[-22.859318, -43.274737],
+[-22.859448, -43.275086],
+[-22.859447, -43.275175],
+[-22.859441, -43.275212],
+[-22.859397, -43.275443],
+[-22.859383, -43.275559],
+[-22.859376, -43.275677],
+[-22.859344, -43.275972],
+[-22.859345, -43.276139],
+[-22.859349, -43.276199],
+[-22.859357, -43.27629],
+[-22.859377, -43.276409],
+[-22.85942, -43.27656],
+[-22.859426, -43.27658],
+[-22.859492, -43.276775],
+[-22.859561, -43.277008],
+[-22.859592, -43.277148],
+[-22.859595, -43.277197],
+[-22.859589, -43.277275],
+[-22.859566, -43.27736],
+[-22.859519, -43.277479],
+[-22.85949, -43.277576],
+[-22.859475, -43.277883],
+[-22.859472, -43.278131],
+[-22.859485, -43.278346],
+[-22.859514, -43.278468],
+[-22.859648, -43.278825],
+[-22.859789, -43.279284]
+]
                 }
             ]
         };
@@ -358,137 +600,108 @@ https://imidia.vercel.app/geospatial_monitoring.html
         let map;
         let layers = {
             factions: L.layerGroup(),
+            battalions: L.layerGroup(),
             routes: L.layerGroup(),
-            movingMarkers: L.layerGroup()
+            anim: L.layerGroup()
         };
 
-        // --- SISTEMA DE LOGIN ---
+        // LOGIN
         function handleLogin() {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
-            const error = document.getElementById('login-error');
-
-            // Simulação de autenticação baseada em acesso
             if (user === 'demo' && pass === 'dint2026') {
-                document.getElementById('login-overlay').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('login-overlay').style.display = 'none';
-                    document.getElementById('app').style.display = 'flex';
-                    initApp();
-                }, 500);
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('app').style.display = 'flex';
+                initMap();
             } else {
-                error.style.display = 'block';
+                document.getElementById('login-error').style.display = 'block';
             }
         }
 
-        // --- INICIALIZAÇÃO DO MAPA ---
-        function initApp() {
+        function initMap() {
             lucide.createIcons();
-            
-            // Centralizado no Rio de Janeiro
-            map = L.map('map').setView([-22.9068, -43.1729], 12);
+            map = L.map('map').setView([-22.855, -43.26], 14);
 
-            // Tile Layer - Estilo claro/corporativo
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                attribution: 'FGV DINT | Map tiles by CARTO'
             }).addTo(map);
 
-            layers.factions.addTo(map);
-            layers.routes.addTo(map);
-            layers.movingMarkers.addTo(map);
-
-            loadMapData();
-            updateClock();
-            
-            // Simular atualização automatizada a cada 30 segundos
-            setInterval(loadMapData, 30000);
+            Object.values(layers).forEach(l => l.addTo(map));
+            loadData();
+            setInterval(loadData, 60000);
         }
 
-        // --- CARREGAMENTO DE DADOS (SIMULANDO API/JSON) ---
-        async function loadMapData() {
-            // No futuro: const response = await fetch('/data/map_status.json');
-            // const data = await response.json();
-            const data = MOCK_DATA; 
-
-            // Limpar camadas para "atualizar"
+        function loadData() {
             layers.factions.clearLayers();
+            layers.battalions.clearLayers();
             layers.routes.clearLayers();
-            layers.movingMarkers.clearLayers();
+            layers.anim.clearLayers();
 
-            // Desenhar Áreas
-            data.factions.forEach(area => {
-                const poly = L.polygon(area.coords, {
-                    color: area.color,
-                    fillColor: area.color,
-                    fillOpacity: 0.4,
-                    weight: 2
-                }).bindPopup(`<strong>${area.name}</strong><br>Domínio: ${area.faction}`);
-                layers.factions.addLayer(poly);
+            const data = MOCK_DATA;
+
+            // Render Fações
+            data.factions.forEach(f => {
+                L.polygon(f.coords, {
+                    color: f.color, fillColor: f.color, fillOpacity: 0.35, weight: 2
+                }).bindPopup(`<strong>${f.name}</strong><br>Domínio: ${f.faction}`).addTo(layers.factions);
             });
 
-            // Desenhar Rotas e Animadores
-            data.routes.forEach(route => {
-                const line = L.polyline(route.points, {
-                    color: route.color,
-                    weight: 3,
-                    dashArray: '5, 10'
-                });
-                layers.routes.addLayer(line);
-
-                // Criar Marcador Animado (Simulado)
-                createMovingMarker(route.points, route.color);
+            // Render Batalhões
+            const btcIcon = L.divIcon({
+                className: 'battalion-icon',
+                html: '<i data-lucide="shield" style="width: 14px; height: 14px; color: var(--police-blue);"></i>',
+                iconSize: [28, 28]
             });
 
-            document.getElementById('last-update').innerText = new Date().toLocaleTimeString();
+            data.battalions.forEach(b => {
+                L.marker(b.coords, { icon: btcIcon })
+                    .bindPopup(`<strong>${b.name}</strong>`)
+                    .addTo(layers.battalions);
+            });
+            lucide.createIcons();
+
+            // Render Rotas com Setas
+            data.routes.forEach(r => {
+                const poly = L.polyline(r.points, { color: r.color, weight: 4, opacity: 0.7 }).addTo(layers.routes);
+                startMovement(r.points, r.color);
+            });
+
+            document.getElementById('sync-time').innerText = new Date().toLocaleTimeString();
         }
 
-        // --- ANIMAÇÃO DE MARCADORES (REPRESENTANDO FLUXO) ---
-        function createMovingMarker(path, color) {
-            const icon = L.divIcon({
-                className: 'moving-marker-icon',
-                html: `<div style="width:8px; height:8px; background:${color}; border-radius:50%"></div>`,
-                iconSize: [16, 16]
+        function startMovement(path, color) {
+            const vehicleIcon = L.divIcon({
+                className: 'vehicle-marker',
+                html: `<div style="width:10px; height:10px; background:${color}; border:2px solid white; border-radius:50%; box-shadow:0 0 10px ${color}"></div>`,
+                iconSize: [14, 14]
             });
 
-            const marker = L.marker(path[0], { icon: icon }).addTo(layers.movingMarkers);
+            const marker = L.marker(path[0], { icon: vehicleIcon }).addTo(layers.anim);
             
-            let step = 0;
-            const duration = 5000; // 5 segundos para completar a rota
-            const startTime = Date.now();
+            let pos = 0;
+            const animate = () => {
+                pos = (pos + 0.002) % 1;
+                const idx = Math.floor(pos * (path.length - 1));
+                const next = (idx + 1) % path.length;
+                const p = (pos * (path.length - 1)) % 1;
 
-            function animate() {
-                const now = Date.now();
-                const progress = ((now - startTime) % duration) / duration;
-                
-                // Lógica simples de interpolação entre pontos da rota
-                const pointIndex = Math.floor(progress * (path.length - 1));
-                const nextIndex = (pointIndex + 1) % path.length;
-                const partProgress = (progress * (path.length - 1)) % 1;
-
-                const lat = path[pointIndex][0] + (path[nextIndex][0] - path[pointIndex][0]) * partProgress;
-                const lng = path[pointIndex][1] + (path[nextIndex][1] - path[pointIndex][1]) * partProgress;
+                const lat = path[idx][0] + (path[next][0] - path[idx][0]) * p;
+                const lng = path[idx][1] + (path[next][1] - path[idx][1]) * p;
 
                 marker.setLatLng([lat, lng]);
                 requestAnimationFrame(animate);
-            }
-
+            };
             animate();
         }
 
-        // --- CONTROLES DE INTERFACE ---
         function toggleLayer(name) {
             if (map.hasLayer(layers[name])) {
                 map.removeLayer(layers[name]);
-                if (name === 'routes') map.removeLayer(layers.movingMarkers);
+                if (name === 'routes') map.removeLayer(layers.anim);
             } else {
                 map.addLayer(layers[name]);
-                if (name === 'routes') map.addLayer(layers.movingMarkers);
+                if (name === 'routes') map.addLayer(layers.anim);
             }
-        }
-
-        function updateClock() {
-            const now = new Date();
-            // Lógica adicional se necessário
         }
 
     </script>
