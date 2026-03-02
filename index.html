@@ -162,7 +162,7 @@
                     <span data-i18n="chart_histogram_desc">Distribuição do sentimento das notícias</span>
                 </div>
                 <div class="card-body">
-                    <div class="canvas-container">
+                    <div class="canvas-container skeleton">
                         <canvas id="gradesChart"></canvas>
                     </div>
                 </div>
@@ -180,11 +180,11 @@
                 </div>
 
                 <div class="card-desc">
-                    <span id="total-news">Carregando...</span>
+                    <span id="total-news" class="skeleton">Carregando...</span>
                 </div>
 
                 <div class="card-body">
-                    <div class="canvas-container">
+                    <div class="canvas-container skeleton">
                         <canvas id="volumeChart"></canvas>
                     </div>
                 </div>
@@ -200,7 +200,7 @@
                     <i data-lucide="gauge" class="card-icon"></i>
                 </div>
                 <div class="card-body centered">
-                    <div class="gauge-wrapper">
+                    <div class="gauge-wrapper skeleton">
                         <canvas id="gaugeChart"></canvas>
                         <div id="gaugeValueText" class="gauge-value-text">0.0</div>
                         <div id="gaugeDescription" class="gauge-description"> </div>
@@ -221,7 +221,7 @@
                             <h3 id="evolution-title">FGV IMíd.IA</h3>
                             <span class="info-icon" data-i18n-tooltip="tooltip_evolution">?</span>
                         </div>
-                        <p class="card-desc" id="evolution-subtitle">
+                        <p class="card-desc skeleton" id="evolution-subtitle">
                             Carregando...
                         </p>
                     </div>
@@ -231,7 +231,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="line-chart-container">    
+                <div class="line-chart-container skeleton">    
                     <canvas id="lineChart"></canvas>
                 </div>
             </div>

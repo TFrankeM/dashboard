@@ -670,8 +670,8 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         
         const sufixo = total === 1 ? t("chart_volume_desc_singular") : t("chart_volume_desc_plural");
+        totalNewsEl.classList.remove("skeleton");
         totalNewsEl.innerHTML = `<strong>${total.toLocaleString('pt-BR')}</strong> ${sufixo}`;
-        console.log(totalNewsEl.innerHTML);
         return total;
     }
 
@@ -790,6 +790,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // subtitle
         const totalStr = totalNews ? totalNews.toLocaleString(CURRENT_LANG) : "0";
+        evolutionSubtitleEl.classList.remove("skeleton");
         evolutionSubtitleEl.textContent = `${t("evo_subtitle_prefix")}${dateStr} | ${t("chart_line_tooltip_count")}: ${totalStr}`;
     }
 
@@ -962,8 +963,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const totalNewsCount = processAndUpdateVolumeChart(volumeData); // Handles null internally
             processAndUpdateGaugeDisplay(gaugeVal); // Handles null internally
             updateEvolutionHeader(totalNewsCount);
-            console.log("Total News Count:", totalNewsCount);
-            console.log("Line Data:", lineData);
             
             try {
                 if (lineData) {

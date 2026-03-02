@@ -113,6 +113,10 @@ const gaugeLabelsPlugin = {
 };
 
 export function drawGaugeChart(canvasElement, value, texts = {}) {
+    if (canvasElement.parentElement) {
+        canvasElement.parentElement.classList.remove("skeleton");
+    }
+
     // value: number (1 to 7)
     // texts is expected to be: { segments: [] }
     // texts: { segments: [ "Extremely Negative", "Very Negative", "Slightly Negative", "Neutral", "Slightly Positive", "Positive", "Extremely Positive" ] }
@@ -168,6 +172,10 @@ export function drawGaugeChart(canvasElement, value, texts = {}) {
 }
 
 export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}) {
+    if (canvasElement.parentElement) {
+        canvasElement.parentElement.classList.remove("skeleton");
+    }
+
     // texts is expected to be: { labelFrequency: "", tooltipTitle: "", tooltipSuffix: "" }
     
     const ctx = canvasElement.getContext("2d");
@@ -239,6 +247,10 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
 
 
 export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
+    if (canvasElement.parentElement) {
+        canvasElement.parentElement.classList.remove("skeleton");
+    }
+    
     const ctx = canvasElement.getContext("2d");
     if (volumeInstance) volumeInstance.destroy();
 
@@ -400,6 +412,10 @@ const verticalLinePlugin = {
 
 
 export function drawLineChart(canvasElement, labels, datasets, onPointClicked, texts = {}) {
+    if (canvasElement.parentElement) {
+        canvasElement.parentElement.classList.remove("skeleton");
+    }
+
     // datasets: array of { label: string, data: [{ x: dateStr, y: grade, count: number }, ...] }
     // texts: { yAxisTitle: "", tooltipGrade: "", tooltipNews: "", originalDates: [] }
     const ctx = canvasElement.getContext("2d");

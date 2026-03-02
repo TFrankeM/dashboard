@@ -335,7 +335,7 @@ request.query e.g.
 export default async function handler(request, response) {
   response.setHeader(
     "Cache-Control",
-    "public, s-maxage=86400, stale-while-revalidate=86400"
+    "public, s-maxage=86400, stale-while-revalidate=2073600"
   );
   const { widget } = request.query;
   try {
