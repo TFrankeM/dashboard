@@ -333,8 +333,10 @@ request.query e.g.
 }
 */
 export default async function handler(request, response) {
-  response.setHeader('Cache-Control', 'no-store');
-
+  response.setHeader(
+    "Cache-Control",
+    "public, s-maxage=86400, stale-while-revalidate=86400"
+  );
   const { widget } = request.query;
   try {
     let data;
@@ -362,8 +364,8 @@ export default async function handler(request, response) {
     return response.status(200).json(data);
 
   } catch (error) {
-    console.error("Erro na API:", error);
-    return response.status(500).json({ error: "Falha ao buscar dados." });
+    console.error("API error:", error);
+    return response.status(500).json({ error: "Failed to retrieve data." });
   }
 }
 
