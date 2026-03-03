@@ -501,6 +501,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function checkApplyButtonState() {
+        /* 
+            Compares appState and pendingState to determine if there are unsaved changes.
+        */
         const normalize = (s) => {
             const copy = JSON.parse(JSON.stringify(s));
             if(Array.isArray(copy.reviewer)) copy.reviewer.sort();
@@ -508,14 +511,15 @@ document.addEventListener("DOMContentLoaded", function () {
             if(Array.isArray(copy.category)) copy.category.sort();
             if(Array.isArray(copy.politicalAlignment)) copy.politicalAlignment.sort();
             copy.aggregation = parseFloat(copy.aggregation);
+
             return JSON.stringify(copy);
         };
 
         const isDifferent = normalize(appState) !== normalize(pendingState);
 
         if (isDifferent) {
-            btnApply.classList.remove("disabled");
-            btnApply.removeAttribute("disabled");
+            btnApply.classList.remove("disabled"); /* removes disabled class from css */
+            btnApply.removeAttribute("disabled");  /* removes <button> from html*/
         } else {
             btnApply.classList.add("disabled");
             btnApply.setAttribute("disabled", "true");
@@ -918,6 +922,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     async function updateDashboard() {
+        if (btnApply) {
+            // Loading: disable button, show spinner
+            btnApply.innerHTML = `
+                <i data-lucide="loader-circle" class="icon-sm" style="animation: spin 1s linear infinite;"></i>
+                <span data-i18n="btn_apply">${t("btn_apply")}</span>
+            `;
+            if (typeof lucide !== "undefined") {
+                lucide.createIcons();
+            }
+            btnApply.disabled = true;
+            btnApply.style.opacity = "0.8";
+            btnApply.style.cursor = "wait";
+        }
+
         const apiFilters = {
             reviewer: appState.reviewer, 
             reviewedEntity: appState.reviewedEntity, 
@@ -936,7 +954,6 @@ document.addEventListener("DOMContentLoaded", function () {
             apiFilters.period = null;
         }
 
-        totalNewsEl.textContent = "...";
 
         try {
             // allSettled prevents one failure from breaking the entire dashboard
@@ -976,6 +993,18 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (err) {
             console.error("Erro dashboard:", err);
             totalNewsEl.textContent = "Erro";
+        } finally {
+            if (btnApply) {
+                btnApply.innerHTML = `
+                <i data-lucide="check-circle" class="icon-sm"></i>
+                <span data-i18n="btn_apply">${t("btn_apply")}</span>
+                `;
+                if (typeof lucide !== "undefined") {
+                    lucide.createIcons();
+                }
+                btnApply.disabled = true;
+                btnApply.style.opacity = "0.8";
+            }
         }
     }
 

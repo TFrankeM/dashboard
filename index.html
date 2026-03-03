@@ -163,6 +163,11 @@
                 </div>
                 <div class="card-body">
                     <div class="canvas-container skeleton">
+                        <div class="skeleton-overlay">
+                            <div class="css-spinner"></div>
+                            <span data-i18n="loading_data">Carregando...</span>
+                        </div>
+
                         <canvas id="gradesChart"></canvas>
                     </div>
                 </div>
@@ -180,11 +185,16 @@
                 </div>
 
                 <div class="card-desc">
-                    <span id="total-news" class="skeleton">Carregando...</span>
+                    <span id="total-news">...</span>
                 </div>
 
                 <div class="card-body">
                     <div class="canvas-container skeleton">
+                        <div class="skeleton-overlay">
+                            <div class="css-spinner"></div>
+                            <span data-i18n="loading_data">Carregando...</span>
+                        </div>
+                        
                         <canvas id="volumeChart"></canvas>
                     </div>
                 </div>
@@ -194,13 +204,18 @@
             <div class="card metric-card">
                 <div class="card-header">
                     <div class="card-header-title-group">
-                        <h3 data-i18n="chart_gauge_title">FGV IMíd.IA</h3>
+                        <h3 data-i18n="chart_gauge_title">FGV IMídIA</h3>
                         <span class="info-icon" data-i18n-tooltip="tooltip_gauge">?</span>
                     </div>
                     <i data-lucide="gauge" class="card-icon"></i>
                 </div>
                 <div class="card-body centered">
                     <div class="gauge-wrapper skeleton">
+                        <div class="skeleton-overlay">
+                            <div class="css-spinner"></div>
+                            <span data-i18n="loading_data">Carregando...</span>
+                        </div>
+
                         <canvas id="gaugeChart"></canvas>
                         <div id="gaugeValueText" class="gauge-value-text">0.0</div>
                         <div id="gaugeDescription" class="gauge-description"> </div>
@@ -218,11 +233,11 @@
                 <div class="card-header-row">
                     <div>
                         <div class="card-header-title-group">
-                            <h3 id="evolution-title">FGV IMíd.IA</h3>
+                            <h3 id="evolution-title">FGV IMídIA</h3>
                             <span class="info-icon" data-i18n-tooltip="tooltip_evolution">?</span>
                         </div>
-                        <p class="card-desc skeleton" id="evolution-subtitle">
-                            Carregando...
+                        <p class="card-desc" id="evolution-subtitle">
+                            ...
                         </p>
                     </div>
                     <div class="chart-controls">
@@ -232,6 +247,11 @@
                     </div>
                 </div>
                 <div class="line-chart-container skeleton">    
+                    <div class="skeleton-overlay">
+                        <div class="css-spinner"></div>
+                        <span data-i18n="loading_data">Carregando...</span>
+                    </div>
+                    
                     <canvas id="lineChart"></canvas>
                 </div>
             </div>

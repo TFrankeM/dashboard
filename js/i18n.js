@@ -10,7 +10,8 @@ export const DICTIONARY = {
         mode_static: "Modo estático",
         mode_dynamic: "Modo dinâmico",
         no_data_found: "Nenhum dado encontrado",
-        
+        loading_data: "Carregando...",
+
         // Filter labels
         label_period: "Período",
         label_reviewer: "Quem avalia",
@@ -23,7 +24,7 @@ export const DICTIONARY = {
         btn_hide_filters: "Ocultar filtros",
 
         // Tooltips
-        tooltip_mode: "Modo Estático: calcula o FGV IMídIA no período definido. <br>Modo Dinâmico: atualiza o FGV IMídIA a cada 30 min.",
+        tooltip_mode: "<b>Modo Estático</b>: calcula o FGV IMídIA no período definido. <br><b>Modo Dinâmico</b>: atualiza o FGV IMídIA a cada 30 min.",
         tooltip_period: "Define o intervalo de tempo do FGV IMídIA.",
         tooltip_reviewer: "País ou entidade que avalia a imagem do ente em avaliação.",
         tooltip_political: "Selecione um alinhamento para comparar até cinco categorias. Selecione até cinco alinhamentos para comparar suas visões sobre uma única categoria.",
@@ -149,7 +150,8 @@ export const DICTIONARY = {
         mode_static: "Static mode: 2025",
         mode_dynamic: "Dynamic mode",
         no_data_found: "No data found",
-        
+        loading_data: "Loading...",
+
         // Filter labels
         label_period: "Period",
         label_reviewer: "Evaluator entity",
@@ -162,7 +164,7 @@ export const DICTIONARY = {
         btn_hide_filters: "Hide filters", 
 
         // Tooltips
-        tooltip_mode: "Static Mode: calculates the FGV IMídIA for the defined period. <br>Dynamic Mode: updates the FGV IMídIA every 30 minutes.",
+        tooltip_mode: "<b>Static Mode</b>: calculates the FGV IMídIA for the defined period. <br><b>Dynamic Mode</b>: updates the FGV IMídIA every 30 minutes.",
         tooltip_period : "Defines the time interval of the FGV IMídIA.",
         tooltip_reviewer: "Country or entity that evaluates the image of the assessed entity.",
         tooltip_political: "Select one alignment to compare up to five categories. Select up to five alignments to compare their views on a single category.",
@@ -288,6 +290,7 @@ export const DICTIONARY = {
         mode_static: "Modo estático: 2025",
         mode_dynamic: "Modo dinámico",
         no_data_found: "Ningún dato encontrado",
+        loading_data: "Cargando...",
         
         // Filter labels
         label_period: "Período",
@@ -301,7 +304,7 @@ export const DICTIONARY = {
         btn_hide_filters: "Ocultar filtros",    
 
         // Tooltips
-        tooltip_mode: "Modo Estático: calcula el FGV IMídIA en el período definido. <br>Modo Dinámico: actualiza el FGV IMídIA cada 30 minutos.",
+        tooltip_mode: "<b>Modo Estático</b>: calcula el FGV IMídIA en el período definido. <br><b>Modo Dinámico</b>: actualiza el FGV IMídIA cada 30 minutos.",
         tooltip_period: "Define el intervalo de tiempo del FGV IMídIA.",
         tooltip_reviewer: "País o entidad que evalúa la imagen del ente evaluado.",
         tooltip_political: "Seleccione una alineación para comparar hasta cinco categorías. Seleccione hasta cinco alineaciones para comparar sus visiones sobre una sola categoría.",
