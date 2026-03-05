@@ -218,7 +218,6 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
                 x: { 
                     grid: { display: false },
                     border: { display: true },
-                    // title: { display: true, text: "Nota FGV IMíd.IA" }
                 }
             },
             plugins: { 

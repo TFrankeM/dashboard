@@ -326,7 +326,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 itemSelectText: "",
                 shouldSort: false,
                 position: "bottom",
-                // Passamos as opções diretamente na inicialização para garantir que carreguem
                 choices: [
                     { value: "pt-BR", label: "PT", selected: true },
                     { value: "en-US", label: "EN" },

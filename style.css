@@ -162,7 +162,7 @@ body {
     align-items: center;
 }
 
-.logo-fgv {
+.logo-dint {
     height: 60px;
     width: auto;
 }
@@ -1246,7 +1246,7 @@ input:checked + .slider:before {
         align-self: center; /* vertical alignment just for son element */
     }
 
-    .logo-fgv { height: 50px; }
+    .logo-dint { height: 50px; }
 
     .brand-header, .sticky-filters, .main-content, .evolution-section {
         padding-left: 15px;

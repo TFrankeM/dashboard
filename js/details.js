@@ -1,13 +1,21 @@
 const API_ENDPOINT = "/api/data";
+import { DICTIONARY } from "./i18n.js";
+
+let CURRENT_LANG = "pt-BR";
+let choicesLanguage = null;
+
+function t(key) {
+    return DICTIONARY[CURRENT_LANG][key] || key;
+}
 
 const COLUMNS = [
-    { key: "date", label: "Data", type: "date" },
-    { key: "headline", label: "Manchete", expandable: true },
-    { key: "source", label: "Fonte" },
-    { key: "category", label: "Categoria" },
-    { key: "analysis", label: "Análise", expandable: true },
-    { key: "grade", label: "IMíd.IA", type: "number" },
-    { key: "url", label: "Link", type: "Veja" },
+    { key: "date", labelKey: "col_date", type: "date" },
+    { key: "headline", labelKey: "col_headline", expandable: true },
+    { key: "source", labelKey: "col_source" },
+    { key: "category", labelKey: "col_category" },
+    { key: "analysis", labelKey: "col_analysis", expandable: true },
+    { key: "grade", labelKey: "col_grade", type: "number" },
+    { key: "url", labelKey: "col_link", type: "link" },
 ];
 
 let visibleColumns = {
@@ -23,7 +31,83 @@ let visibleColumns = {
     language: false
 };
 
+function initLanguageSelector() {
+    if (typeof Choices !== "undefined") {
+        choicesLanguage = new Choices("#language-select", {
+            searchEnabled: false,
+            itemSelectText: "",
+            shouldSort: false,
+            position: "bottom",
+            choices: [
+                { value: "pt-BR", label: "PT", selected: true },
+                { value: "en-US", label: "EN" },
+                { value: "es-ES", label: "ES" }
+            ]
+        });
+
+        document.getElementById("language-select").addEventListener("change", (e) => {
+            CURRENT_LANG = e.target.value;
+            
+            // Recalcula formatação da data baseada no locale
+            const rawDate = new URLSearchParams(window.location.search).get("date");
+            if (rawDate) {
+                const dateObj = new Date(rawDate);
+                if (!isNaN(dateObj)) {
+                    document.getElementById("date-span").textContent = dateObj.toLocaleDateString(CURRENT_LANG, { timeZone: "UTC" });
+                }
+            }
+            
+            // updateFilterSummary(new URLSearchParams(window.location.search));
+            translateUI();
+            renderColumnSelector();
+            renderTableHeaders();
+            
+            const currentData = window.cachedData || [];
+            if(currentData.length > 0) {
+                renderTableBody(currentData);
+            }
+        });
+
+        const langWrapper = document.querySelector(".lang-dropdown-wrapper");
+        if (langWrapper) {
+            langWrapper.addEventListener("click", (e) => {
+                if (!e.target.closest(".choices")) {
+                    choicesLanguage.showDropdown();
+                }
+            });
+        }
+    }
+}
+
+
+function translateUI() {
+    const texts = DICTIONARY[CURRENT_LANG];
+    if (!texts) return;
+
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (texts[key]) {
+            el.textContent = texts[key];
+        }
+    });
+
+    document.querySelectorAll("[data-i18n-img]").forEach(el => {
+        const key = el.getAttribute("data-i18n-img");
+        if (texts[key]) {
+            el.src = texts[key];
+        }
+    });
+
+    COLUMNS.forEach(col => {
+        col.label = t(col.labelKey);
+    })
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
+    initLanguageSelector();
+    translateUI();
+
     const urlParams = new URLSearchParams(window.location.search);
     const filterSummary = document.getElementById("filter-summary");
     const dateSpan = document.getElementById("date-span");
@@ -54,6 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("limit-select").addEventListener("change", () => fetchData(urlParams));
 });
+
 
 function renderColumnSelector() {
     const container = document.getElementById("column-selector");
@@ -162,5 +247,7 @@ function renderTableBody(data) {
         tbody.appendChild(tr);
     });
     
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    if (typeof lucide !== "undefined") {
+        lucide.createIcons();
+    }
 }
