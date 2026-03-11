@@ -140,29 +140,30 @@ function initPaginationSelectors() {
             currentLimit = parseInt(e.target.value, 10);
             currentOffset = 0;
             // window.location.search := ?page=2&limit=50
-            fetchDetailsData(new URLSearchParams(window.location.search));
+            fetchData(new URLSearchParams(window.location.search));
         });
     }
 
     // range selector
     document.getElementById("prev-page").addEventListener("click", () => {
         currentOffset = Math.max(0, currentOffset - currentLimit);
-        fetchDetailsData(new URLSearchParams(window.location.search));
+        fetchData(new URLSearchParams(window.location.search));
     });
 
     document.getElementById("page-range-select").addEventListener("change", (e) => {
         currentOffset = parseInt(e.target.value, 10);
-        fetchDetailsData(new URLSearchParams(window.location.search));
+        fetchData(new URLSearchParams(window.location.search));
     });
 
     document.getElementById("next-page").addEventListener("click", () => {
         currentOffset += currentLimit;
-        fetchDetailsData(new URLSearchParams(window.location.search));
+        fetchData(new URLSearchParams(window.location.search));
     });
 }
 
 
 function updatePaginationUI(totalItems) {
+    /* Updates the pagination controls based on the total number of items returned by the API and the current limit and offset. */
     const rangeSelect = document.getElementById("page-range-select");
     const totalCountElement = document.getElementById("total-news-count");
 
@@ -211,6 +212,7 @@ function updateFilterSummary(urlParams) {
 
 
 async function fetchData(urlParams) {
+    /* Fetches data from the API based on the current URL parameters and updates the table with the results. */
     const tbody = document.getElementById("table-body");
 
     const filters = {
