@@ -4,7 +4,7 @@ import { sql } from "@vercel/postgres";
 
 function buildCommonFilters(query, params) {
   // Basic WHERE clause used by all charts
-  const { reviewer, reviewed_entity, category, period, start_date, end_date, politicalAlignment } = query;
+  const { reviewer, reviewedEntity, category, period, start_date, end_date, politicalAlignment } = query;
   const conditions = [];
 
   if (reviewer) {
@@ -12,8 +12,8 @@ function buildCommonFilters(query, params) {
     conditions.push(`evaluator_entity = $${params.length}`);
   }
 
-  if (reviewed_entity) {
-    params.push(reviewed_entity);
+  if (reviewedEntity) {
+    params.push(reviewedEntity);
     conditions.push(`evaluated_entity = $${params.length}`);
   }
 
@@ -262,36 +262,52 @@ async function getLineChartData(request) {
 async function getNewsList(request) {
     const params = [];
     //console.log("Request Query:", request.query);
-    const { date, aggregation, limit } = request.query;
+    const { date, aggregation, limit, offset } = request.query;
     //console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
     const queryForFilters = { ...request.query };
     delete queryForFilters.period; 
+    delete queryForFilters.limit;
+    delete queryForFilters.offset;
     
     const conditions = buildCommonFilters(queryForFilters, params);
 
     if (date && aggregation) {
-        let dateTrunc = 'day';
-        switch (aggregation) {
-            case 'monthly': dateTrunc = 'month'; break;
-            case 'weekly': dateTrunc = 'week'; break;
-            case 'daily': dateTrunc = 'day'; break;
-            case 'hourly': dateTrunc = 'hour'; break;
-            case 'half_hourly': dateTrunc = 'minute'; break;
-            default: dateTrunc = 'day';
-        }
+      let hours = parseFloat(aggregation);
+      if (isNaN(hours) || hours <= 0) {
+        hours = 1;
+      }
 
-        params.push(date);
-        
-        // ::date para forçar o banco a olhar apenas o dia (YYYY-MM-DD)
-        if (dateTrunc === 'day') {
-            conditions.push(`date::date = $${params.length}::date`);
-        } else {
-            conditions.push(`DATE_TRUNC('${dateTrunc}', date) = DATE_TRUNC('${dateTrunc}', $${params.length}::timestamp)`);
-        }
+      // Bind the interval
+      params.push(`${hours} hours;`)
+      const intervalParam = `$${params.length}`;
+
+      // Bind the exact clicked timestamp
+      params.push(date);
+      const dateParam = `$${params.length}`;
+
+      // ::interval converts the string to an interval type
+      // date: column name
+      conditions.push(`date_bin(${intervalParam}::interval, date, TIMESTAMP '2025-01-01') = ${dateParam}::timestamp`);
+    } else if (date) {
+      // Fallback to aggregate by day
+      params.push(date);
+      conditions.push(`date::date = $${params.length}::date`);
     }
+    
+    const whereClause = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
 
-    const limitClause = limit ? `LIMIT ${parseInt(limit)}` : 'LIMIT 50';
+    // Calculate the number of records | for pagination purposes
+    const countQuery = `
+        SELECT COUNT(*) AS total_count
+        FROM noticias
+        ${whereClause};
+    `;
+    const countResult = await sql.query(countQuery, params);
+    const totalCount = parseInt(countResult.rows[0].total_count, 10);
 
+    // Retrieve the actual news records with limit and offset
+    const limitVal = parseInt(limit, 10) || 50;
+    const offsetVal = parseInt(offset, 10) || 0;
     const query = `
         SELECT 
             id,
@@ -306,39 +322,46 @@ async function getNewsList(request) {
             grade,
             analysis
         FROM noticias
-        ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
+        ${whereClause}
         ORDER BY date DESC, grade DESC
-        ${limitClause};
+        LIMIT ${limitVal}
+        OFFSET ${offsetVal};
     `;
-
-    //console.log("Query Details:", query, params);
-
     const { rows } = await sql.query(query, params);
-    return rows;
+    console.log({ data: rows, total_count: totalCount });
+
+    return { total_count: totalCount, data: rows };
 }
 
 
-// ROTEADOR
-/*
-request.query e.g.
-{
-  "widget": "gauge",
-  "period": "Last365d",
-  "reviewer": "Argentina",
-  "reviewed_entity": "Brasil",
-  "category": [
-    "Meio ambiente",
-    "Conflito, guerra e paz"
-  ]
-}
-*/
+// ROUTER
 export default async function handler(request, response) {
+  /* API route handler for all data requests from the frontend.
+     It parses the query parameters, determines which data to fetch based 
+     on the 'widget' parameter, and returns the data as JSON.
+  */
+
   response.setHeader(
     "Cache-Control",
     "public, s-maxage=3600, stale-while-revalidate=86400"
   );
   
   const { widget } = request.query;
+  /*
+  request.query e.g.
+  {
+    "widget": "gauge",
+    "period": "Last365d",
+    "reviewer": "Argentina",
+    "reviewed_entity": "Brasil",
+    "category": [
+      "Meio ambiente",
+      "Conflito, guerra e paz"
+    ],
+    limit: undefined,
+    offset: undefined
+  }
+  */
   try {
     let data;
 
@@ -369,5 +392,4 @@ export default async function handler(request, response) {
     return response.status(500).json({ error: "Failed to retrieve data." });
   }
 }
-
 

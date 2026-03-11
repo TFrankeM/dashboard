@@ -1,6 +1,7 @@
 
 export const DICTIONARY = {
     "pt-BR" : {
+        main_page_title: "FGV IMídIA | Sala de Situación",
         app_logo: "assets/logodint_pt.svg",
 
         // General
@@ -11,6 +12,12 @@ export const DICTIONARY = {
         mode_dynamic: "Modo dinâmico",
         no_data_found: "Nenhum dado encontrado",
         loading_data: "Carregando...",
+        error_loading: "Erro",
+        unit_singular: "notícia",
+        unit_plural: "notícias",
+        reviewer: "Ente avaliador",
+        reviewedEntity: "Ente em avaliação",
+        not_specified: "Não especificado",
 
         // Filter labels
         label_period: "Período",
@@ -49,8 +56,6 @@ export const DICTIONARY = {
         chart_histogram_title: "Distribuição de notas",
         chart_histogram_desc: "Sentimento das notícias",
         chart_histogram_tooltip_grade: "Nota",
-        chart_histogram_tooltip_unit_singular: "notícia",
-        chart_histogram_tooltip_unit_plural: "notícias",
 
         // Volume chart
         chart_volume_title: "Quantidade de notícias",
@@ -80,7 +85,7 @@ export const DICTIONARY = {
         popup_text: "Entenda o IMídIA de ",
         btn_view_news: "Veja as notícias",
         btn_cancel: "Cancelar",
-        
+
         // Footer
         footer_copyright: "Diretoria Internacional da Fundação Getulio Vargas",
         footer_description: "Em desenvolvimento •",
@@ -138,9 +143,31 @@ export const DICTIONARY = {
             "Democratas": "Democratas",
             "Republicanos": "Republicanos",
             "Independentes": "Independentes"
-        }
+        },
+
+        // Details page
+        details_page_title: "Detalhes das notícias",
+        btn_close: "Fechar",
+        details_title_prefix: "Notícias que compõem o FGV IMídIA em ",
+        loading_filters: "Carregando filtros...",
+        btn_choose_columns: "Escolha as colunas visíveis",
+        label_show: "Exibir:",
+        label_news_count: "notícias",
+        col_date: "Data",
+        col_headline: "Manchete",
+        col_summary: "Resumo",
+        col_article_text: "Texto do artigo",
+        col_source: "Fonte",
+        col_category: "Categoria",
+        col_analysis: "Análise",
+        col_grade: "Nota do IMídIA",
+        col_link: "Link",
+        click_to_expand: "Clique para expandir",
+        table_link_view: "Veja",
     },
     "en-US": {
+        main_page_title: "FGV IMídIA | Situation Room",
+
         app_logo: "assets/logodint_en.svg",
 
         // General
@@ -151,6 +178,12 @@ export const DICTIONARY = {
         mode_dynamic: "Dynamic mode",
         no_data_found: "No data found",
         loading_data: "Loading...",
+        error_loading: "Error",
+        unit_singular: "news item",
+        unit_plural: "news items",
+        reviewer: "Evaluating entity",
+        reviewedEntity: "Evaluated entity",
+        not_specified: "Not specified",
 
         // Filter labels
         label_period: "Period",
@@ -189,8 +222,6 @@ export const DICTIONARY = {
         chart_histogram_title: "Grade frequency",
         chart_histogram_desc: "Distribution of news sentiment",
         chart_histogram_tooltip_grade: "Grade",
-        chart_histogram_tooltip_unit_singular: "news item",
-        chart_histogram_tooltip_unit_plural: "news items",
 
         // Volume chart
         chart_volume_title: "News quantity",
@@ -211,7 +242,7 @@ export const DICTIONARY = {
         evo_date_connector: " in the ",
         evo_date_connector_static: " from ",
         evo_date_connector_static_to: " to ",
-        chart_line_y_axis_title: "FGV IMíd.IA",
+        chart_line_y_axis_title: "FGV IMídIA",
         chart_line_tooltip_avg: "Average grade",
         chart_line_tooltip_count: "News quantity",
         btn_reset: "Reset",
@@ -278,7 +309,27 @@ export const DICTIONARY = {
             "Democratas": "Democrats",
             "Republicanos": "Republicans",
             "Independentes": "Independents"
-        }
+        },
+
+        // Detailse page
+        details_page_title: "News details",
+        btn_close: "Close",
+        details_title_prefix: "News composing the FGV IMídIA on ",
+        loading_filters: "Loading filters...",
+        btn_choose_columns: "Choose visible columns",
+        label_show: "Show:",
+        label_news_count: "news articles",
+        col_date: "Date",
+        col_headline: "Headline",
+        col_summary: "Summary",
+        col_article_text: "Article text",
+        col_source: "Source",
+        col_category: "Category",
+        col_analysis: "Analysis",
+        col_grade: "IMídIA Grade",
+        col_link: "Link",
+        click_to_expand: "Click to expand",
+        table_link_view: "View",
     },
     "es-ES": {
         app_logo: "assets/logodint_es.svg",
@@ -291,7 +342,13 @@ export const DICTIONARY = {
         mode_dynamic: "Modo dinámico",
         no_data_found: "Ningún dato encontrado",
         loading_data: "Cargando...",
-        
+        error_loading: "Error",
+        unit_singular: "noticia",
+        unit_plural: "noticias",
+        reviewer: "Entidad evaluadora",
+        reviewedEntity: "Entidad evaluada",
+        not_specified: "No especificado",
+
         // Filter labels
         label_period: "Período",
         label_reviewer: "Entidad evaluadora",
@@ -329,8 +386,6 @@ export const DICTIONARY = {
         chart_histogram_title: "Frecuencia de calificaciones",
         chart_histogram_desc: "Distribución del sentimiento noticioso",
         chart_histogram_tooltip_grade: "Nota",
-        chart_histogram_tooltip_unit_singular: "noticia",
-        chart_histogram_tooltip_unit_plural: "noticias",
 
         // Volume chart
         chart_volume_title: "Cantidad de noticias",
@@ -351,7 +406,7 @@ export const DICTIONARY = {
         evo_date_connector: " en los ",
         evo_date_connector_static: " de ",
         evo_date_connector_static_to: " a ",
-        chart_line_y_axis_title: "FGV IMíd.IA",
+        chart_line_y_axis_title: "FGV IMídIA",
         chart_line_tooltip_avg: "Nota media",
         chart_line_tooltip_count: "Cantidad de noticias",
         btn_reset: "Restablecer",
@@ -418,6 +473,25 @@ export const DICTIONARY = {
             "Democratas": "Demócratas",
             "Republicanos": "Republicanos",
             "Independentes": "Independientes"
-        }
+        },
+
+        // Details page
+        btn_close: "Cerrar",
+        details_title_prefix: "Noticias que componen el FGV IMídIA el ",
+        loading_filters: "Cargando filtros...",
+        btn_choose_columns: "Elija las columnas visibles",
+        label_show: "Mostrar:",
+        label_news_count: "noticias",
+        col_date: "Fecha",
+        col_headline: "Titular",
+        col_summary: "Resumen",
+        col_article_text: "Texto del artículo",
+        col_source: "Fuente",
+        col_category: "Categoría",
+        col_analysis: "Análisis",
+        col_grade: "Nota de IMídIA",
+        col_link: "Enlace",
+        click_to_expand: "Haga clic para expandir",
+        table_link_view: "Ver",
     }
 };

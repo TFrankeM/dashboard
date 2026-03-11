@@ -206,7 +206,7 @@ body {
 
 .lang-dropdown-wrapper .choices__list--dropdown .choices__item {
     font-size: 13px !important;
-    color: var(--text-secondary) !important;
+    color: red !important;
     padding: 8px !important;
     display: block !important;      /* full width */
 }

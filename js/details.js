@@ -1,37 +1,51 @@
 const API_ENDPOINT = "/api/data";
 import { DICTIONARY } from "./i18n.js";
+import { fetchDetailsData } from "./api_adapter.js";
 
+// Global state variables
 let CURRENT_LANG = "pt-BR";
 let choicesLanguage = null;
-
-function t(key) {
-    return DICTIONARY[CURRENT_LANG][key] || key;
-}
+let currentLimit = 50;
+let currentOffset = 0;
+let choicesLimit = null;
 
 const COLUMNS = [
     { key: "date", labelKey: "col_date", type: "date" },
     { key: "headline", labelKey: "col_headline", expandable: true },
+    { key: "summary", labelKey: "col_summary", expandable: true },
+    { key: "article_text", labelKey: "col_article_text", expandable: true },
     { key: "source", labelKey: "col_source" },
     { key: "category", labelKey: "col_category" },
-    { key: "analysis", labelKey: "col_analysis", expandable: true },
     { key: "grade", labelKey: "col_grade", type: "number" },
+    { key: "analysis", labelKey: "col_analysis", expandable: true },
     { key: "url", labelKey: "col_link", type: "link" },
 ];
 
 let visibleColumns = {
     date: true, 
+    language: false,
+    category: true, 
     headline: true, 
     source: true, 
-    grade: true, 
-    category: true, 
-    analysis: true, 
     summary: false, 
     article_text: false, 
-    url: true, 
-    language: false
+    analysis: true, 
+    grade: true, 
+    url: true
 };
 
+
+
+function t(key) {
+    return DICTIONARY[CURRENT_LANG][key] || key;
+}
+
+function translateEntity(key) {
+    return DICTIONARY[CURRENT_LANG].entity_options?.[key] || key;
+}
+
 function initLanguageSelector() {
+    /* Initializes the language selector dropdown and sets up event listeners to handle language changes. */
     if (typeof Choices !== "undefined") {
         choicesLanguage = new Choices("#language-select", {
             searchEnabled: false,
@@ -48,7 +62,7 @@ function initLanguageSelector() {
         document.getElementById("language-select").addEventListener("change", (e) => {
             CURRENT_LANG = e.target.value;
             
-            // Recalcula formatação da data baseada no locale
+            // Locale-based date reformatting
             const rawDate = new URLSearchParams(window.location.search).get("date");
             if (rawDate) {
                 const dateObj = new Date(rawDate);
@@ -57,7 +71,7 @@ function initLanguageSelector() {
                 }
             }
             
-            // updateFilterSummary(new URLSearchParams(window.location.search));
+            updateFilterSummary(new URLSearchParams(window.location.search));
             translateUI();
             renderColumnSelector();
             renderTableHeaders();
@@ -81,6 +95,8 @@ function initLanguageSelector() {
 
 
 function translateUI() {
+    /* Translate all text elements with data-i18n attribute and also handles image 
+    translations for elements with the data-i18n-img attribute. */
     const texts = DICTIONARY[CURRENT_LANG];
     if (!texts) return;
 
@@ -104,9 +120,131 @@ function translateUI() {
 }
 
 
+function initPaginationSelectors() {
+    /* Initializes the pagination controls, including the limit selector and page navigation buttons.
+    It sets up event listeners to handle user interactions and updates the current limit and offset accordingly. */
+    if (typeof Choices !== "undefined") {
+        choicesLimit = new Choices("#limit-select", {
+            searchEnabled: false,
+            itemSelectText: "",
+            shouldSort: false,
+            choices: [
+                { value: "50", label: "50", selected: true },
+                { value: "100", label: "100" },
+                { value: "500", label: "500" },
+                { value: "1000", label: "1000" }
+            ]
+        });
+
+        document.getElementById("limit-select").addEventListener("change", (e) => {
+            currentLimit = parseInt(e.target.value, 10);
+            currentOffset = 0;
+            // window.location.search := ?page=2&limit=50
+            fetchDetailsData(new URLSearchParams(window.location.search));
+        });
+    }
+
+    // range selector
+    document.getElementById("prev-page").addEventListener("click", () => {
+        currentOffset = Math.max(0, currentOffset - currentLimit);
+        fetchDetailsData(new URLSearchParams(window.location.search));
+    });
+
+    document.getElementById("page-range-select").addEventListener("change", (e) => {
+        currentOffset = parseInt(e.target.value, 10);
+        fetchDetailsData(new URLSearchParams(window.location.search));
+    });
+
+    document.getElementById("next-page").addEventListener("click", () => {
+        currentOffset += currentLimit;
+        fetchDetailsData(new URLSearchParams(window.location.search));
+    });
+}
+
+
+function updatePaginationUI(totalItems) {
+    const rangeSelect = document.getElementById("page-range-select");
+    const totalCountElement = document.getElementById("total-news-count");
+
+    rangeSelect.innerHTML = "";
+    totalCountElement.textContent = totalItems.toLocaleString(CURRENT_LANG);
+
+    const totalPages = Math.ceil(totalItems / currentLimit);
+
+    if (totalPages === 0) {
+        rangeSelect.appendChild(new Option("0 - 0", 0));
+        rangeSelect.disabled = true;
+        document.getElementById("prev-page").disabled = true;
+        document.getElementById("next-page").disabled = true;
+        return;
+    }
+
+    rangeSelect.disabled = false;
+    for (let i = 0; i < totalPages; i++) {
+        const startItem = (i * currentLimit) + 1;
+        const endItem = Math.min((i + 1) * currentLimit, totalItems);
+        const option = new Option(`${startItem} - ${endItem}`, i * currentLimit);
+        if (currentOffset === i * currentLimit) {
+            option.selected = true;
+        }
+        rangeSelect.appendChild(option);
+    }
+
+    document.getElementById("prev-page").disabled = currentOffset === 0;
+    document.getElementById("next-page").disabled = (currentOffset + currentLimit) >= totalItems;
+}
+
+
+function updateFilterSummary(urlParams) {
+    /* Updates the filter summary text based on the current URL parameters */
+    const filterSummary = document.getElementById("filter-summary");
+    if (!filterSummary) return;
+
+    const reviewers = urlParams.getAll("reviewer");
+    const reviewersStr = reviewers.length > 0 ? reviewers.map(translateEntity).join(", ") : t("not_specified");
+
+    const reviewedEntities = urlParams.getAll("reviewedEntity");
+    const reviewedEntitiesStr = reviewedEntities.length > 0 ? reviewedEntities.map(translateEntity).join(", ") : t("not_specified");
+    
+    filterSummary.textContent = `${t("reviewer")}: ${reviewersStr} | ${t("reviewedEntity")}: ${reviewedEntitiesStr}`;
+}
+
+
+async function fetchData(urlParams) {
+    const tbody = document.getElementById("table-body");
+
+    const filters = {
+        limit: currentLimit,
+        offset: currentOffset,
+        date: urlParams.get("date"),
+        aggregation: urlParams.get("aggregation"),
+
+        reviewer: urlParams.getAll("reviewer"),
+        reviewedEntity: urlParams.getAll("reviewedEntity"),
+        category: urlParams.getAll("category"),
+        politicalAlignment: urlParams.getAll("politicalAlignment"),
+    };
+
+    try {
+        const { total_count, data } = await fetchDetailsData(filters);
+        if (!{ total_count, data } || typeof total_count === "undefined") {
+            console.error("Invalid API response format:", { total_count, data });
+            return;
+        }
+        window.cachedData = data;
+        updatePaginationUI(total_count);
+        renderTableHeaders();
+        renderTableBody(data);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    }
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
     initLanguageSelector();
     translateUI();
+    initPaginationSelectors();
 
     const urlParams = new URLSearchParams(window.location.search);
     const filterSummary = document.getElementById("filter-summary");
@@ -127,16 +265,14 @@ document.addEventListener("DOMContentLoaded", () => {
         dateSpan.textContent = dateFormatted;
     }
     
-    const reviewer = urlParams.get("reviewer") || "Não especificado";
-    const reviwedEntity = urlParams.get("reviewedEntity") || "Não especificado";
-    const agg = urlParams.get("aggregation") || "Diária";
-    filterSummary.textContent = `Ente avaliador: ${reviewer} | Ente em avaliação: ${reviwedEntity}`;
+    // const reviewer = urlParams.get("reviewer") || t("not_specified");
+    // const reviewedEntity = urlParams.get("reviewedEntity") || t("not_specified");
+    // const agg = urlParams.get("aggregation") || "Diária";
+    // filterSummary.textContent = `${t("reviewer")}: ${reviewer} | ${t("reviewedEntity")}: ${reviewedEntity}`;
     
+    updateFilterSummary(urlParams);
     renderColumnSelector();
-
     fetchData(urlParams);
-
-    document.getElementById("limit-select").addEventListener("change", () => fetchData(urlParams));
 });
 
 
@@ -164,30 +300,6 @@ function renderColumnSelector() {
     });
 }
 
-async function fetchData(urlParams) {
-    const tbody = document.getElementById('table-body');
-    tbody.innerHTML = '<tr><td colspan="100%" class="text-center p-4">Carregando...</td></tr>';
-    
-    urlParams.set('widget', 'details');
-    urlParams.set('limit', document.getElementById('limit-select').value);
-    
-    const queryString = urlParams.toString().replace(/\+/g, '%20');
-
-    try {
-        const response = await fetch(`${API_ENDPOINT}?${queryString}`);
-        if (!response.ok) throw new Error('Erro na API');
-        
-        const data = await response.json();
-        window.cachedData = data;
-        console.log("Query String:", queryString);
-        console.log("Fetched Data:", data);
-        renderTableHeaders();
-        renderTableBody(data);
-        
-    } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="100%" class="text-center text-red-500 p-4">Erro: ${error.message}</td></tr>`;
-    }
-}
 
 function renderTableHeaders() {
     const theadRow = document.getElementById('table-header');
@@ -201,6 +313,7 @@ function renderTableHeaders() {
         }
     });
 }
+
 
 function renderTableBody(data) {
     const tbody = document.getElementById('table-body');

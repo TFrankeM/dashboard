@@ -7,7 +7,10 @@ const API_ENDPOINT = "/api/data";
 
 
 function buildApiUrl(filters, widgetType) {
-    /* Builds the URL with parameters*/
+    /* Builds the URL with parameters 
+    filters := Object containing filter parameters
+    widgetType := "grade", "volume", "gauge", "line" or "details"
+    */
 
     const url_params = new URLSearchParams();
     url_params.append("widget", widgetType);
@@ -56,24 +59,27 @@ function buildApiUrl(filters, widgetType) {
     }
     
     // Filters for details section
-    if (filters.limit) {
-        url_params.append("limit", filters.limit);
-    };
-
     if (filters.date) {
         url_params.append("date", filters.date);
     };
 
+    if (filters.limit !== undefined && filters.limit !== null) {
+        url_params.append("limit", filters.limit);
+    };
+
+    if (filters.offset !== undefined && filters.offset !== null) {
+        url_params.append("offset", filters.offset)
+    }
+
     return url_params;
 }
-
 
 
 async function fetchFromApi(filters, widgetType) {
     /* Internal function to fetch data from the API */
     try {
         let url_params = buildApiUrl(filters, widgetType);
-        url_params = url_params.toString().replace(/\+/g, "%20");
+        url_params = url_params.toString().replace(/\+/g, "%20"); /* '\+' literal + symbol; '/ /' start and end of the expression; 'g' global flag */
         const fullUrl = `${API_ENDPOINT}?${url_params.toString()}`;
 
         console.log(`[Fetching from API] Requesting: ${fullUrl}`);
@@ -90,7 +96,6 @@ async function fetchFromApi(filters, widgetType) {
         return null;
     }
 }
-
 
 
 /* Functions exported to script.js */

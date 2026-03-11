@@ -200,27 +200,9 @@ document.addEventListener("DOMContentLoaded", function () {
             { value: "Last365d" }
         ]
     };
-    
-    const CATEGORIESLIST = [
-        "Todas", 
-        "Artes, cultura, entretenimento e mídia", 
-        "Ciência e tecnologia", 
-        "Conflito, guerra e paz", 
-        "Crime, lei e justiça", 
-        "Desastres, acidentes e emergências", 
-        "Economia, negócios e finanças", 
-        "Educação", 
-        "Esporte", 
-        "Estilo de vida e lazer", 
-        "Interesse humano", 
-        "Meio ambiente", 
-        "Meteorologia", 
-        "Política", 
-        "Religião e crenças", 
-        "Saúde", 
-        "Sociedade", 
-        "Trabalho" 
-    ];
+
+    /* Get keys and transform into an array */
+    const CATEGORIESLIST = Object.keys(DICTIONARY["pt-BR"].category_options); 
 
     const RELATIONSHIPS = {
         // Evaluator: [Evaluated]
@@ -631,8 +613,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const texts = {
             tooltipTitle: t("chart_histogram_tooltip_grade"),
-            tooltipUnitSingular: t("chart_histogram_tooltip_unit_singular"),
-            tooltipUnitPlural: t("chart_histogram_tooltip_unit_plural"),
+            tooltipUnitSingular: t("unit_singular"),
+            tooltipUnitPlural: t("unit_plural"),
             gradeDescriptions: gradeDescriptions
         };
         drawGradesHistogramChart(gradesChartCanvas, labels, values, texts);
@@ -1015,7 +997,7 @@ document.addEventListener("DOMContentLoaded", function () {
         processAndUpdateLineChart(cachedApiData.lineData);
     }
 
-
     initializeFilters();
     setTimeout(updateDashboard, 100);
 });
+
