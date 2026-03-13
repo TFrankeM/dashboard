@@ -338,7 +338,7 @@ async function getNewsList(request) {
         OFFSET ${offsetVal};
     `;
     const { rows } = await sql.query(query, params);
-    console.log({ data: rows, total_count: totalCount });
+    // console.log({ data: rows, total_count: totalCount });
 
     return { total_count: totalCount, data: rows };
 }

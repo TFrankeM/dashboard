@@ -41,20 +41,13 @@
     --fgv-aux-gold:    #BDA132; /* Highlight */
 
     /* Utilities */
-    --bg-light: #D7D9DD;    /* light gray background for the page */
-    --bg-page: #f3f4f6;     /* even lighter background as an option */
-    --text-primary: var(--fgv-gray-dark);
-    --text-secondary: var(--fgv-gray-med);
-    --border-card: var(--fgv-gray-pale);
+    --bg-light:      #D7D9DD;   /* light gray background for the page */
+    --bg-page:       #f3f4f6;   /* even lighter background as an option */
+    --text-primary:    var(--fgv-gray-dark);
+    --text-secondary:  var(--fgv-gray-med);
+    --border-card:     var(--fgv-gray-pale);
     --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.08);
 
-
-    --fgv-blue: #003A79;
-    --fgv-gold: #D7D9DD;
-    --white: #ffffff;
-    /* --text-primary: #88868B; */
-    --text-secondary: #88868B;
-    --border-color: #ffffff;
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
@@ -218,7 +211,7 @@ body {
 }
 
 .lang-dropdown-wrapper:hover {
-    border-color: var(--fgv-blue);
+    border-color: var(--fgv-blue-dark);
 }
 
 .lang-icon {
@@ -292,7 +285,7 @@ body {
     left: auto !important;
     right: -9px !important;     
 
-    border: 1px solid var(--fgv-blue) !important;
+    border: 1px solid var(--fgv-blue-dark) !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     border-radius: 4px !important;
     text-align: center !important;
@@ -577,8 +570,8 @@ input:checked + .slider:before {
 
 /* Selected items/categories */
 .filter-group .choices__list--multiple .choices__item {
-    background-color: var(--fgv-blue) !important;
-    border: 1px solid var(--fgv-blue) !important;
+    background-color: var(--fgv-blue-dark) !important;
+    border: 1px solid var(--fgv-blue-dark) !important;
     color: white !important;
     border: none !important;
     font-size: 13px !important;
@@ -595,7 +588,7 @@ input:checked + .slider:before {
 /* Dropdown aberto */
 .filter-group select .choices__list--dropdown, 
 .filter-group .choices__list--dropdown {
-    border: 1px solid var(--fgv-blue) !important;
+    border: 1px solid var(--fgv-blue-dark) !important;
     border-radius: 4px !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
     margin-top: 2px !important;
@@ -662,7 +655,7 @@ input:checked + .slider:before {
     height: 14px;
     padding-top: 1px;
     background-color: #e2e8f0;        /* cor de fundo do círculo */
-    border: 1px solid var(--fgv-blue);
+    border: 1px solid var(--fgv-blue-dark);
     border-radius: 50%;                 /* arredondamento das bordas */
     text-align: center;
     font-size: 10px;;
@@ -675,9 +668,9 @@ input:checked + .slider:before {
 }
 
 .info-icon:hover {
-    background-color: var(--fgv-gold);
-    color: var(--fgv-blue);
-    border-color: var(--fgv-gold);
+    background-color: var(--bg-light);
+    color: var(--fgv-blue-dark);
+    border-color: var(--bg-light);
 }
 
 .tippy-box {
@@ -700,7 +693,7 @@ input:checked + .slider:before {
 }
 
 .card {
-    background-color: var(--white);
+    background-color: var(--fgv-white);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 15px;
@@ -731,7 +724,7 @@ input:checked + .slider:before {
 .card-header h3 { 
     font-size: 16px; 
     font-weight: 700; 
-    color: var(--fgv-blue); 
+    color: var(--fgv-blue-dark); 
     margin: 0; 
 }
 
@@ -787,7 +780,7 @@ input:checked + .slider:before {
     right: 0;
     font-size: 3rem;
     font-weight: 700;
-    color: var(--fgv-blue);
+    color: var(--fgv-blue-dark);
     text-align: center;
     pointer-events: none;
     line-height: 1;
@@ -879,7 +872,7 @@ input:checked + .slider:before {
 }
 
 .card-header-row h3 {
-    color: var(--fgv-blue);
+    color: var(--fgv-blue-dark);
     font-size: 18px;
     font-weight: 700;
     margin: 0;
@@ -923,12 +916,12 @@ input:checked + .slider:before {
     cursor: pointer;
     font-size: 12px;
     font-weight: 700;
-    color: var(--fgv-blue);
+    color: var(--fgv-blue-dark);
     transition: background-color 0.2s, color 0.2s;
 }
 
 .avg-btn.active {
-    background-color: var(--fgv-blue);
+    background-color: var(--fgv-blue-dark);
     color: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -948,8 +941,8 @@ input:checked + .slider:before {
 .chart-popup {
     position: fixed; /* to work with the mouse X/Y coordinates */
     z-index: 200;   /* Guarantee that it floats above any chart or menu */
-    background-color: var(--white);
-    border: 1px solid var(--fgv-blue); /* Thin blue border for emphasis */
+    background-color: var(--fgv-white);
+    border: 1px solid var(--fgv-blue-dark); /* Thin blue border for emphasis */
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
@@ -996,9 +989,9 @@ input:checked + .slider:before {
 
 /* Confirm Button (View Details) */
 .btn-confirm {
-    background-color: var(--fgv-blue);
+    background-color: var(--fgv-blue-dark);
     color: white;
-    border: 1px solid var(--fgv-blue);
+    border: 1px solid var(--fgv-blue-dark);
 }
 
 .btn-confirm:hover {
@@ -1026,8 +1019,8 @@ input:checked + .slider:before {
     width: 12px;
     height: 12px;
     background-color: white;
-    border-right: 1px solid var(--fgv-blue);
-    border-bottom: 1px solid var(--fgv-blue);
+    border-right: 1px solid var(--fgv-blue-dark);
+    border-bottom: 1px solid var(--fgv-blue-dark);
 }
 
 
@@ -1127,7 +1120,7 @@ input:checked + .slider:before {
 }
 
 .link_dint_site { 
-    color: var(--fgv-blue); 
+    color: var(--fgv-blue-dark); 
     text-decoration: none; 
     font-weight: 700; 
 }
