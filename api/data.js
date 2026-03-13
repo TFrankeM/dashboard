@@ -262,12 +262,14 @@ async function getLineChartData(request) {
 async function getNewsList(request) {
     const params = [];
     //console.log("Request Query:", request.query);
-    const { date, aggregation, limit, offset } = request.query;
+    const { date, aggregation, limit, offset, sort_by, sort_dir } = request.query;
     //console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
     const queryForFilters = { ...request.query };
     delete queryForFilters.period; 
     delete queryForFilters.limit;
     delete queryForFilters.offset;
+    delete queryForFilters.sort_by;
+    delete queryForFilters.sort_dir;
     
     const conditions = buildCommonFilters(queryForFilters, params);
 
@@ -305,6 +307,14 @@ async function getNewsList(request) {
     const countResult = await sql.query(countQuery, params);
     const totalCount = parseInt(countResult.rows[0].total_count, 10);
 
+    // Ordering clause for standard fallback
+    let orderClause = "ORDER BY date DESC, grade DESC";
+    const allowedSortColumns = ["date", "headline", "source", "category", "grade", "analysis"];
+    if (sort_by && allowedSortColumns.includes(sort_by)) {
+        const direction = (sort_dir && sort_dir.toUpperCase() === "ASC") ? "ASC" : "DESC";
+        orderClause = `ORDER BY ${sort_by} ${direction}`;
+    }
+
     // Retrieve the actual news records with limit and offset
     const limitVal = parseInt(limit, 10) || 50;
     const offsetVal = parseInt(offset, 10) || 0;
@@ -323,7 +333,7 @@ async function getNewsList(request) {
             analysis
         FROM noticias
         ${whereClause}
-        ORDER BY date DESC, grade DESC
+        ${orderClause}
         LIMIT ${limitVal}
         OFFSET ${offsetVal};
     `;

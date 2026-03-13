@@ -70,7 +70,12 @@ function buildApiUrl(filters, widgetType) {
     if (filters.offset !== undefined && filters.offset !== null) {
         url_params.append("offset", filters.offset)
     }
-
+    if (filters.sort_by) {
+        url_params.append("sort_by", filters.sort_by);
+    }
+    if (filters.sort_dir) {
+        url_params.append("sort_dir", filters.sort_dir);
+    }
     return url_params;
 }
 

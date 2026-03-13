@@ -8,17 +8,35 @@ let choicesLanguage = null;
 let currentLimit = 50;
 let currentOffset = 0;
 let choicesLimit = null;
+let currentSortColumn = null;
+let currentSortDirection = null;
+
+/*
+CREATE INDEX idx_noticias_date ON noticias(date);
+CREATE INDEX idx_noticias_grade ON noticias(grade);
+
+CREATE INDEX idx_noticias_source ON noticias(source);
+CREATE INDEX idx_noticias_category ON noticias(category);
+CREATE INDEX idx_noticias_language ON noticias(language);
+
+CREATE INDEX idx_noticias_evaluator ON noticias(evaluator_entity);
+CREATE INDEX idx_noticias_evaluated ON noticias(evaluated_entity);
+
+these the ordering doesn't work
+CREATE INDEX idx_noticias_headline ON noticias(headline);
+CREATE INDEX idx_noticias_summary ON noticias(summary);
+*/
 
 const COLUMNS = [
-    { key: "date", labelKey: "col_date", type: "date" },
-    { key: "headline", labelKey: "col_headline", expandable: true },
-    { key: "summary", labelKey: "col_summary", expandable: true },
-    { key: "article_text", labelKey: "col_article_text", expandable: true },
-    { key: "source", labelKey: "col_source" },
-    { key: "category", labelKey: "col_category" },
-    { key: "grade", labelKey: "col_grade", type: "number" },
-    { key: "analysis", labelKey: "col_analysis", expandable: true },
-    { key: "url", labelKey: "col_link", type: "link" },
+    { key: "date", labelKey: "col_date", type: "date", expandable: false, sortable: true},
+    { key: "headline", labelKey: "col_headline", expandable: true, sortable: false },
+    { key: "summary", labelKey: "col_summary", expandable: true, sortable: false },
+    { key: "article_text", labelKey: "col_article_text", expandable: true , sortable: false },
+    { key: "source", labelKey: "col_source", expandable: true , sortable: true },
+    { key: "category", labelKey: "col_category", expandable: false, sortable: true },
+    { key: "grade", labelKey: "col_grade", type: "number", expandable: false, sortable: true },
+    { key: "analysis", labelKey: "col_analysis", expandable: true , sortable: false },
+    { key: "url", labelKey: "col_link", type: "link", expandable: false, sortable: true },
 ];
 
 let visibleColumns = {
@@ -220,7 +238,8 @@ async function fetchData(urlParams) {
         offset: currentOffset,
         date: urlParams.get("date"),
         aggregation: urlParams.get("aggregation"),
-
+        sort_by: currentSortColumn,
+        sort_dir: currentSortDirection,
         reviewer: urlParams.getAll("reviewer"),
         reviewedEntity: urlParams.getAll("reviewedEntity"),
         category: urlParams.getAll("category"),
@@ -249,7 +268,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initPaginationSelectors();
 
     const urlParams = new URLSearchParams(window.location.search);
-    const filterSummary = document.getElementById("filter-summary");
     const dateSpan = document.getElementById("date-span");
 
     const rawDate = urlParams.get("date");
@@ -262,15 +280,11 @@ document.addEventListener("DOMContentLoaded", () => {
             dateFormatted = dateObj.toLocaleDateString("pt-BR", { timeZone: "UTC" });
         }
     }
+    
     console.log("Formatted Date:", dateFormatted);
     if (dateSpan && rawDate) {
         dateSpan.textContent = dateFormatted;
     }
-    
-    // const reviewer = urlParams.get("reviewer") || t("not_specified");
-    // const reviewedEntity = urlParams.get("reviewedEntity") || t("not_specified");
-    // const agg = urlParams.get("aggregation") || "Diária";
-    // filterSummary.textContent = `${t("reviewer")}: ${reviewer} | ${t("reviewedEntity")}: ${reviewedEntity}`;
     
     updateFilterSummary(urlParams);
     renderColumnSelector();
@@ -279,6 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 function renderColumnSelector() {
+    /* Renders the column selector UI based on the available columns and their visibility settings. */
     const container = document.getElementById("column-selector");
     container.innerHTML = '';
     
@@ -303,17 +318,66 @@ function renderColumnSelector() {
 }
 
 
+function handleSort(col) {
+    /* Handles sorting when a column header is clicked. It toggles the sort direction if the same column is clicked again, 
+    or sets it to ascending if a new column is clicked. It then fetches the data with the updated sorting parameters. */
+    if (!col.sortable) return;
+    
+    if (currentSortColumn === col.key) {
+        console.log(`Toggling sort direction for column "${col.label}"`);
+        console.log(`Current sort direction: ${currentSortDirection}`);
+        currentSortDirection = currentSortDirection === "asc" ? "desc" : "asc";
+    } else {
+        currentSortColumn = col.key;
+        currentSortDirection = "asc";
+    }
+    
+    currentOffset = 0;
+    fetchData(new URLSearchParams(window.location.search));
+}
+
+
 function renderTableHeaders() {
-    const theadRow = document.getElementById('table-header');
-    theadRow.innerHTML = '';
+    const theadRow = document.getElementById("table-header");
+    theadRow.innerHTML = "";
     
     COLUMNS.forEach(col => {
         if (visibleColumns[col.key]) {
-            const th = document.createElement('th');
-            th.textContent = col.label;
+            const th = document.createElement("th");
+            if (col.sortable) {
+                th.style.cursor = "pointer";
+                th.style.userSelect = "none";
+                th.title = `Sort by ${col.label}`;
+
+                let iconName = "chevrons-up-down";
+                let iconOpacity = "0.4";
+
+                if (currentSortColumn === col.key) {
+                    iconName = currentSortDirection === "asc" ? "arrow-up" : "arrow-down";
+                    console.log(`Column "${col.label}" is currently sorted in ${currentSortDirection} order.`);
+                }
+
+                th.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        <span>${col.label}</span>
+                        <i data-lucide="${iconName}" style="width: 14px; height: 14px; opacity: ${iconOpacity}; transition: opacity 0.2s;"></i>
+                    </div>
+                `;
+                th.addEventListener("click", () => handleSort(col));
+                console.log(`Column "${col.label}" is sortable. Click to sort.`);
+            } else {
+                console.log(`Column "${col.label}" does not support sorting.`);
+                // For columns that do not support sorting (e.g., full text blocks or URLs)
+                th.innerHTML = `<span>${col.label}</span>`;
+            }
+
             theadRow.appendChild(th);
         }
     });
+    
+    if (typeof lucide !== "undefined") {
+        lucide.createIcons({ root: theadRow });
+    }
 }
 
 
@@ -366,3 +430,4 @@ function renderTableBody(data) {
         lucide.createIcons();
     }
 }
+
