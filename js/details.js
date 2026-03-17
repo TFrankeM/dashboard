@@ -8,8 +8,9 @@ let choicesLanguage = null;
 let currentLimit = 50;
 let currentOffset = 0;
 let choicesLimit = null;
+
 let currentSortColumn = null;
-let currentSortDirection = null;
+let currentSortDirection = "asc";
 
 /*
 CREATE INDEX idx_noticias_date ON noticias(date);
@@ -36,7 +37,7 @@ const COLUMNS = [
     { key: "category", labelKey: "col_category", expandable: false, sortable: true },
     { key: "grade", labelKey: "col_grade", type: "number", expandable: false, sortable: true },
     { key: "analysis", labelKey: "col_analysis", expandable: true , sortable: false },
-    { key: "url", labelKey: "col_link", type: "link", expandable: false, sortable: true },
+    { key: "url", labelKey: "col_link", type: "link", expandable: false, sortable: false },
 ];
 
 let visibleColumns = {
@@ -228,10 +229,41 @@ function updateFilterSummary(urlParams) {
     filterSummary.textContent = `${t("reviewer")}: ${reviewersStr} | ${t("reviewedEntity")}: ${reviewedEntitiesStr}`;
 }
 
+function toggleLoadingState(isLoading) {
+    /* Toggles the loading state of the UI by showing or hiding the loading spinner 
+    and disabling/enabling interactive elements. */
+    const tableContainer = document.querySelector(".table-container");
+    const paginationContainer = document.querySelector(".pagination-container");
+
+    if (!tableContainer || !paginationContainer) return;
+
+    if(isLoading) {
+        tableContainer.classList.add("loading-state");
+        paginationContainer.classList.add("loading-state");
+        // Inject spinner if it doesn't exist
+        if (!document.getElementById("table-spinner")) {
+            const spinnerDiv = document.createElement("div");
+            spinnerDiv.id = "table-spinner";
+            spinnerDiv.className = "loading-spinner-container";
+            spinnerDiv.innerHTML =  `
+                                        <div class="css-spinner"></div>
+                                        <span class="loading-text">${t("loading_data")}</span>
+                                    `;
+            tableContainer.appendChild(spinnerDiv);
+        }
+    } else {
+        tableContainer.classList.remove("loading-state");
+        paginationContainer.classList.remove("loading-state");
+        const spinner = document.getElementById("table-spinner");
+        if (spinner) spinner.remove();
+    }
+}
 
 async function fetchData(urlParams) {
     /* Fetches data from the API based on the current URL parameters and updates the table with the results. */
     const tbody = document.getElementById("table-body");
+
+    toggleLoadingState(true);
 
     const filters = {
         limit: currentLimit,
@@ -258,6 +290,8 @@ async function fetchData(urlParams) {
         renderTableBody(data);
     } catch (error) {
         console.error("Error fetching data:", error);
+    } finally {
+        toggleLoadingState(false);
     }
 }
 
@@ -266,6 +300,10 @@ document.addEventListener("DOMContentLoaded", () => {
     initLanguageSelector();
     translateUI();
     initPaginationSelectors();
+
+    if (typeof lucide !== "undefined") {
+        lucide.createIcons();
+    };
 
     const urlParams = new URLSearchParams(window.location.search);
     const dateSpan = document.getElementById("date-span");
@@ -345,12 +383,13 @@ function renderTableHeaders() {
         if (visibleColumns[col.key]) {
             const th = document.createElement("th");
             if (col.sortable) {
+                th.classList.add("sortable-header");
                 th.style.cursor = "pointer";
                 th.style.userSelect = "none";
                 th.title = `Sort by ${col.label}`;
 
                 let iconName = "chevrons-up-down";
-                let iconOpacity = "0.4";
+                let iconOpacity = "0.6";
 
                 if (currentSortColumn === col.key) {
                     iconName = currentSortDirection === "asc" ? "arrow-up" : "arrow-down";
@@ -360,7 +399,7 @@ function renderTableHeaders() {
                 th.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                         <span>${col.label}</span>
-                        <i data-lucide="${iconName}" style="width: 14px; height: 14px; opacity: ${iconOpacity}; transition: opacity 0.2s;"></i>
+                        <i data-lucide="${iconName}" style="width: 20px; height: 20px; opacity: ${iconOpacity}; transition: opacity 0.2s;"></i>
                     </div>
                 `;
                 th.addEventListener("click", () => handleSort(col));
@@ -391,33 +430,33 @@ function renderTableBody(data) {
     }
 
     data.forEach(row => {
-        const tr = document.createElement('tr');
+        const tr = document.createElement("tr");
         
         COLUMNS.forEach(col => {
             if (visibleColumns[col.key]) {
-                const td = document.createElement('td');
+                const td = document.createElement("td");
                 const value = row[col.key];
 
                 if (col.expandable) {
-                    td.className = 'expandable';
-                    td.textContent = value || '-';
+                    td.className = "expandable";
+                    td.textContent = value || "-";
                     td.title = "Clique para expandir";
-                    td.onclick = function() { this.classList.toggle('expanded'); };
+                    td.onclick = function() { this.classList.toggle("expanded"); };
                 } else if (col.type === 'link') {
                     if (value) {
                         td.innerHTML = `<a href="${value}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">Link <i data-lucide="external-link" width="12"></i></a>`;
                     } else {
-                        td.textContent = '-';
+                        td.textContent = "-";
                     }
-                } else if (col.type === 'date') {
-                    td.textContent = value ? new Date(value).toLocaleString('pt-BR') : '-';
-                } else if (col.type === 'number') {
-                    td.textContent = value ? parseFloat(value).toFixed(2) : '-';
-                    td.className = 'font-mono font-bold';
-                    if (value < 3.5) td.style.color = '#ef4444';
-                    else if (value > 5.5) td.style.color = '#10b981';
+                } else if (col.type === "date") {
+                    td.textContent = value ? new Date(value).toLocaleString("pt-BR") : "-";
+                } else if (col.type === "number") {
+                    td.textContent = value ? parseFloat(value).toFixed(2) : "-";
+                    td.className = "font-mono font-bold";
+                    if (value < 3.5) td.style.color = "#ef4444";
+                    else if (value > 5.5) td.style.color = "#10b981";
                 } else {
-                    td.textContent = value || '-';
+                    td.textContent = value || "-";
                 }
                 
                 tr.appendChild(td);

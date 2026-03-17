@@ -538,6 +538,7 @@ body {
 
 table { 
     width: 100%; 
+    height: 220px;
     border-collapse: collapse; 
     background: white; 
     border-radius: 8px; 
@@ -546,12 +547,18 @@ table {
 }
 
 th { 
-    background: #003A79; 
+    background: var(--fgv-blue-dark); 
     color: white; 
     padding: 12px; 
     text-align: left; 
     font-size: 0.85rem; 
     white-space: nowrap; 
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+th.sortable-header:hover {
+    background-color: var(--fgv-blue-navy) !important;
+    color: var(--fgv-blue-light);
 }
 
 td { 
@@ -618,3 +625,57 @@ tr:hover {
 .table-link:hover {
     text-decoration: underline;
 }
+
+
+/* SKELETON LOADER */
+.loading-state {
+    position: relative;     /* in order to contain the loading elements */
+    pointer-events: none;   /* prevent interaction while loading */
+    user-select: none;      /* prevent text selection while loading */
+}
+
+/* >* means all direct children; 'not' stands for except */
+.loading-state > *:not(.loading-spinner-container) {
+    opacity: 0.4;
+    filter: grayscale(30%);
+    transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.loading-spinner-container {
+    position: absolute;      /* position it over the faded content; leaves no space in the document flow */
+    top: 130px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* center vertically */
+    align-items: center;     /* center horizontally */
+    z-index: 20; 
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.css-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(0, 139, 201, 0.2);
+    border-top-color: var(--fgv-blue-med);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-family: "Gotham", "Arial", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--fgv-blue-dark);
+}
+
