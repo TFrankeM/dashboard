@@ -59,10 +59,6 @@ function buildApiUrl(filters, widgetType) {
     }
     
     // Filters for details section
-    if (filters.date) {
-        url_params.append("date", filters.date);
-    };
-
     if (filters.limit !== undefined && filters.limit !== null) {
         url_params.append("limit", filters.limit);
     };
@@ -76,6 +72,7 @@ function buildApiUrl(filters, widgetType) {
     if (filters.sort_dir) {
         url_params.append("sort_dir", filters.sort_dir);
     }
+    console.log("Built URL Parameters:", url_params.toString());
     return url_params;
 }
 

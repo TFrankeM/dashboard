@@ -732,10 +732,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // url for new handlePeriodChange
         const params = new URLSearchParams();
-        params.append("date", currentClickedDate.date);
+        params.append("start_date", currentClickedDate.start_date);
+        params.append("end_date", currentClickedDate.end_date);
         params.append("aggregation", appState.aggregation);
         params.append("reviewer", appState.reviewer);
-        params.append("reviewedEntity", appState.reviewedEntity);
+        params.append("reviewed_entity", appState.reviewedEntity);
 
         if (appState.category) {
             appState.category.forEach(c => params.append("category", c));
@@ -874,10 +875,17 @@ document.addEventListener("DOMContentLoaded", function () {
             // rawDateISO := e.g.: 2025-05-29T21:00:00.000Z
             const rawDateISO = sortedDates[index];
             // Keep clicked date for details navigation
-            currentClickedDate = { date: rawDateISO };
-
-            console.log("popupCoords:", popupCoords);
+            const startDateObj = new Date(rawDateISO);
+            const aggHours = parseFloat(appState.aggregation) || 24;
+            // endDateObj is startDate + aggregation hours (in milliseconds)
+            const endDateObj = new Date(startDateObj.getTime() + (aggHours * 60 * 60 * 1000));
             
+            currentClickedDate = { 
+                start_date: startDateObj.toISOString(),
+                end_date: endDateObj.toISOString(),
+                aggregation: aggHours
+            };
+
             // tooltipDates := Full date displayed in the tooltip | e.g.: 29/05/2025, 18:00
             if (tooltipDates && popupDateSpan) {
                 popupDateSpan.textContent = tooltipDates[index];

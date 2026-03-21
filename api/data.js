@@ -262,7 +262,9 @@ async function getLineChartData(request) {
 async function getNewsList(request) {
     const params = [];
     //console.log("Request Query:", request.query);
-    const { date, aggregation, limit, offset, sort_by, sort_dir } = request.query;
+    const { limit, offset, sort_by, sort_dir } = request.query;
+    console.log("Received Details List Request with Query:", request.query);
+    console.log("Details List Request - Limit:", limit, "Offset:", offset, "Sort By:", sort_by, "Sort Direction:", sort_dir);
     //console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
     const queryForFilters = { ...request.query };
     delete queryForFilters.period; 
@@ -272,29 +274,6 @@ async function getNewsList(request) {
     delete queryForFilters.sort_dir;
     
     const conditions = buildCommonFilters(queryForFilters, params);
-
-    if (date && aggregation) {
-      let hours = parseFloat(aggregation);
-      if (isNaN(hours) || hours <= 0) {
-        hours = 1;
-      }
-
-      // Bind the interval
-      params.push(`${hours} hours;`)
-      const intervalParam = `$${params.length}`;
-
-      // Bind the exact clicked timestamp
-      params.push(date);
-      const dateParam = `$${params.length}`;
-
-      // ::interval converts the string to an interval type
-      // date: column name
-      conditions.push(`date_bin(${intervalParam}::interval, date, TIMESTAMP '2025-01-01') = ${dateParam}::timestamp`);
-    } else if (date) {
-      // Fallback to aggregate by day
-      params.push(date);
-      conditions.push(`date::date = $${params.length}::date`);
-    }
     
     const whereClause = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
 
@@ -338,6 +317,7 @@ async function getNewsList(request) {
         OFFSET ${offsetVal};
     `;
     const { rows } = await sql.query(query, params);
+    console.log("News List Query:", query, params);
     // console.log({ data: rows, total_count: totalCount });
 
     return { total_count: totalCount, data: rows };

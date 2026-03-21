@@ -9,8 +9,17 @@ let currentLimit = 50;
 let currentOffset = 0;
 let choicesLimit = null;
 
-let currentSortColumn = null;
+let currentSortColumn = "date";
 let currentSortDirection = "asc";
+
+let appState = {
+    category: [],
+    start_date: "",
+    end_date: "",
+    reviewer: [],
+    reviewedEntity: []
+};
+let pendingState = JSON.parse(JSON.stringify(appState));
 
 /*
 CREATE INDEX idx_noticias_date ON noticias(date);
@@ -59,10 +68,6 @@ function t(key) {
     return DICTIONARY[CURRENT_LANG][key] || key;
 }
 
-function translateEntity(key) {
-    return DICTIONARY[CURRENT_LANG].entity_options?.[key] || key;
-}
-
 function initLanguageSelector() {
     /* Initializes the language selector dropdown and sets up event listeners to handle language changes. */
     if (typeof Choices !== "undefined") {
@@ -93,22 +98,13 @@ function initLanguageSelector() {
             updateFilterSummary(new URLSearchParams(window.location.search));
             translateUI();
             renderColumnSelector();
-            renderTableHeaders();
             
             const currentData = window.cachedData || [];
             if(currentData.length > 0) {
+                renderTableHeaders();
                 renderTableBody(currentData);
             }
         });
-
-        const langWrapper = document.querySelector(".lang-dropdown-wrapper");
-        if (langWrapper) {
-            langWrapper.addEventListener("click", (e) => {
-                if (!e.target.closest(".choices")) {
-                    choicesLanguage.showDropdown();
-                }
-            });
-        }
     }
 }
 
@@ -139,38 +135,193 @@ function translateUI() {
 }
 
 
+function checkApplyButtonState() {
+    /* Checks if there are any changes in the filter inputs compared to the 
+    current app state and enables/disables the Apply button accordingly. */
+    const normalize = (s) => {
+        const copy = JSON.parse(JSON.stringify(s));
+        if(Array.isArray(copy.reviewer)) copy.reviewer.sort();
+        if(Array.isArray(copy.reviewedEntity)) copy.reviewedEntity.sort();
+        if(Array.isArray(copy.category)) copy.category.sort();
+        return JSON.stringify(copy);
+    };
+
+    const isDifferent = normalize(appState) !== normalize(pendingState);
+    const btnApply = document.getElementById("btn-apply");
+
+    if (btnApply) {
+        if (isDifferent) {
+            btnApply.classList.remove("disabled");  /*removes the visual styling from CSS*/
+            btnApply.removeAttribute("disabled");   /*tells the browser that the button is now active*/
+        } else {
+            btnApply.classList.add("disabled");
+            btnApply.setAttribute("disabled", "true");
+        }
+    }
+}
+function initFilters(urlParams) {
+    /* Initializes the filter UI components (categories, evaluator, evaluated, date range) based 
+    on the current URL parameters and sets up event listeners to handle user interactions. */
+    // Categories
+    appState.category = urlParams.getAll("category").sort() || [];
+    appState.start_date = urlParams.get("start_date") || "";
+    appState.end_date = urlParams.get("end_date") || "";
+    appState.reviewer = urlParams.getAll("reviewer").sort() || [];
+    appState.reviewedEntity = urlParams.getAll("reviewedEntity").sort() || [];
+    
+    pendingState = JSON.parse(JSON.stringify(appState));
+
+    /* Categories */
+    const catContent = document.getElementById("category-selector");
+    if (catContent) {
+        catContent.innerHTML = "";
+        const allCategories = Object.keys(DICTIONARY[CURRENT_LANG].category_options || {}).filter(c => c !== "Todas");
+        
+        allCategories.forEach(cat => {
+            const label = document.createElement("label");
+            label.className = "col-option";
+            
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = cat;
+            checkbox.checked = pendingState.category.includes(cat) || pendingState.category.length === 0;
+            
+            checkbox.addEventListener("change", (e) => {
+                if (e.target.checked) {
+                    if (!pendingState.category.includes(cat)) {
+                        pendingState.category.push(cat);
+                    }
+                } else { /* unchecked */
+                    pendingState.category = pendingState.category.filter(c => c !== cat);
+                }
+                checkApplyButtonState();
+            });
+            
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(" " + t(cat)));
+            catContent.appendChild(label);
+        });
+    }
+
+    // Date range with flatpickr and apply button
+    const startInput = document.getElementById("start-date");
+    const endInput = document.getElementById("end-date");
+    const btnApply = document.getElementById("btn-apply");
+
+    const localeMap = {
+        "pt-BR": "pt",
+        "es-ES": "es",
+        "en-US": "en"
+    };
+
+    const dateConfig = {
+        enableTime: true,
+        dateFormat: "Y-m-d\\TH:i", // ISO format sent to the API
+        altInput: true,
+        altFormat: "d/m/Y H:i",    // How it appears to the user
+        time_24hr: true,
+        allowInput: true,          // Allow manual input
+        locale: localeMap[CURRENT_LANG] || "pt"
+    };
+
+    
+    if (startInput) {
+        flatpickr(startInput, {
+            ...dateConfig,
+            defaultDate: pendingState.start_date || null,
+            onChange: function(selectedDates, dateStr) {
+                pendingState.start_date = dateStr;
+                checkApplyButtonState();
+            }
+        });
+    }
+
+    if (endInput) {
+        flatpickr(endInput, {
+            ...dateConfig,
+            defaultDate: pendingState.end_date || null,
+            onChange: function(selectedDates, dateStr) {
+                pendingState.end_date = dateStr;
+                checkApplyButtonState();
+            }
+        });
+    }
+
+    if (btnApply) {
+        checkApplyButtonState(); // Initialize apply button as disabled
+
+        btnApply.addEventListener("click", () => {
+            if (btnApply.classList.contains("disabled")) return;
+            
+            appState = JSON.parse(JSON.stringify(pendingState));
+            checkApplyButtonState(); // Disable apply button after applying changes
+
+            const currentUrl = new URL(window.location);
+
+            // Update URL parameters based on the current appState
+            currentUrl.searchParams.delete("category");
+            appState.category.forEach(c => currentUrl.searchParams.append("category", c));
+            
+            if (appState.start_date) {
+                currentUrl.searchParams.set("start_date", appState.start_date);
+            } else {
+                currentUrl.searchParams.delete("start_date");
+            }
+            if (appState.end_date) {
+                currentUrl.searchParams.set("end_date", appState.end_date);
+            } else {
+                currentUrl.searchParams.delete("end_date");
+            }
+            
+            // Send new URL, restart pagination and fetch data
+            window.history.replaceState({}, "", currentUrl);
+            currentOffset = 0;
+            fetchData(currentUrl.searchParams);
+        });
+    }
+}
+
+
+function renderLimitOptions() {
+    /* Generates and manage limit dropdown options dynamically */
+    const limitLabel = document.getElementById("limit-label");
+    const limitSelector = document.getElementById("limit-selector");
+    
+    if (limitSelector && limitLabel) {
+        limitSelector.innerHTML = '';
+        limitLabel.textContent = currentLimit.toString();
+
+        const limits = [50, 100, 500, 1000];
+        limits.forEach(val => {
+            const opt = document.createElement("div");
+            opt.className = "col-option";
+            if (currentLimit === val) {
+                opt.classList.add("selected");
+            }
+            opt.setAttribute("data-val", val.toString());
+            opt.textContent = val.toString();
+            
+            opt.addEventListener("click", () => {
+                currentLimit = val;
+                currentOffset = 0;
+                renderLimitOptions(); // Update visual selection
+                fetchData(new URLSearchParams(window.location.search));
+                limitSelector.parentElement.classList.remove('is-open');
+            });
+            
+            limitSelector.appendChild(opt);
+        });
+    }
+}
+
 function initPaginationSelectors() {
     /* Initializes the pagination controls, including the limit selector and page navigation buttons.
     It sets up event listeners to handle user interactions and updates the current limit and offset accordingly. */
-    if (typeof Choices !== "undefined") {
-        choicesLimit = new Choices("#limit-select", {
-            searchEnabled: false,
-            itemSelectText: "",
-            shouldSort: false,
-            choices: [
-                { value: "50", label: "50", selected: true },
-                { value: "100", label: "100" },
-                { value: "500", label: "500" },
-                { value: "1000", label: "1000" }
-            ]
-        });
-
-        document.getElementById("limit-select").addEventListener("change", (e) => {
-            currentLimit = parseInt(e.target.value, 10);
-            currentOffset = 0;
-            // window.location.search := ?page=2&limit=50
-            fetchData(new URLSearchParams(window.location.search));
-        });
-    }
+    renderLimitOptions();
 
     // range selector
     document.getElementById("prev-page").addEventListener("click", () => {
         currentOffset = Math.max(0, currentOffset - currentLimit);
-        fetchData(new URLSearchParams(window.location.search));
-    });
-
-    document.getElementById("page-range-select").addEventListener("change", (e) => {
-        currentOffset = parseInt(e.target.value, 10);
         fetchData(new URLSearchParams(window.location.search));
     });
 
@@ -182,36 +333,58 @@ function initPaginationSelectors() {
 
 
 function updatePaginationUI(totalItems) {
-    /* Updates the pagination controls based on the total number of items returned by the API and the current limit and offset. */
-    const rangeSelect = document.getElementById("page-range-select");
+    /* Updates the pagination controls based on the total number of items returned by 
+    the API and the current limit and offset. */
     const totalCountElement = document.getElementById("total-news-count");
-
-    rangeSelect.innerHTML = "";
-    totalCountElement.textContent = totalItems.toLocaleString(CURRENT_LANG);
-
+    if (totalCountElement) {
+        totalCountElement.textContent = totalItems.toLocaleString(CURRENT_LANG);
+    }
     const totalPages = Math.ceil(totalItems / currentLimit);
+    const rangeSelector = document.getElementById("page-range-selector");
+    const rangeLabel = document.getElementById("page-range-label");
 
-    if (totalPages === 0) {
-        rangeSelect.appendChild(new Option("0 - 0", 0));
-        rangeSelect.disabled = true;
-        document.getElementById("prev-page").disabled = true;
-        document.getElementById("next-page").disabled = true;
-        return;
-    }
+    if (rangeSelector && rangeLabel) {
+        rangeSelector.innerHTML = "";
 
-    rangeSelect.disabled = false;
-    for (let i = 0; i < totalPages; i++) {
-        const startItem = (i * currentLimit) + 1;
-        const endItem = Math.min((i + 1) * currentLimit, totalItems);
-        const option = new Option(`${startItem} - ${endItem}`, i * currentLimit);
-        if (currentOffset === i * currentLimit) {
-            option.selected = true;
+        if (totalPages === 0) {
+            rangeLabel.textContent = "0 - 0";
+            rangeSelector.disabled = true;
+            document.getElementById("prev-page").disabled = true;
+            document.getElementById("next-page").disabled = true;
+            return;
+        } else {
+            let activeLabel = "";
+            rangeSelector.disabled = false;
+
+            for (let i = 0; i < totalPages; i++) {
+                const startItem = (i * currentLimit) + 1;
+                const endItem = Math.min((i + 1) * currentLimit, totalItems);
+                const offsetValue = i * currentLimit;
+                const labelText = `${startItem} - ${endItem}`;
+
+                const opt = document.createElement("div");
+                opt.className = "col-option";
+                opt.textContent = labelText;
+                
+                if (currentOffset === offsetValue) {
+                    opt.classList.add("selected");
+                    activeLabel = labelText;
+                } else {
+                    opt.addEventListener("click", () => {
+                        currentOffset = offsetValue;
+                        fetchData(new URLSearchParams(window.location.search));
+                        rangeSelector.parentElement.classList.remove("is-open");
+                    });
+                }
+                
+                rangeSelector.appendChild(opt);
+            }
+
+            rangeLabel.textContent = activeLabel;
+            document.getElementById("prev-page").disabled = currentOffset === 0;
+            document.getElementById("next-page").disabled = (currentOffset + currentLimit) >= totalItems;
         }
-        rangeSelect.appendChild(option);
     }
-
-    document.getElementById("prev-page").disabled = currentOffset === 0;
-    document.getElementById("next-page").disabled = (currentOffset + currentLimit) >= totalItems;
 }
 
 
@@ -220,28 +393,30 @@ function updateFilterSummary(urlParams) {
     const filterSummary = document.getElementById("filter-summary");
     if (!filterSummary) return;
 
+    const translateEntity = (val) => DICTIONARY[CURRENT_LANG].entity_options?.[val] || val;
     const reviewers = urlParams.getAll("reviewer");
     const reviewersStr = reviewers.length > 0 ? reviewers.map(translateEntity).join(", ") : t("not_specified");
 
-    const reviewedEntities = urlParams.getAll("reviewedEntity");
+    const reviewedEntities = urlParams.getAll("reviewed_entity");
     const reviewedEntitiesStr = reviewedEntities.length > 0 ? reviewedEntities.map(translateEntity).join(", ") : t("not_specified");
     
     filterSummary.textContent = `${t("reviewer")}: ${reviewersStr} | ${t("reviewedEntity")}: ${reviewedEntitiesStr}`;
 }
 
+
 function toggleLoadingState(isLoading) {
     /* Toggles the loading state of the UI by showing or hiding the loading spinner 
     and disabling/enabling interactive elements. */
-    const tableContainer = document.querySelector(".table-container");
-    const paginationContainer = document.querySelector(".pagination-container");
+    const elementsToFade = document.querySelectorAll(".table-container, .pagination-container, .controls, .details-subheader");
 
-    if (!tableContainer || !paginationContainer) return;
+    if (!elementsToFade.length) return;
 
     if(isLoading) {
-        tableContainer.classList.add("loading-state");
-        paginationContainer.classList.add("loading-state");
+        elementsToFade.forEach(el => el.classList.add("loading-state"))
+
+        const tableContainer = document.querySelector(".table-container");
         // Inject spinner if it doesn't exist
-        if (!document.getElementById("table-spinner")) {
+        if (tableContainer && !document.getElementById("table-spinner")) {
             const spinnerDiv = document.createElement("div");
             spinnerDiv.id = "table-spinner";
             spinnerDiv.className = "loading-spinner-container";
@@ -252,12 +427,12 @@ function toggleLoadingState(isLoading) {
             tableContainer.appendChild(spinnerDiv);
         }
     } else {
-        tableContainer.classList.remove("loading-state");
-        paginationContainer.classList.remove("loading-state");
+        elementsToFade.forEach(el => el.classList.remove("loading-state"));
         const spinner = document.getElementById("table-spinner");
         if (spinner) spinner.remove();
     }
 }
+
 
 async function fetchData(urlParams) {
     /* Fetches data from the API based on the current URL parameters and updates the table with the results. */
@@ -268,28 +443,30 @@ async function fetchData(urlParams) {
     const filters = {
         limit: currentLimit,
         offset: currentOffset,
-        date: urlParams.get("date"),
+        startDate: urlParams.get("start_date"),
+        endDate: urlParams.get("end_date"),
         aggregation: urlParams.get("aggregation"),
         sort_by: currentSortColumn,
         sort_dir: currentSortDirection,
         reviewer: urlParams.getAll("reviewer"),
-        reviewedEntity: urlParams.getAll("reviewedEntity"),
+        reviewedEntity: urlParams.getAll("reviewed_entity"),
         category: urlParams.getAll("category"),
         politicalAlignment: urlParams.getAll("politicalAlignment"),
     };
-
+    console.log("Fetching data with filters:", filters);
     try {
-        const { total_count, data } = await fetchDetailsData(filters);
-        if (!{ total_count, data } || typeof total_count === "undefined") {
-            console.error("Invalid API response format:", { total_count, data });
+        const responseData = await fetchDetailsData(filters);
+        if (!responseData || typeof responseData.total_count === "undefined") {
+            console.error("Invalid API response format:", responseData);
             return;
         }
-        window.cachedData = data;
-        updatePaginationUI(total_count);
+        window.cachedData = responseData.data;
+        updatePaginationUI(responseData.total_count);
         renderTableHeaders();
-        renderTableBody(data);
+        renderTableBody(responseData.data);
     } catch (error) {
         console.error("Error fetching data:", error);
+        tbody.innerHTML = `<tr><td colspan="100%" class="error-message">${t("error_loading")}</td></tr>`;
     } finally {
         toggleLoadingState(false);
     }
@@ -315,29 +492,57 @@ document.addEventListener("DOMContentLoaded", () => {
         // If it's UTC string, convert to local string (DD/MM/YY)
         const dateObj = new Date(rawDate);
         if (!isNaN(dateObj)) {
-            dateFormatted = dateObj.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+            dateFormatted = dateObj.toLocaleDateString(CURRENT_LANG, { timeZone: "UTC" });
         }
     }
     
-    console.log("Formatted Date:", dateFormatted);
+    //console.log("Formatted Date:", dateFormatted);
     if (dateSpan && rawDate) {
         dateSpan.textContent = dateFormatted;
     }
     
     updateFilterSummary(urlParams);
     renderColumnSelector();
+    initFilters(urlParams); 
     fetchData(urlParams);
+
+    const btnClose = document.getElementById("btn-close");
+    if (btnClose) {
+        btnClose.addEventListener("click", () => {
+            window.close();
+        });
+    }
+
+    // Global click-dropdown handler
+    document.addEventListener("click", (e) => {
+        const btn = e.target.closest(".btn-outline");                       // clicked element is dropdown trigger button
+        if (btn && btn.parentElement.classList.contains("dropdown")) {
+            const dropdown = btn.parentElement;
+            document.querySelectorAll(".dropdown.is-open").forEach(d => {   // Close other open dropdowns
+                if (d !== dropdown) d.classList.remove("is-open");
+            });
+            dropdown.classList.toggle("is-open");                           // Toggle the 'is-open' class on the clicked dropdown
+        } else if (!e.target.closest(".dropdown-content")) {
+            document.querySelectorAll(".dropdown.is-open").forEach(d => d.classList.remove("is-open"));
+        }
+    });
+    // Close buttons if scroll
+    window.addEventListener("scroll", () => {
+        document.querySelectorAll(".dropdown.is-open").forEach(d => {
+            d.classList.remove("is-open");
+        });
+    }, { passive: true });
 });
 
 
 function renderColumnSelector() {
     /* Renders the column selector UI based on the available columns and their visibility settings. */
     const container = document.getElementById("column-selector");
-    container.innerHTML = '';
+    container.innerHTML = "";
     
     COLUMNS.forEach(col => {
-        const label = document.createElement('label');
-        label.className = 'col-option flex items-center gap-2 text-sm p-1 hover:bg-slate-50 rounded';
+        const label = document.createElement("label");
+        label.className = "col-option";
         
         const checkbox = document.createElement("input");      // Checkbox for each column
         checkbox.type = "checkbox";
@@ -376,6 +581,8 @@ function handleSort(col) {
 
 
 function renderTableHeaders() {
+    /* Renders the table headers based on the visible columns and their sorting state. 
+    It adds click event listeners to sortable columns to handle sorting interactions. */
     const theadRow = document.getElementById("table-header");
     theadRow.innerHTML = "";
     
@@ -389,17 +596,21 @@ function renderTableHeaders() {
                 th.title = `Sort by ${col.label}`;
 
                 let iconName = "chevrons-up-down";
+                let iconClass = "th-icon-inactive"; 
                 let iconOpacity = "0.6";
 
                 if (currentSortColumn === col.key) {
                     iconName = currentSortDirection === "asc" ? "arrow-up" : "arrow-down";
+                    iconClass = "th-icon-active"; 
                     console.log(`Column "${col.label}" is currently sorted in ${currentSortDirection} order.`);
                 }
 
                 th.innerHTML = `
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div class="th-inner">
                         <span>${col.label}</span>
-                        <i data-lucide="${iconName}" style="width: 20px; height: 20px; opacity: ${iconOpacity}; transition: opacity 0.2s;"></i>
+                        <div class="th-icon-wrapper ${iconClass}">
+                            <i data-lucide="${iconName}" class="icon-14"></i>
+                        </div>
                     </div>
                 `;
                 th.addEventListener("click", () => handleSort(col));
@@ -421,11 +632,12 @@ function renderTableHeaders() {
 
 
 function renderTableBody(data) {
-    const tbody = document.getElementById('table-body');
-    tbody.innerHTML = '';
+    /* Renders the table body based on the provided data and the visible columns. */
+    const tbody = document.getElementById("table-body");
+    tbody.innerHTML = "";
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="100%" class="text-center p-4">Nenhuma notícia encontrada para este filtro.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="100%" class="text-center p-4">${t("no_data_found")}</td></tr>`;
         return;
     }
 
@@ -440,16 +652,16 @@ function renderTableBody(data) {
                 if (col.expandable) {
                     td.className = "expandable";
                     td.textContent = value || "-";
-                    td.title = "Clique para expandir";
+                    td.title = t("click_to_expand");
                     td.onclick = function() { this.classList.toggle("expanded"); };
-                } else if (col.type === 'link') {
+                } else if (col.type === "link") {
                     if (value) {
-                        td.innerHTML = `<a href="${value}" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">Link <i data-lucide="external-link" width="12"></i></a>`;
+                        td.innerHTML = `<a href="${value}" target="_blank" class="table-link">${t("table_link_view")} <i data-lucide="external-link" class="icon-12"></i></a>`;
                     } else {
                         td.textContent = "-";
                     }
                 } else if (col.type === "date") {
-                    td.textContent = value ? new Date(value).toLocaleString("pt-BR") : "-";
+                    td.textContent = value ? new Date(value).toLocaleString(CURRENT_LANG) : "-";
                 } else if (col.type === "number") {
                     td.textContent = value ? parseFloat(value).toFixed(2) : "-";
                     td.className = "font-mono font-bold";
