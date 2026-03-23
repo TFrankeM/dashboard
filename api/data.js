@@ -4,16 +4,17 @@ import { sql } from "@vercel/postgres";
 
 function buildCommonFilters(query, params) {
   // Basic WHERE clause used by all charts
-  const { reviewer, reviewedEntity, category, period, start_date, end_date, politicalAlignment } = query;
+  const { evaluatorEntity, evaluatedEntity, category, period, startDate, endDate, politicalAlignment } = query;
   const conditions = [];
 
-  if (reviewer) {
-    params.push(reviewer);
+  if (evaluatorEntity) {
+    params.push(evaluatorEntity);
     conditions.push(`evaluator_entity = $${params.length}`);
   }
 
-  if (reviewedEntity) {
-    params.push(reviewedEntity);
+  if (evaluatedEntity) {
+    console.log("Adding evaluated_entity filter:", evaluatedEntity);
+    params.push(evaluatedEntity);
     conditions.push(`evaluated_entity = $${params.length}`);
   }
 
@@ -47,10 +48,10 @@ function buildCommonFilters(query, params) {
     }
   }
   // Fixed date range mode
-  else if (start_date && end_date) {
-    params.push(start_date);
+  else if (startDate && endDate) {
+    params.push(startDate);
     conditions.push(`date::date >= $${params.length}::date`);
-    params.push(end_date);
+    params.push(endDate);
     conditions.push(`date::date <= $${params.length}::date`);
   }
 
@@ -122,7 +123,7 @@ async function getGaugeData(request) {
   const conditions = buildCommonFilters(gaugeQuery, params);
   //console.log("Gauge Conditions:", conditions, params);
   // if no start and end date provided => dynamic mode => recent day logic
-  const isStaticMode = gaugeQuery.start_date && gaugeQuery.end_date;
+  const isStaticMode = gaugeQuery.startDate && gaugeQuery.endDate;
   let timeCondition = "";
   //console.log("isStaticMode:", isStaticMode);
   if (!isStaticMode) {
@@ -342,8 +343,8 @@ export default async function handler(request, response) {
   {
     "widget": "gauge",
     "period": "Last365d",
-    "reviewer": "Argentina",
-    "reviewed_entity": "Brasil",
+    "evaluatorEntity": "Argentina",
+    "evaluatedEntity": "Brasil",
     "category": [
       "Meio ambiente",
       "Conflito, guerra e paz"

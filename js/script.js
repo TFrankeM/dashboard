@@ -60,8 +60,8 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         // filters
-        updateChoicesLabels(choicesReviewer, tEntity);
-        updateChoicesLabels(choicesReviewedEntity, tEntity);
+        updateChoicesLabels(choicesEvaluatorEntity, tEntity);
+        updateChoicesLabels(choicesEvaluatedEntity, tEntity);
         updateChoicesLabels(choicesPolitical, tPolitical);
         updateChoicesLabels(choicesCategory, tCategory);
         updatePeriodDropdown(pendingState.isDynamic);
@@ -168,8 +168,8 @@ document.addEventListener("DOMContentLoaded", function () {
         period: "year_2025",
         customStartDate: "2025-01-01",
         customEndDate: "2025-06-30",
-        reviewer: ["Argentina"],
-        reviewedEntity: ["Brasil"],
+        evaluatorEntity: ["Argentina"],
+        evaluatedEntity: ["Brasil"],
         category: ["Todas"],
         politicalAlignment: null,
         aggregation: 1
@@ -211,10 +211,10 @@ document.addEventListener("DOMContentLoaded", function () {
     };
     
     // SELECTORS
-    const reviewerSelect = document.getElementById("reviewer");
+    const evaluatorEntitySelect = document.getElementById("evaluatorEntity");
     const politicalSelect = document.getElementById("politicalAlignment");
     const politicalGroup = document.getElementById("political-filter-group");
-    const reviewedEntitySelect = document.getElementById("reviewedEntity");
+    const evaluatedEntitySelect = document.getElementById("evaluatedEntity");
     const periodSelect = document.getElementById("period");
     const aggregationInput = document.getElementById("aggregation");
     const categorySelect = document.getElementById("category");
@@ -241,7 +241,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     // Referências para instâncias do Choices
-    let choicesPeriod, choicesCategory, choicesReviewer, choicesReviewedEntity, choicesPolitical, choicesLanguage;
+    let choicesPeriod, choicesCategory, choicesEvaluatorEntity, choicesEvaluatedEntity, choicesPolitical, choicesLanguage;
     let currentClickedDate = null;
     let pollingInterval = null;
 
@@ -315,23 +315,22 @@ document.addEventListener("DOMContentLoaded", function () {
                 ]
             });
 
-            // Reviewer (Multi)
-            choicesReviewer = new Choices("#reviewer", multiOpts);
-            const initialReviewers = await fetchOptionsFromDB("evaluator", []); 
-            choicesReviewer.setChoices(initialReviewers, "value", "label", true);
-            choicesReviewer.setChoiceByValue(appState.reviewer);    // set initial value
-
+            // Evaluator (Multi)
+            choicesEvaluatorEntity = new Choices("#evaluatorEntity", multiOpts);
+            const initialEvaluatorEntities = await fetchOptionsFromDB("evaluator", []); 
+            choicesEvaluatorEntity.setChoices(initialEvaluatorEntities, "value", "label", true);
+            choicesEvaluatorEntity.setChoiceByValue(appState.evaluatorEntity);    // set initial value
             
             // Political (Multi)
             choicesPolitical = new Choices("#politicalAlignment", multiOpts);
             const polList = ["Democratas", "Republicanos", "Independentes"];
             choicesPolitical.setChoices(polList.map(p => ({ value: p, label: p, selected: p === "Independentes" })), "value", "label", true);
 
-            // Reviewed (Multi)
-            choicesReviewedEntity = new Choices("#reviewedEntity", multiOpts);
-            const initialReviewed = await fetchOptionsFromDB("evaluated", appState.reviewer);
-            choicesReviewedEntity.setChoices(initialReviewed, "value", "label", true);
-            choicesReviewedEntity.setChoiceByValue(appState.reviewedEntity);
+            // Evaluated (Multi)
+            choicesEvaluatedEntity = new Choices("#evaluatedEntity", multiOpts);
+            const initialEvaluated = await fetchOptionsFromDB("evaluated", appState.evaluatorEntity);
+            choicesEvaluatedEntity.setChoices(initialEvaluated, "value", "label", true);
+            choicesEvaluatedEntity.setChoiceByValue(appState.evaluatedEntity);
 
             // Period
             choicesPeriod = new Choices("#period", singleOpts);
@@ -351,8 +350,8 @@ document.addEventListener("DOMContentLoaded", function () {
         
         translateUI();
         updateToggleVisual(pendingState.isDynamic);
-        checkEvaluatorContext(appState.reviewer);   // check for political alignement
-        checkApplyButtonState();                    // Initialize apply button
+        checkEvaluatorContext(appState.evaluatorEntity);   // check for political alignement
+        checkApplyButtonState();                           // Initialize apply button
         
         // Listeners for Language Buttons
         const langElement = document.getElementById("language-select");
@@ -399,24 +398,24 @@ document.addEventListener("DOMContentLoaded", function () {
             checkApplyButtonState();
         };
 
-        reviewerSelect.addEventListener("change", async () => {
-            onFilterChange('reviewer', choicesReviewer, true);
-            checkEvaluatorContext(pendingState.reviewer);
+        evaluatorEntitySelect.addEventListener("change", async () => {
+            onFilterChange("evaluatorEntity", choicesEvaluatorEntity, true);
+            checkEvaluatorContext(pendingState.evaluatorEntity);
             
-            const newOptions = await fetchOptionsFromDB('evaluated', pendingState.reviewer);
-            const currentSelected = choicesReviewedEntity.getValue(true);
-            choicesReviewedEntity.clearStore();
-            choicesReviewedEntity.setChoices(newOptions, 'value', 'label', true);
+            const newOptions = await fetchOptionsFromDB("evaluated", pendingState.evaluatorEntity);
+            const currentSelected = choicesEvaluatedEntity.getValue(true);
+            choicesEvaluatedEntity.clearStore();
+            choicesEvaluatedEntity.setChoices(newOptions, "value", "label", true);
             const validSelection = currentSelected.filter(s => newOptions.find(o => o.value === s));
             if(validSelection.length > 0) {
-                choicesReviewedEntity.setChoiceByValue(validSelection);
+                choicesEvaluatedEntity.setChoiceByValue(validSelection);
             }
 
-            pendingState.reviewedEntity = choicesReviewedEntity.getValue(true); 
+            pendingState.evaluatedEntity = choicesEvaluatedEntity.getValue(true); 
         });
 
-        reviewedEntitySelect.addEventListener("change", async () => {
-            onFilterChange('reviewedEntity', choicesReviewedEntity, true);
+        evaluatedEntitySelect.addEventListener("change", async () => {
+            onFilterChange("evaluatedEntity", choicesEvaluatedEntity, true);
         });
 
         periodSelect.addEventListener("change", () => {
@@ -461,7 +460,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     function enforceMultiSelectConstraints(changedKey) {
-        const keys = ['reviewer', 'reviewedEntity', 'category'];
+        const keys = ["evaluatorEntity", "evaluatedEntity", "category"];
         const changedVal = pendingState[changedKey];
 
         if (Array.isArray(changedVal) && changedVal.length > 1) {
@@ -472,9 +471,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         const first = otherVal[0];
                         pendingState[k] = [first];
                         
-                        if (k === 'reviewer') { choicesReviewer.removeActiveItems(); choicesReviewer.setChoiceByValue(first); }
-                        if (k === 'reviewedEntity') { choicesReviewedEntity.removeActiveItems(); choicesReviewedEntity.setChoiceByValue(first); }
-                        if (k === 'category') { choicesCategory.removeActiveItems(); choicesCategory.setChoiceByValue(first); }
+                        if (k === "evaluatorEntity") { choicesEvaluatorEntity.removeActiveItems(); choicesEvaluatorEntity.setChoiceByValue(first); }
+                        if (k === "evaluatedEntity") { choicesEvaluatedEntity.removeActiveItems(); choicesEvaluatedEntity.setChoiceByValue(first); }
+                        if (k === "category") { choicesCategory.removeActiveItems(); choicesCategory.setChoiceByValue(first); }
                     }
                 }
             });
@@ -487,8 +486,8 @@ document.addEventListener("DOMContentLoaded", function () {
         */
         const normalize = (s) => {
             const copy = JSON.parse(JSON.stringify(s));
-            if(Array.isArray(copy.reviewer)) copy.reviewer.sort();
-            if(Array.isArray(copy.reviewedEntity)) copy.reviewedEntity.sort();
+            if(Array.isArray(copy.evaluatorEntity)) copy.evaluatorEntity.sort();
+            if(Array.isArray(copy.evaluatedEntity)) copy.evaluatedEntity.sort();
             if(Array.isArray(copy.category)) copy.category.sort();
             if(Array.isArray(copy.politicalAlignment)) copy.politicalAlignment.sort();
             copy.aggregation = parseFloat(copy.aggregation);
@@ -567,8 +566,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Show/hide political alignemnt filter
-    function checkEvaluatorContext(reviewers) {
-        const hasUS = Array.isArray(reviewers) ? reviewers.includes("EUA") : reviewers === "EUA";
+    function checkEvaluatorContext(evaluatorEntities) {
+        const hasUS = Array.isArray(evaluatorEntities) ? evaluatorEntities.includes("EUA") : evaluatorEntities === "EUA";
         
         if (hasUS) {
             politicalGroup.classList.remove("hidden");
@@ -732,11 +731,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // url for new handlePeriodChange
         const params = new URLSearchParams();
-        params.append("start_date", currentClickedDate.start_date);
-        params.append("end_date", currentClickedDate.end_date);
+        params.append("startDate", currentClickedDate.startDate);
+        params.append("endDate", currentClickedDate.endDate);
         params.append("aggregation", appState.aggregation);
-        params.append("reviewer", appState.reviewer);
-        params.append("reviewed_entity", appState.reviewedEntity);
+        params.append("evaluatorEntity", appState.evaluatorEntity);
+        params.append("evaluatedEntity", appState.evaluatedEntity);
 
         if (appState.category) {
             appState.category.forEach(c => params.append("category", c));
@@ -753,8 +752,8 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateEvolutionHeader(totalNews) {
         if (!evolutionTitleEl || !evolutionSubtitleEl) return;
         
-        const revArr = Array.isArray(appState.reviewer) ? appState.reviewer : [appState.reviewer];
-        const entArr = Array.isArray(appState.reviewedEntity) ? appState.reviewedEntity : [appState.reviewedEntity];
+        const revArr = Array.isArray(appState.evaluatorEntity) ? appState.evaluatorEntity : [appState.evaluatorEntity];
+        const entArr = Array.isArray(appState.evaluatedEntity) ? appState.evaluatedEntity : [appState.evaluatedEntity];
         const revStr = revArr.map(r => tEntity(r)).join(", ");
         const entStr = entArr.map(e => tEntity(e)).join(", ");
         
@@ -881,8 +880,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const endDateObj = new Date(startDateObj.getTime() + (aggHours * 60 * 60 * 1000));
             
             currentClickedDate = { 
-                start_date: startDateObj.toISOString(),
-                end_date: endDateObj.toISOString(),
+                startDate: startDateObj.toISOString(),
+                endDate: endDateObj.toISOString(),
                 aggregation: aggHours
             };
 
@@ -895,8 +894,8 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmPopup.style.left = `${x}px`;
             confirmPopup.classList.remove("hidden");
 
-            const popupHight = confirmPopup.offsetHeight;
-            const y = popupCoords ? popupCoords.y - popupHight : event.native.clientY - popupHight - 10;
+            const popupHeight = confirmPopup.offsetHeight;
+            const y = popupCoords ? popupCoords.y - popupHeight : event.native.clientY - popupHeight - 10;
             confirmPopup.style.top = `${y}px`;
         };
 
@@ -926,8 +925,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const apiFilters = {
-            reviewer: appState.reviewer, 
-            reviewedEntity: appState.reviewedEntity, 
+            evaluatorEntity: appState.evaluatorEntity, 
+            evaluatedEntity: appState.evaluatedEntity, 
             category: appState.category,
             politicalAlignment: appState.politicalAlignment, 
             aggregation: appState.aggregation

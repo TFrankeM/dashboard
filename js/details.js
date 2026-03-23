@@ -14,10 +14,10 @@ let currentSortDirection = "asc";
 
 let appState = {
     category: [],
-    start_date: "",
-    end_date: "",
-    reviewer: [],
-    reviewedEntity: []
+    startDate: "",
+    endDate: "",
+    evaluatorEntity: [],
+    evaluatedEntity: []
 };
 let pendingState = JSON.parse(JSON.stringify(appState));
 
@@ -140,8 +140,8 @@ function checkApplyButtonState() {
     current app state and enables/disables the Apply button accordingly. */
     const normalize = (s) => {
         const copy = JSON.parse(JSON.stringify(s));
-        if(Array.isArray(copy.reviewer)) copy.reviewer.sort();
-        if(Array.isArray(copy.reviewedEntity)) copy.reviewedEntity.sort();
+        if(Array.isArray(copy.evaluatorEntity)) copy.evaluatorEntity.sort();
+        if(Array.isArray(copy.evaluatedEntity)) copy.evaluatedEntity.sort();
         if(Array.isArray(copy.category)) copy.category.sort();
         return JSON.stringify(copy);
     };
@@ -164,10 +164,10 @@ function initFilters(urlParams) {
     on the current URL parameters and sets up event listeners to handle user interactions. */
     // Categories
     appState.category = urlParams.getAll("category").sort() || [];
-    appState.start_date = urlParams.get("start_date") || "";
-    appState.end_date = urlParams.get("end_date") || "";
-    appState.reviewer = urlParams.getAll("reviewer").sort() || [];
-    appState.reviewedEntity = urlParams.getAll("reviewedEntity").sort() || [];
+    appState.startDate = urlParams.get("startDate") || "";
+    appState.endDate = urlParams.get("endDate") || "";
+    appState.evaluatorEntity = urlParams.getAll("evaluatorEntity").sort() || [];
+    appState.evaluatedEntity = urlParams.getAll("evaluatedEntity").sort() || [];
     
     pendingState = JSON.parse(JSON.stringify(appState));
 
@@ -228,9 +228,9 @@ function initFilters(urlParams) {
     if (startInput) {
         flatpickr(startInput, {
             ...dateConfig,
-            defaultDate: pendingState.start_date || null,
+            defaultDate: pendingState.startDate || null,
             onChange: function(selectedDates, dateStr) {
-                pendingState.start_date = dateStr;
+                pendingState.startDate = dateStr;
                 checkApplyButtonState();
             }
         });
@@ -239,9 +239,9 @@ function initFilters(urlParams) {
     if (endInput) {
         flatpickr(endInput, {
             ...dateConfig,
-            defaultDate: pendingState.end_date || null,
+            defaultDate: pendingState.endDate || null,
             onChange: function(selectedDates, dateStr) {
-                pendingState.end_date = dateStr;
+                pendingState.endDate = dateStr;
                 checkApplyButtonState();
             }
         });
@@ -262,15 +262,15 @@ function initFilters(urlParams) {
             currentUrl.searchParams.delete("category");
             appState.category.forEach(c => currentUrl.searchParams.append("category", c));
             
-            if (appState.start_date) {
-                currentUrl.searchParams.set("start_date", appState.start_date);
+            if (appState.startDate) {
+                currentUrl.searchParams.set("startDate", appState.startDate);
             } else {
-                currentUrl.searchParams.delete("start_date");
+                currentUrl.searchParams.delete("startDate");
             }
-            if (appState.end_date) {
-                currentUrl.searchParams.set("end_date", appState.end_date);
+            if (appState.endDate) {
+                currentUrl.searchParams.set("endDate", appState.endDate);
             } else {
-                currentUrl.searchParams.delete("end_date");
+                currentUrl.searchParams.delete("endDate");
             }
             
             // Send new URL, restart pagination and fetch data
@@ -394,13 +394,13 @@ function updateFilterSummary(urlParams) {
     if (!filterSummary) return;
 
     const translateEntity = (val) => DICTIONARY[CURRENT_LANG].entity_options?.[val] || val;
-    const reviewers = urlParams.getAll("reviewer");
-    const reviewersStr = reviewers.length > 0 ? reviewers.map(translateEntity).join(", ") : t("not_specified");
+    const evaluatorEntities = urlParams.getAll("evaluatorEntity");
+    const evaluatorEntitiesStr = evaluatorEntities.length > 0 ? evaluatorEntities.map(translateEntity).join(", ") : t("not_specified");
 
-    const reviewedEntities = urlParams.getAll("reviewed_entity");
-    const reviewedEntitiesStr = reviewedEntities.length > 0 ? reviewedEntities.map(translateEntity).join(", ") : t("not_specified");
+    const evaluatedEntities = urlParams.getAll("evaluatedEntity");
+    const evaluatedEntitiesStr = evaluatedEntities.length > 0 ? evaluatedEntities.map(translateEntity).join(", ") : t("not_specified");
     
-    filterSummary.textContent = `${t("reviewer")}: ${reviewersStr} | ${t("reviewedEntity")}: ${reviewedEntitiesStr}`;
+    filterSummary.textContent = `${t("evaluatorEntity")}: ${evaluatorEntitiesStr} | ${t("evaluatedEntity")}: ${evaluatedEntitiesStr}`;
 }
 
 
@@ -443,13 +443,13 @@ async function fetchData(urlParams) {
     const filters = {
         limit: currentLimit,
         offset: currentOffset,
-        startDate: urlParams.get("start_date"),
-        endDate: urlParams.get("end_date"),
+        startDate: urlParams.get("startDate"),
+        endDate: urlParams.get("endDate"),
         aggregation: urlParams.get("aggregation"),
         sort_by: currentSortColumn,
         sort_dir: currentSortDirection,
-        reviewer: urlParams.getAll("reviewer"),
-        reviewedEntity: urlParams.getAll("reviewed_entity"),
+        evaluatorEntity: urlParams.getAll("evaluatorEntity"),
+        evaluatedEntity: urlParams.getAll("evaluatedEntity"),
         category: urlParams.getAll("category"),
         politicalAlignment: urlParams.getAll("politicalAlignment"),
     };
@@ -485,19 +485,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const dateSpan = document.getElementById("date-span");
 
-    const rawDate = urlParams.get("date");
+    const startDate = urlParams.get("startDate");
+    const endDate = urlParams.get("endDate");
+
+
     let dateFormatted = "-";
     
-    if (rawDate) {
-        // If it's UTC string, convert to local string (DD/MM/YY)
-        const dateObj = new Date(rawDate);
-        if (!isNaN(dateObj)) {
-            dateFormatted = dateObj.toLocaleDateString(CURRENT_LANG, { timeZone: "UTC" });
+    if (startDate && endDate) {
+        // If it's UTC string, convert to local string (DD/MM/YY hh:mm)
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+        if (!isNaN(startDateObj) && !isNaN(endDateObj)) {
+            const startStr = startDateObj.toLocaleDateString(CURRENT_LANG, { 
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: "UTC" 
+            });
+            const endStr = endDateObj.toLocaleDateString(CURRENT_LANG, { 
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: "UTC" 
+            });
+            dateFormatted = `${startStr} - ${endStr}`;
         }
     }
     
     //console.log("Formatted Date:", dateFormatted);
-    if (dateSpan && rawDate) {
+    if (dateSpan) {
         dateSpan.textContent = dateFormatted;
     }
     
@@ -600,7 +620,7 @@ function renderTableHeaders() {
                 let iconOpacity = "0.6";
 
                 if (currentSortColumn === col.key) {
-                    iconName = currentSortDirection === "asc" ? "arrow-up" : "arrow-down";
+                    iconName = currentSortDirection === "asc" ? "arrow-up-narrow-wide" : "arrow-down-wide-narrow";
                     iconClass = "th-icon-active"; 
                     console.log(`Column "${col.label}" is currently sorted in ${currentSortDirection} order.`);
                 }
@@ -609,7 +629,7 @@ function renderTableHeaders() {
                     <div class="th-inner">
                         <span>${col.label}</span>
                         <div class="th-icon-wrapper ${iconClass}">
-                            <i data-lucide="${iconName}" class="icon-14"></i>
+                            <i data-lucide="${iconName}" class="icon-16"></i>
                         </div>
                     </div>
                 `;

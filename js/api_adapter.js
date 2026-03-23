@@ -18,23 +18,23 @@ function buildApiUrl(filters, widgetType) {
     if (filters.period) {
         url_params.append("period", filters.period);
     } else if (filters.startDate && filters.endDate) {
-        url_params.append("start_date", filters.startDate);
-        url_params.append("end_date", filters.endDate);
+        url_params.append("startDate", filters.startDate);
+        url_params.append("endDate", filters.endDate);
     };
 
-     if (filters.reviewer) {
-        if (Array.isArray(filters.reviewer)) {
-            filters.reviewer.forEach(rev => url_params.append("reviewer", rev));
+     if (filters.evaluatorEntity) {
+        if (Array.isArray(filters.evaluatorEntity)) {
+            filters.evaluatorEntity.forEach(ev => url_params.append("evaluatorEntity", ev));
         } else {
-            url_params.append("reviewer", filters.reviewer);
+            url_params.append("evaluatorEntity", filters.evaluatorEntity);
         }
     };
 
-    if (filters.reviewedEntity) {
-        if (Array.isArray(filters.reviewedEntity)) {
-            filters.reviewedEntity.forEach(ent => url_params.append("reviewed_entity", ent));
+    if (filters.evaluatedEntity) {
+        if (Array.isArray(filters.evaluatedEntity)) {
+            filters.evaluatedEntity.forEach(ent => url_params.append("evaluatedEntity", ent));
         } else {
-            url_params.append("reviewed_entity", filters.reviewedEntity);
+            url_params.append("evaluatedEntity", filters.evaluatedEntity);
         }
     };
 
