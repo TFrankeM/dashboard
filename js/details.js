@@ -62,10 +62,27 @@ let visibleColumns = {
     url: true
 };
 
+// testando
+// const RELATIONSHIPS = {
+//     "EUA": ["Presidente Trump", "Brasil", "Argentina"],
+//     "Argentina": ["Brasil", "EUA"],
+//     "Brasil": ["Argentina", "EUA"],
+//     "Presidente Trump": []
+// }
+
+const RELATIONSHIPS = {
+    // Evaluator: [Evaluated]
+    "Argentina": ["Brasil"],
+    "EUA": ["Presidente Trump"]
+};
 
 
 function t(key) {
     return DICTIONARY[CURRENT_LANG][key] || key;
+}
+
+function tEntity(val) {
+    return DICTIONARY[CURRENT_LANG].entity_options?.[val] || val;
 }
 
 function initLanguageSelector() {
@@ -159,6 +176,8 @@ function checkApplyButtonState() {
         }
     }
 }
+
+
 function initFilters(urlParams) {
     /* Initializes the filter UI components (categories, evaluator, evaluated, date range) based 
     on the current URL parameters and sets up event listeners to handle user interactions. */
@@ -175,7 +194,7 @@ function initFilters(urlParams) {
     const catContent = document.getElementById("category-selector");
     if (catContent) {
         catContent.innerHTML = "";
-        const allCategories = Object.keys(DICTIONARY[CURRENT_LANG].category_options || {}).filter(c => c !== "Todas");
+        const allCategories = Object.keys(DICTIONARY[CURRENT_LANG].category_options || {});
         
         allCategories.forEach(cat => {
             const label = document.createElement("label");
@@ -203,11 +222,37 @@ function initFilters(urlParams) {
         });
     }
 
-    // Date range with flatpickr and apply button
-    const startInput = document.getElementById("start-date");
-    const endInput = document.getElementById("end-date");
-    const btnApply = document.getElementById("btn-apply");
+    setupEntityDropdown("evaluatorEntity");
+    setupEntityDropdown("evaluatedEntity");
 
+    function setupEntityDropdown(type) {
+        const containerId = type === "evaluatorEntity" ? "evaluator-selector" : "evaluated-selector";
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Estrutura interna com campo de busca fixo e lista rolável
+        container.innerHTML = `
+            <div class="dropdown-search-wrapper">
+                <input type="text" class="dropdown-search" placeholder="Buscar...">
+            </div>
+            <div class="options-list"></div>
+        `;
+
+        const searchInput = container.querySelector(".dropdown-search");
+        const optionsList = container.querySelector(".options-list");
+
+        // Previne o encerramento do menu ao clicar no campo de pesquisa
+        searchInput.addEventListener("click", e => e.stopPropagation());
+        
+        searchInput.addEventListener("input", () => {
+            updateEntityOptions(type, searchInput.value, optionsList);
+        });
+
+        // Renderização inicial
+        updateEntityOptions(type, "", optionsList);
+    }
+
+    // Date range with flatpickr and apply button
     const localeMap = {
         "pt-BR": "pt",
         "es-ES": "es",
@@ -224,7 +269,7 @@ function initFilters(urlParams) {
         locale: localeMap[CURRENT_LANG] || "pt"
     };
 
-    
+    const startInput = document.getElementById("start-date");
     if (startInput) {
         flatpickr(startInput, {
             ...dateConfig,
@@ -236,6 +281,7 @@ function initFilters(urlParams) {
         });
     }
 
+    const endInput = document.getElementById("end-date");
     if (endInput) {
         flatpickr(endInput, {
             ...dateConfig,
@@ -247,6 +293,7 @@ function initFilters(urlParams) {
         });
     }
 
+    const btnApply = document.getElementById("btn-apply");
     if (btnApply) {
         checkApplyButtonState(); // Initialize apply button as disabled
 
@@ -261,6 +308,13 @@ function initFilters(urlParams) {
             // Update URL parameters based on the current appState
             currentUrl.searchParams.delete("category");
             appState.category.forEach(c => currentUrl.searchParams.append("category", c));
+            
+            currentUrl.searchParams.delete("evaluatorEntity");
+            appState.evaluatorEntity.forEach(e => currentUrl.searchParams.append("evaluatorEntity", e));
+            if (appState.evaluatorEntity !== "EUA") currentUrl.searchParams.delete("politicalAlignment");
+
+            currentUrl.searchParams.delete("evaluatedEntity");
+            appState.evaluatedEntity.forEach(e => currentUrl.searchParams.append("evaluatedEntity", e));
             
             if (appState.startDate) {
                 currentUrl.searchParams.set("startDate", appState.startDate);
@@ -281,6 +335,108 @@ function initFilters(urlParams) {
     }
 }
 
+
+function updateAllEntityOptions() {
+    /* Updates the options in both evaluator and evaluated entity dropdowns based on the 
+    current search input and the defined relationships between entities. */
+    const evaluatorContainer = document.getElementById("evaluator-selector");
+    const evaluatedContainer = document.getElementById("evaluated-selector");
+
+    if (evaluatorContainer) {
+        const search = evaluatorContainer.querySelector(".dropdown-search").value;
+        updateEntityOptions("evaluatorEntity", search, evaluatorContainer.querySelector(".options-list"));
+    }
+    if (evaluatedContainer) {
+        const search = evaluatedContainer.querySelector(".dropdown-search").value;
+        updateEntityOptions("evaluatedEntity", search, evaluatedContainer.querySelector(".options-list"));
+    }
+}
+
+
+function updateEntityOptions(type, searchTerm, optionsList) {
+    optionsList.innerHTML = "";
+
+    const allEvaluators = Object.keys(RELATIONSHIPS);
+    const allEvaluated = [...new Set(Object.values(RELATIONSHIPS).flat())];
+
+    let allOptions = type === "evaluatorEntity" ? allEvaluators : allEvaluated;
+    let selectedOptions = type === "evaluatorEntity" ? pendingState.evaluatorEntity : pendingState.evaluatedEntity;
+
+    // Determine related options based on current selections in the opposite dropdown
+    let validOptions;
+    if (type === "evaluatorEntity") { // To select evaluator, we look at the currently selected evaluated entities
+        const currentEvaluated = pendingState.evaluatedEntity;
+        if (!currentEvaluated || currentEvaluated.length === 0) {
+            validOptions = allOptions;
+        } else {
+            validOptions = allOptions.filter(evaluator => 
+                RELATIONSHIPS[evaluator] && RELATIONSHIPS[evaluator]?.some(evaluated => currentEvaluated.includes(evaluated))
+            );
+        }
+    } else {
+        const currentEvaluators = pendingState.evaluatorEntity;
+        if (!currentEvaluators || currentEvaluators.length === 0) {
+            validOptions = allOptions;
+        } else {
+            let validSet = new Set();
+            currentEvaluators.forEach(evaluator => {
+                if (RELATIONSHIPS[evaluator]) {
+                    RELATIONSHIPS[evaluator].forEach(evaluated => validSet.add(evaluated));
+                }
+            });
+            validOptions = [...validSet];
+        }
+    }
+
+    // Aplicação de filtro
+    if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        allOptions = allOptions.filter(opt => tEntity(opt).toLowerCase().includes(term));
+    }
+
+    // Ordering: valid options first, then alphabetically; unavailable options at the end
+    allOptions.sort((a, b) => {
+        const aValid = validOptions.includes(a);
+        const bValid = validOptions.includes(b);
+        
+        if (aValid && !bValid) return -1;
+        if (!aValid && bValid) return 1;
+        
+        return tEntity(a).localeCompare(tEntity(b));
+    });
+
+    // DOM elements
+    allOptions.forEach(opt => {
+        const isValid = validOptions.includes(opt);
+        
+        const label = document.createElement("label");
+        label.className = `col-option ${isValid ? '' : "disabled-option"}`;
+        
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = opt;
+        checkbox.checked = selectedOptions.includes(opt);
+        
+        if (!isValid) {
+            checkbox.disabled = true;
+        }
+
+        checkbox.addEventListener("change", (e) => {
+            if (e.target.checked) {
+                selectedOptions.push(opt);
+            } else {
+                const idx = selectedOptions.indexOf(opt);
+                if (idx > -1) selectedOptions.splice(idx, 1);
+            }
+            checkApplyButtonState();
+            updateAllEntityOptions(); // Forces revaluation of restrictions in the opposite list
+        });
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(" " + tEntity(opt)));
+        optionsList.appendChild(label);
+    });
+}
 
 function renderLimitOptions() {
     /* Generates and manage limit dropdown options dynamically */
@@ -582,14 +738,19 @@ function renderColumnSelector() {
 
 
 function handleSort(col) {
-    /* Handles sorting when a column header is clicked. It toggles the sort direction if the same column is clicked again, 
-    or sets it to ascending if a new column is clicked. It then fetches the data with the updated sorting parameters. */
+    /* Handles sorting when a column header is clicked
+    3 steps cicle: Ascending -> Descending -> Return to Default (Date, Ascending) */
     if (!col.sortable) return;
     
     if (currentSortColumn === col.key) {
-        console.log(`Toggling sort direction for column "${col.label}"`);
-        console.log(`Current sort direction: ${currentSortDirection}`);
-        currentSortDirection = currentSortDirection === "asc" ? "desc" : "asc";
+        if (currentSortDirection === "asc") {
+            currentSortDirection = "desc";
+            console.log(`Column "${col.label}" is currently sorted in ascending order. Toggling to descending.`);
+        } else {
+            currentSortColumn = "date";
+            currentSortDirection = "asc";
+            console.log(`Column "${col.label}" is currently sorted in descending order. Resetting to default sorting by date in ascending order.`);
+        }
     } else {
         currentSortColumn = col.key;
         currentSortDirection = "asc";
