@@ -311,7 +311,7 @@ function initFilters(urlParams) {
             
             currentUrl.searchParams.delete("evaluatorEntity");
             appState.evaluatorEntity.forEach(e => currentUrl.searchParams.append("evaluatorEntity", e));
-            if (appState.evaluatorEntity !== "EUA") currentUrl.searchParams.delete("politicalAlignment");
+            if (appState.evaluatorEntity.includes("EUA")) currentUrl.searchParams.delete("politicalAlignment");
 
             currentUrl.searchParams.delete("evaluatedEntity");
             appState.evaluatedEntity.forEach(e => currentUrl.searchParams.append("evaluatedEntity", e));
@@ -328,8 +328,10 @@ function initFilters(urlParams) {
             }
             
             // Send new URL, restart pagination and fetch data
-            window.history.replaceState({}, "", currentUrl);
+            window.history.replaceState({}, "", currentUrl.toString());
             currentOffset = 0;
+            
+            updateFilterSummary(currentUrl.searchParams);
             fetchData(currentUrl.searchParams);
         });
     }
@@ -545,6 +547,44 @@ function updatePaginationUI(totalItems) {
 
 
 function updateFilterSummary(urlParams) {
+    const dateSpan = document.getElementById("date-span");
+
+    const startDate = urlParams.get("startDate");
+    const endDate = urlParams.get("endDate");
+
+
+    let dateFormatted = "-";
+    
+    if (startDate && endDate) {
+        // If it's UTC string, convert to local string (DD/MM/YY hh:mm)
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+        if (!isNaN(startDateObj) && !isNaN(endDateObj)) {
+            const startStr = startDateObj.toLocaleDateString(CURRENT_LANG, { 
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: "UTC" 
+            });
+            const endStr = endDateObj.toLocaleDateString(CURRENT_LANG, { 
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: "UTC" 
+            });
+            dateFormatted = `${startStr} - ${endStr}`;
+        }
+    }
+    
+    //console.log("Formatted Date:", dateFormatted);
+    if (dateSpan) {
+        dateSpan.textContent = dateFormatted;
+    }
+
     /* Updates the filter summary text based on the current URL parameters */
     const filterSummary = document.getElementById("filter-summary");
     if (!filterSummary) return;
@@ -639,43 +679,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const urlParams = new URLSearchParams(window.location.search);
-    const dateSpan = document.getElementById("date-span");
-
-    const startDate = urlParams.get("startDate");
-    const endDate = urlParams.get("endDate");
-
-
-    let dateFormatted = "-";
-    
-    if (startDate && endDate) {
-        // If it's UTC string, convert to local string (DD/MM/YY hh:mm)
-        const startDateObj = new Date(startDate);
-        const endDateObj = new Date(endDate);
-        if (!isNaN(startDateObj) && !isNaN(endDateObj)) {
-            const startStr = startDateObj.toLocaleDateString(CURRENT_LANG, { 
-                day: '2-digit',
-                month: '2-digit',
-                year: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: "UTC" 
-            });
-            const endStr = endDateObj.toLocaleDateString(CURRENT_LANG, { 
-                day: '2-digit',
-                month: '2-digit',
-                year: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: "UTC" 
-            });
-            dateFormatted = `${startStr} - ${endStr}`;
-        }
-    }
-    
-    //console.log("Formatted Date:", dateFormatted);
-    if (dateSpan) {
-        dateSpan.textContent = dateFormatted;
-    }
     
     updateFilterSummary(urlParams);
     renderColumnSelector();
