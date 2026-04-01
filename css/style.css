@@ -1,7 +1,7 @@
 
 @font-face {
     font-family: "Gotham";
-    src: url("assets/fonts/gotham_family/Gotham-Book.otf") format("opentype");
+    src: url("../assets/fonts/gotham_family/Gotham-Book.otf") format("opentype");
     font-weight: 400;
     font-style: normal;
     font-display: swap; 
@@ -9,7 +9,7 @@
 
 @font-face {
     font-family: "Gotham";
-    src: url("assets/fonts/gotham_family/GOTHAM-BOLD.TTF") format("truetype");
+    src: url("../assets/fonts/gotham_family/GOTHAM-BOLD.TTF") format("truetype");
     font-weight: 700;
     font-style: normal;
     font-display: swap; 
@@ -263,16 +263,22 @@ body {
 
 /* arrow icon */
 .lang-dropdown-wrapper .choices::after {
-    border-color: var(--fgv-blue-dark) transparent transparent transparent !important;
-    border-width: 4px !important;
-    margin-top: -2px !important;
-    right: 0 !important;
+    content: "" !important;
+    border: solid var(--fgv-blue-dark) !important;
+    border-width: 0 2px 2px 0 !important;
+    display: inline-block !important;
+    padding: 3px !important;
+    transform: translateY(-50%) rotate(45deg) !important;
+    transition: transform 0.3s ease !important;
     position: absolute !important;
+    right: 12px !important;
+    top: 50% !important;
+    margin: 0 !important;
     pointer-events: none;
 }
 
 .lang-dropdown-wrapper .choices.is-open::after {
-    border-color: transparent transparent var(--fgv-blue-dark) transparent !important;
+    transform: translateY(-50%) rotate(-135deg) !important;
 }
 
 /* dropdown of the language options */
@@ -296,7 +302,6 @@ body {
     font-size: 13px !important;
     color: var(--text-secondary) !important;
     padding: 8px !important;
-    display: block !important;      /* full width */
 }
 
 .lang-dropdown-wrapper .choices__list--dropdown .choices__item--selectable.is-highlighted {
@@ -1023,6 +1028,9 @@ input:checked + .slider:before {
     border-bottom: 1px solid var(--fgv-blue-dark);
 }
 
+.canvas-container, .gauge-wrapper, .line-chart-container {
+    transition: background-color 0.5s ease, color 0.5s ease;
+}
 
 /* SKELETON DESIGN */
 .skeleton {
@@ -1040,10 +1048,14 @@ input:checked + .slider:before {
    :not excepts elements with class skeleton-overlay */
 .skeleton >*:not(.skeleton-overlay) {
     opacity: 0 !important;
-    visibility: hidden !important;
 }
 
-/* A onda brilhante (shimmer) que se move */
+/* Graphs show up smoothly (fade-in) when skeleton desapears */
+.canvas-container > canvas, .gauge-wrapper > canvas, .gauge-wrapper > div, .line-chart-container > canvas {
+    transition: opacity 0.6s ease;
+}
+
+/* Shiny wave (shimmer) that moves */
 .skeleton::after {
     content: "";
     position: absolute;
@@ -1080,7 +1092,7 @@ input:checked + .slider:before {
     z-index: 20; /* above shimmer */
     opacity: 0 !important;
     visibility: hidden !important;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
 /* When skeleton class is parent, the son class .skeleton-overlay stay visible */
@@ -1109,6 +1121,31 @@ input:checked + .slider:before {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@media (hover: hover) {
+    /* hover open dropdown and change border color */
+    .filter-group:hover .choices__inner,
+    .lang-dropdown-wrapper:hover .choices__inner,
+    .choices:hover .choices__inner {
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-color: var(--fgv-blue-dark) !important;
+    }
+    
+    .filter-group:hover .choices__list--dropdown,
+    .lang-dropdown-wrapper:hover .choices__list--dropdown,
+    .choices:hover .choices__list--dropdown {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .filter-group:hover .choices[data-type*="select-one"]::after,
+    .lang-dropdown-wrapper:hover .choices::after,
+    .choices[data-type*="select-one"]:hover::after {
+        transform: translateY(-50%) rotate(-135deg) !important;
+    }
 }
 
 /* Footer */
@@ -1141,7 +1178,7 @@ input:checked + .slider:before {
 
 
 
-/* RESPONSIVE DESIGN */
+    /* RESPONSIVE DESIGN */
 
 /* max 1200px | tablet, small laptop */
 @media (max-width: 1200px) {
@@ -1282,4 +1319,3 @@ input:checked + .slider:before {
     }
     .chart-controls { width: 100%; justify-content: flex-end; }
 }
-

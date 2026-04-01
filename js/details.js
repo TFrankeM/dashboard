@@ -100,6 +100,25 @@ function initLanguageSelector() {
             ]
         });
 
+        // Hover for desktop devices (ignoring touch devices)
+        if (window.matchMedia("(hover: hover)").matches) {
+            const langWrapper = document.querySelector(".lang-dropdown-wrapper");
+            const choicesEl = choicesLanguage.containerOuter.element;
+            if (langWrapper && choicesEl) {
+                let langTimeout;
+                const openLang = () => { 
+                    clearTimeout(langTimeout); 
+                    choicesLanguage.showDropdown(); 
+                };
+                const closeLang = () => { 
+                    langTimeout = setTimeout(() => choicesLanguage.hideDropdown(), 300); 
+                };
+
+                langWrapper.addEventListener("mouseenter", openLang);
+                langWrapper.addEventListener("mouseleave", closeLang);
+            }
+        }
+
         document.getElementById("language-select").addEventListener("change", (e) => {
             CURRENT_LANG = e.target.value;
             
@@ -266,12 +285,19 @@ function initFilters(urlParams) {
         altFormat: "d/m/Y H:i",    // How it appears to the user
         time_24hr: true,
         allowInput: true,          // Allow manual input
-        locale: localeMap[CURRENT_LANG] || "pt"
+        locale: localeMap[CURRENT_LANG] || "pt",
+        prevArrow: '<i data-lucide="chevron-left" class="icon-16"></i>',
+        nextArrow: '<i data-lucide="chevron-right" class="icon-16"></i>',
+        onReady: function() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
     };
 
     const startInput = document.getElementById("start-date");
     if (startInput) {
-        flatpickr(startInput, {
+        const fpStart = flatpickr(startInput, {
             ...dateConfig,
             defaultDate: pendingState.startDate || null,
             onChange: function(selectedDates, dateStr) {
@@ -279,11 +305,22 @@ function initFilters(urlParams) {
                 checkApplyButtonState();
             }
         });
+
+        if (window.matchMedia("(hover: hover)").matches) {
+            let startTimeout;
+            const openStart = () => { clearTimeout(startTimeout); fpStart.open(); };
+            const closeStart = () => { startTimeout = setTimeout(() => fpStart.close(), 300); };
+            
+            startInput.parentElement.addEventListener("mouseenter", openStart);
+            startInput.parentElement.addEventListener("mouseleave", closeStart);
+            fpStart.calendarContainer.addEventListener("mouseenter", openStart);
+            fpStart.calendarContainer.addEventListener("mouseleave", closeStart);
+        }
     }
 
     const endInput = document.getElementById("end-date");
     if (endInput) {
-        flatpickr(endInput, {
+        const fpEnd = flatpickr(endInput, {
             ...dateConfig,
             defaultDate: pendingState.endDate || null,
             onChange: function(selectedDates, dateStr) {
@@ -291,6 +328,16 @@ function initFilters(urlParams) {
                 checkApplyButtonState();
             }
         });
+        if (window.matchMedia("(hover: hover)").matches) {
+            let endTimeout;
+            const openEnd = () => { clearTimeout(endTimeout); fpEnd.open(); };
+            const closeEnd = () => { endTimeout = setTimeout(() => fpEnd.close(), 300); };
+
+            endInput.parentElement.addEventListener("mouseenter", openEnd);
+            endInput.parentElement.addEventListener("mouseleave", closeEnd);
+            fpEnd.calendarContainer.addEventListener("mouseenter", openEnd);
+            fpEnd.calendarContainer.addEventListener("mouseleave", closeEnd);
+        }
     }
 
     const btnApply = document.getElementById("btn-apply");
@@ -748,11 +795,11 @@ function handleSort(col) {
     if (currentSortColumn === col.key) {
         if (currentSortDirection === "asc") {
             currentSortDirection = "desc";
-            console.log(`Column "${col.label}" is currently sorted in ascending order. Toggling to descending.`);
+            //console.log(`Column "${col.label}" is currently sorted in ascending order. Toggling to descending.`);
         } else {
             currentSortColumn = "date";
             currentSortDirection = "asc";
-            console.log(`Column "${col.label}" is currently sorted in descending order. Resetting to default sorting by date in ascending order.`);
+            //console.log(`Column "${col.label}" is currently sorted in descending order. Resetting to default sorting by date in ascending order.`);
         }
     } else {
         currentSortColumn = col.key;
@@ -786,7 +833,7 @@ function renderTableHeaders() {
                 if (currentSortColumn === col.key) {
                     iconName = currentSortDirection === "asc" ? "arrow-up-narrow-wide" : "arrow-down-wide-narrow";
                     iconClass = "th-icon-active"; 
-                    console.log(`Column "${col.label}" is currently sorted in ${currentSortDirection} order.`);
+                    //console.log(`Column "${col.label}" is currently sorted in ${currentSortDirection} order.`);
                 }
 
                 th.innerHTML = `
@@ -798,9 +845,9 @@ function renderTableHeaders() {
                     </div>
                 `;
                 th.addEventListener("click", () => handleSort(col));
-                console.log(`Column "${col.label}" is sortable. Click to sort.`);
+                //console.log(`Column "${col.label}" is sortable. Click to sort.`);
             } else {
-                console.log(`Column "${col.label}" does not support sorting.`);
+                //console.log(`Column "${col.label}" does not support sorting.`);
                 // For columns that do not support sorting (e.g., full text blocks or URLs)
                 th.innerHTML = `<span>${col.label}</span>`;
             }
@@ -865,4 +912,3 @@ function renderTableBody(data) {
         lucide.createIcons();
     }
 }
-

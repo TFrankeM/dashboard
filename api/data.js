@@ -13,7 +13,7 @@ function buildCommonFilters(query, params) {
   }
 
   if (evaluatedEntity) {
-    console.log("Adding evaluated_entity filter:", evaluatedEntity);
+    //console.log("Adding evaluated_entity filter:", evaluatedEntity);
     params.push(evaluatedEntity);
     conditions.push(`evaluated_entity = $${params.length}`);
   }
@@ -264,8 +264,8 @@ async function getNewsList(request) {
     const params = [];
     //console.log("Request Query:", request.query);
     const { limit, offset, sort_by, sort_dir } = request.query;
-    console.log("Received Details List Request with Query:", request.query);
-    console.log("Details List Request - Limit:", limit, "Offset:", offset, "Sort By:", sort_by, "Sort Direction:", sort_dir);
+    //console.log("Received Details List Request with Query:", request.query);
+    //console.log("Details List Request - Limit:", limit, "Offset:", offset, "Sort By:", sort_by, "Sort Direction:", sort_dir);
     //console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
     const queryForFilters = { ...request.query };
     delete queryForFilters.period; 
@@ -318,8 +318,8 @@ async function getNewsList(request) {
         OFFSET ${offsetVal};
     `;
     const { rows } = await sql.query(query, params);
-    console.log("News List Query:", query, params);
-    // console.log({ data: rows, total_count: totalCount });
+    //console.log("News List Query:", query, params);
+    //console.log({ data: rows, total_count: totalCount });
 
     return { total_count: totalCount, data: rows };
 }

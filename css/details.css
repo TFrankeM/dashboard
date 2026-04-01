@@ -4,14 +4,14 @@
 
 @font-face {
     font-family: "Gotham";
-    src: url("assets/fonts/gotham_family/Gotham-Book.otf") format("opentype");
+    src: url("../assets/fonts/gotham_family/Gotham-Book.otf") format("opentype");
     font-weight: 400;
     font-style: normal;
     font-display: swap; 
 }
 @font-face {
     font-family: "Gotham";
-    src: url("assets/fonts/gotham_family/GOTHAM-BOLD.TTF") format("truetype");
+    src: url("../assets/fonts/gotham_family/GOTHAM-BOLD.TTF") format("truetype");
     font-weight: 700;
     font-style: normal;
     font-display: swap; 
@@ -26,8 +26,6 @@
     --fgv-gray-dark: #5C5B5F;
     --fgv-gray-med: #88868B;
     --fgv-gray-pale: #D7D9DD;
-    --text-primary: var(--fgv-gray-dark);
-    --text-secondary: var(--fgv-gray-med);
 }
 body { 
     font-family: "Gotham", "Arial", sans-serif; 
@@ -136,7 +134,7 @@ body {
 .subtitle {
     font-family: "Gotham", "Arial", sans-serif;
     font-size: 13px;
-    color: var(--text-secondary);
+    color: var(--fgv-gray-med);
     text-transform: uppercase;
     letter-spacing: 1px;
     display: block; 
@@ -206,11 +204,11 @@ body {
     margin: 4px 0 0 0;
 }
 .controls { 
-    display: flex; 
-    gap: 1rem; 
-    align-items: center; 
+    display: flex;
     flex-wrap: wrap;
-    margin-top: 1rem; 
+    gap: 15px;
+    align-items: center; 
+    margin-top: 15px; 
 }
 
         /* CHOICES.JS */
@@ -302,7 +300,8 @@ data-type* means any type that contains select-one, like select-one-groups */
 .choices__list--dropdown .choices__item {
     font-size: 13px !important;
     font-family: "Gotham", "Arial", sans-serif !important;
-    color: var(--text-secondary) !important;
+    color: var(--fgv-gray-med) !important;
+    font-weight: 700;
     padding: 10px 16px !important;
     margin: 0 !important; 
     border-radius: 0 !important; 
@@ -312,6 +311,7 @@ data-type* means any type that contains select-one, like select-one-groups */
 .choices__list--dropdown .choices__item--selectable.is-highlighted {
     background-color: var(--fgv-blue-light) !important;
     color: white !important;
+    font-weight: 700;
 }
 
 
@@ -346,6 +346,9 @@ data-type* means any type that contains select-one, like select-one-groups */
 .dropdown { 
     position: relative; 
     display: inline-block; 
+    flex: 1 1 200px; /* allows to grow if needed, starting from 200px */
+    min-width: 220px;
+    max-width: 300px;
 }
 .btn-outline { 
     border: 1px solid var(--fgv-gray-pale) !important; 
@@ -370,7 +373,7 @@ data-type* means any type that contains select-one, like select-one-groups */
 input[type="datetime-local"].date-input {
     width: 180px;
     padding: 0 10px;
-    color: var(--text-primary);
+    color: var(--fgv-gray-dark);
 }
 .btn-outline:hover:not(:disabled) { /* apply when a button is hovered and just if it isn't disabled */ 
     border-color: var(--fgv-blue-dark) !important;
@@ -437,7 +440,7 @@ input[type="datetime-local"].date-input {
     cursor: pointer; 
     font-size: 13px; 
     font-family: "Gotham", "Arial", sans-serif;
-    color: var(--text-secondary);
+    color: var(--fgv-gray-med);
     padding: 10px 16px;
     transition: background-color 0.2s, color 0.2s;
     user-select: none;
@@ -445,20 +448,57 @@ input[type="datetime-local"].date-input {
     word-break: break-word;
 }
 .col-option:hover {
-    background-color: #f1f5f9;
-    color: var(--fgv-blue-dark);
-}
-.col-option.selected {
     background-color: var(--fgv-blue-light) !important;
     color: white !important;
 }
+.col-option.selected {
+    background-color: #f1f5f9 !important;
+    color: var(--fgv-blue-dark) !important;
+    font-weight: 700;
+}
+
+/* Create checkbox for dropdowns */
 .col-option input[type="checkbox"] {
+    appearance: none;           /* Remove standard browser styling */
+    -webkit-appearance: none;   /* for Safari */
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--fgv-gray-med);
+    border-radius: 3px;
+    background-color: white;
     margin: 0;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;             /* Prevents from shrinking if long text */
+}
+.col-option:hover input[type="checkbox"] {
+    border-color: var(--fgv-blue-light);
+}
+.col-option input[type="checkbox"]:checked {
+    background-color: var(--fgv-blue-dark);
+    border-color: var(--fgv-blue-dark);
+}
+/* White checkmark inside checkbox */
+.col-option input[type="checkbox"]::after {
+    content: "";
+    display: none;              /* default: hidden */
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;         /* Fine-tunes vertical centering */
+}
+/* Show the checkmark only when checked */
+.col-option input[type="checkbox"]:checked::after {
+    display: block;
 }
 
 
-/* === SEARCH BAR AND DISABLED OPTIONS (INTERDEPENDENT DROPDOWNS) === */
+/* Search bar and disabled options inside evaluator/evaluated dropdowns */
 .dropdown-search-wrapper {
     padding: 10px 12px 6px 12px;
     position: sticky;
@@ -476,7 +516,7 @@ input[type="datetime-local"].date-input {
     border-radius: 4px;
     font-family: "Gotham", "Arial", sans-serif;
     font-size: 13px;
-    color: var(--text-primary);
+    color: var(--fgv-gray-dark);
     outline: none;
     box-sizing: border-box;
     transition: border-color 0.2s ease;
@@ -498,6 +538,189 @@ input[type="datetime-local"].date-input {
 }
 
 
+    /* Calendar styling */
+input[type="text"].date-input {
+    width: 100%;
+    flex: 1;
+    padding: 0 10px;
+    color: var(--fgv-blue-dark);
+    font-weight: 700;
+}
+
+/* Calendar container */
+.flatpickr-calendar {
+    width: 320px;
+    font-family: "Gotham", "Arial", sans-serif !important;
+    border: 1px solid var(--fgv-blue-dark) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+    padding: 5px !important;
+    background: white !important;
+    margin-top: 4px !important;
+}
+.flatpickr-innerContainer, 
+.flatpickr-rContainer, 
+.flatpickr-days, 
+.dayContainer {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+}
+/* small triangle on the edge (when pointing upwards) */
+.flatpickr-calendar.arrowTop::before {
+    border-bottom-color: var(--fgv-blue-dark) !important;
+}
+/* small triangle on the edge (when pointing downwards) */
+.flatpickr-calendar.arrowBottom::before {
+    border-top-color: var(--fgv-blue-dark) !important;
+}
+.flatpickr-day {
+    font-weight: 700 !important;
+    color: var(--fgv-gray-dark) !important;
+    border-radius: 4px !important;
+}
+.flatpickr-day:hover, .flatpickr-day:focus {
+    background: var(--fgv-blue-light) !important;
+    color: white !important;
+    border-color: var(--fgv-blue-light) !important;
+}
+.flatpickr-day.selected {
+    background: var(--fgv-blue-dark) !important;
+    color: white !important;
+    border-color: var(--fgv-blue-dark) !important;
+}
+.flatpickr-months .flatpickr-month {
+    color: var(--fgv-blue-dark) !important;
+    fill: var(--fgv-blue-dark) !important;
+    font-weight: 700 !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    font-weight: 700 !important;
+}
+.flatpickr-weekdays .flatpickr-weekday {
+    color: var(--fgv-gray-med) !important;
+    font-weight: 700 !important;
+}
+
+/* month and year container*/
+.flatpickr-current-month {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 !important;
+    height: 100% !important;
+}
+/* year container (before unrolling) => don't skip line */
+.flatpickr-current-month .numInputWrapper {
+    width: 85px !important;
+    height: 30px !important;
+    border: 1px solid var(--fgv-gray-pale) !important;
+    border-radius: 4px !important;
+    background: white !important;
+    margin: 0 0 0 8px !important;
+    box-sizing: border-box !important;
+    position: relative !important; 
+    transition: border-color 0.2s ease;
+}
+.flatpickr-current-month .numInputWrapper:hover {
+    border-color: var(--fgv-blue-dark) !important;
+}
+/* Year Text */
+.flatpickr-current-month .numInput.cur-year {
+    font-family: "Gotham", "Arial", sans-serif !important;
+    font-weight: 700 !important;
+    color: var(--fgv-blue-dark) !important;
+    height: 100% !important;
+    width: 85px !important;
+    line-height: 28px !important;       /* centrilize text vertical */
+    padding: 0 25px 0 8px !important;   /* left */
+    margin: 0 !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+/* Year Up/Down Arrows Box */
+.flatpickr-current-month .numInputWrapper span.arrowUp,
+.flatpickr-current-month .numInputWrapper span.arrowDown {
+    display: flex !important;
+    opacity: 1 !important;
+    border-left: 1px solid var(--fgv-gray-pale) !important;
+    position: absolute !important;
+    right: 0 !important;
+    width: 20px !important;
+    height: 50% !important;             /* Cada seta ocupa exatamente metade da altura */
+    padding: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease !important;
+}
+.flatpickr-current-month .numInputWrapper span.arrowUp {
+    top: 0 !important;
+}
+.flatpickr-current-month .numInputWrapper span.arrowDown {
+    bottom: 0 !important;
+    top: auto !important;
+}
+/* Up and down arrow to change year */
+.flatpickr-current-month .numInputWrapper span::after {
+    content: "" !important;
+    display: block !important;
+    position: relative !important;
+    top: auto !important;
+    margin: 0 !important;
+    border: solid var(--fgv-blue-dark) !important;
+    border-width: 0 2px 2px 0 !important;
+    padding: 2px !important;
+    transition: border-color 0.2s ease !important;
+}
+/* Color of internal arrows inside year container */
+.flatpickr-current-month .numInputWrapper span.arrowUp::after {
+    transform: translateY(2px) rotate(-135deg) !important;
+}
+.flatpickr-current-month .numInputWrapper span.arrowDown::after {
+    transform: translateY(-2px) rotate(45deg) !important;
+}
+/* When hover, change background and arrows colors */
+.flatpickr-current-month .numInputWrapper span:hover {
+    background: var(--fgv-blue-light) !important;
+}
+.flatpickr-current-month .numInputWrapper span:hover::after {
+    border-color: white !important;
+}
+
+/* Month dropdown options (after unrolling) */
+.flatpickr-monthDropdown-months {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important; /* for Firefox */
+    background-color: white !important;
+    border: 1px solid var(--fgv-gray-pale) !important;
+    border-radius: 4px !important;
+    color: var(--fgv-blue-dark) !important;
+    font-family: "Gotham", "Arial", sans-serif !important;
+    font-weight: 700 !important;
+    padding: 4px 24px 4px 8px !important;
+    height: 30px !important;
+    cursor: pointer;
+    outline: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23003A79" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') !important;
+    background-repeat: no-repeat !important;
+    background-position: right 6px center !important;
+    transition: border-color 0.2s ease;
+}
+
+.flatpickr-monthDropdown-months::-ms-expand {   /* hide native arrow of some browsers */
+    display: none !important;
+}
+
+.flatpickr-prev-month:hover svg, 
+.flatpickr-next-month:hover svg {
+    fill: none !important;                      /* Prevents the whole SVG from turning black */
+    stroke: var(--fgv-blue-light) !important;   /* Highlights the Lucide path */
+}
+
+
     /* PAGINATION AND RANGE CONTROLS*/
 .pagination-container {
     display: flex;  /* horizontal layout */
@@ -512,7 +735,7 @@ input[type="datetime-local"].date-input {
     font-size: 13px;
     font-weight: 600;
     font-family: "Gotham", "Arial", sans-serif;
-    color: var(--text-secondary);
+    color: var(--fgv-gray-med);
 }
 /* buttons previous and next page */
 .btn-icon {
@@ -689,4 +912,124 @@ tr:hover {
     font-size: 13px;
     font-weight: 700;
     color: var(--fgv-blue-dark);
+}
+
+
+
+
+
+
+
+
+
+
+    /* RESPONSIVE DESIGN */
+
+/* max 1024px | tablet, large phones */
+@media (max-width: 1024px) {
+    .brand-header { padding: 15px 20px; }
+    .details-subheader { padding: 1rem 20px; }
+    .table-container { padding: 1.5rem 20px; }
+    .controls { 
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* max 768px | mobile */
+@media (max-width: 768px) {
+    /* Reestruturação do cabeçalho em grelha */
+    .header-content {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-areas: 
+            "logo actions"
+            "title title";
+        gap: 15px 0;
+        text-align: center;
+    }
+
+    .logo-wrapper { 
+        grid-area: logo;
+        justify-self: start; 
+    }
+    
+    .brand-title { 
+        grid-area: title;
+        justify-self: center;
+        margin-top: 5px;
+    }
+
+    .header-actions {
+        grid-area: actions;
+        justify-self: end;
+    }
+
+    .logo-dint { height: 50px; }
+    .brand-title h1 { font-size: 18px; }
+    .subtitle { font-size: 11px; }
+
+    /* Reestruturação dos controlos e botões de filtro */
+    .controls {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+
+    .dropdown { width: 100%; display: block; }
+    .btn-outline.filter-btn { width: 100%; }
+    .dropdown-content.filter-dropdown { width: 100%; }
+    
+    .date-control-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    input[type="text"].date-input { width: 100%; }
+    
+    .filter-apply { flex: 0 0 auto; }
+    .btn-apply { width: 100%; justify-content: center; }
+
+    /* Alinhamento da paginação */
+    .pagination-container {
+        justify-content: flex-start;
+        width: 100%;
+        gap: 15px;
+    }
+    
+    .limit-control, .range-control {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .range-control .dropdown { width: auto; display: inline-block; }
+    .limit-control .dropdown { width: auto; display: inline-block; }
+}
+
+/* max 480px | small mobile */
+@media (max-width: 480px) {
+    .brand-header { padding: 15px; }
+    .logo-dint { height: 40px; }
+    .brand-title h1 { font-size: 16px; }
+    
+    /* Oculta o texto "Fechar" para poupar espaço, preservando o ícone */
+    .btn-close span { display: none; } 
+    .btn-close { padding: 0; width: 38px; justify-content: center; }
+}
+
+@media (hover: hover) {
+    .dropdown:hover .btn-outline,
+    .lang-dropdown-wrapper:hover .choices__inner {
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-color: var(--fgv-blue-dark) !important;
+    }
+    
+    .dropdown:hover .btn-outline::after,
+    .lang-dropdown-wrapper:hover .choices::after {
+        transform: translateY(-50%) rotate(-135deg) !important;
+    }
+    
+    .dropdown:hover .dropdown-content { 
+        display: block !important; 
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
 }
