@@ -732,6 +732,25 @@ document.addEventListener("DOMContentLoaded", () => {
     initFilters(urlParams); 
     fetchData(urlParams);
 
+    const mobilefilterBtn = document.getElementById("mobile-filter-toggle");
+    const filterWrapper = document.getElementById("filters-wrapper");
+    const mobileFilterText = document.getElementById("mobile-filter-text");
+    
+    if (mobilefilterBtn && filterWrapper && mobileFilterText) {
+        mobilefilterBtn.addEventListener("click", () => {
+            const isOpen = filterWrapper.classList.toggle("open");
+            mobilefilterBtn.classList.toggle("expanded");
+
+            if (isOpen) {
+                mobileFilterText.setAttribute("data-i18n", "btn_hide_filters");
+                mobileFilterText.textContent = t("btn_hide_filters") || "Ocultar filtros";
+            } else {
+                mobileFilterText.setAttribute("data-i18n", "btn_show_filters");
+                mobileFilterText.textContent = t("btn_show_filters") || "Mostrar filtros";
+            }
+        });
+    }
+
     const btnClose = document.getElementById("btn-close");
     if (btnClose) {
         btnClose.addEventListener("click", () => {

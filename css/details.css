@@ -537,6 +537,40 @@ input[type="datetime-local"].date-input {
     cursor: not-allowed;
 }
 
+    /* Mobile filter button: hide filters when mobile */
+.mobile-filter-btn {
+    display: none; 
+    width: 100%;
+    padding: 12px;
+    background-color: white;
+    border: 1px solid var(--fgv-gray-pale);
+    color: var(--fgv-blue-dark);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: "Gotham", "Arial", sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.mobile-filter-btn:hover {
+    border-color: var(--fgv-blue-dark);
+    background-color: #f8fafc;
+}
+
+.mobile-filter-btn .chevron {
+    transition: transform 0.3s ease;
+}
+
+.mobile-filter-btn.expanded .chevron {
+    transform: rotate(-180deg);
+}
+
 
     /* Calendar styling */
 input[type="text"].date-input {
@@ -712,6 +746,19 @@ input[type="text"].date-input {
 
 .flatpickr-monthDropdown-months::-ms-expand {   /* hide native arrow of some browsers */
     display: none !important;
+}
+
+.flatpickr-monthDropdown-month {
+    background-color: white !important;
+    color: var(--fgv-gray-dark) !important;
+    font-family: "Gotham", "Arial", sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+}
+
+.flatpickr-monthDropdown-month:hover {
+    background-color: var(--fgv-blue-light) !important;
+    color: white !important;
 }
 
 .flatpickr-prev-month:hover svg, 
@@ -930,8 +977,75 @@ tr:hover {
     .brand-header { padding: 15px 20px; }
     .details-subheader { padding: 1rem 20px; }
     .table-container { padding: 1.5rem 20px; }
+
     .controls { 
-        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+    }
+    
+    /* Move mobile filter logic to 1024px breakpoint */
+    .mobile-filter-btn { display: flex; }
+    
+    .filters-collapse {
+        display: none; /* Hidden by default on small screens */
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .filters-collapse.open {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: auto;
+        gap: 15px;
+        align-items: start;
+        align-content: start;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    /* Make sure inputs and dropdowns take full width when stacked */
+    .filters-collapse .dropdown, 
+    .filters-collapse .dropdown-content,
+    .filters-collapse .date-control-group {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        flex: none; 
+    }
+    
+    .filters-collapse .btn-outline {
+        width: 100% !important;
+    }
+    
+    .filters-collapse .date-control-group {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .filters-collapse .date-control-group > div {
+        width: 100%;
+    }
+
+    .filters-collapse .date-input,
+    .filters-collapse .flatpickr-mobile { 
+        width: 100% !important; 
+        box-sizing: border-box;
+    }
+
+    .filters-collapse .filter-apply { 
+        grid-column: 1 / -1; 
+        width: 100%;
+        display: flex;
+        margin-top: 5px;
+    }
+
+    .filters-collapse .btn-apply { 
+        justify-content: center; 
+        width: 100%; 
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 }
 
@@ -968,24 +1082,9 @@ tr:hover {
     .subtitle { font-size: 11px; }
 
     /* Reestruturação dos controlos e botões de filtro */
-    .controls {
-        grid-template-columns: 1fr !important;
-        gap: 12px;
+    .filters-collapse.open {
+        grid-template-columns: 1fr;
     }
-
-    .dropdown { width: 100%; display: block; }
-    .btn-outline.filter-btn { width: 100%; }
-    .dropdown-content.filter-dropdown { width: 100%; }
-    
-    .date-control-group {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    input[type="text"].date-input { width: 100%; }
-    
-    .filter-apply { flex: 0 0 auto; }
-    .btn-apply { width: 100%; justify-content: center; }
 
     /* Alinhamento da paginação */
     .pagination-container {
