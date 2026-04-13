@@ -81,6 +81,10 @@ function t(key) {
     return DICTIONARY[CURRENT_LANG][key] || key;
 }
 
+function tCategory(val) {
+    return DICTIONARY[CURRENT_LANG].category_options?.[val] || val;
+}
+
 function tEntity(val) {
     return DICTIONARY[CURRENT_LANG].entity_options?.[val] || val;
 }
@@ -165,9 +169,35 @@ function translateUI() {
         }
     });
 
+    const searchInputs = document.querySelectorAll(".dropdown-search");
+    searchInputs.forEach(input => {
+        input.placeholder = t("placeholder_search");
+    });
+
+    const startInput = document.getElementById("start-date");
+    if (startInput) {
+        startInput.placeholder = t("placeholder_start_date");
+        if (startInput._flatpickr && startInput._flatpickr.altInput) {
+            startInput._flatpickr.altInput.placeholder = t("placeholder_start_date");
+        }
+    }
+    
+    const endInput = document.getElementById("end-date");
+    if (endInput) {
+        endInput.placeholder = t("placeholder_end_date");
+        if (endInput._flatpickr && endInput._flatpickr.altInput) {
+            endInput._flatpickr.altInput.placeholder = t("placeholder_end_date");
+        }
+    }
+
     COLUMNS.forEach(col => {
         col.label = t(col.labelKey);
-    })
+    });
+
+    const theadRow = document.getElementById("table-header");
+    if (theadRow && theadRow.innerHTML.trim() !== "") {
+        renderTableHeaders();
+    }
 }
 
 
@@ -197,7 +227,7 @@ function checkApplyButtonState() {
 }
 
 
-function initFilters(urlParams) {
+function initializeFilters(urlParams) {
     /* Initializes the filter UI components (categories, evaluator, evaluated, date range) based 
     on the current URL parameters and sets up event listeners to handle user interactions. */
     // Categories
@@ -729,7 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     updateFilterSummary(urlParams);
     renderColumnSelector();
-    initFilters(urlParams); 
+    initializeFilters(urlParams); 
     fetchData(urlParams);
 
     const mobilefilterBtn = document.getElementById("mobile-filter-toggle");
@@ -915,10 +945,17 @@ function renderTableBody(data) {
                 } else if (col.type === "number") {
                     td.textContent = value ? parseFloat(value).toFixed(2) : "-";
                     td.className = "font-mono font-bold";
-                    if (value < 3.5) td.style.color = "#ef4444";
-                    else if (value > 5.5) td.style.color = "#10b981";
+                    if (value < 3.5) {
+                        td.style.color = "#ef4444";
+                    } else if (value > 5.5) {
+                        td.style.color = "#10b981";
+                    }
                 } else {
-                    td.textContent = value || "-";
+                    if (col.key === 'category' && value) {
+                        td.textContent = tCategory(value) || "-";
+                    } else {
+                        td.textContent = value || "-";
+                    }
                 }
                 
                 tr.appendChild(td);

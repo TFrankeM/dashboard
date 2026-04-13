@@ -47,7 +47,10 @@ body {
 .date-control-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
+}
+.date-control-group > div {
+    width: 180px;
 }
 .btn-apply {
     color: white !important;
@@ -146,7 +149,6 @@ body {
     justify-self: end;
     letter-spacing: 1px;
     display: flex; /* horizontal layout */
-    align-items: center;
     gap: 15px;
 }   
 
@@ -157,6 +159,7 @@ body {
     background-color: var(--fgv-blue-dark);
     color: white;
     border: none;
+    border-radius: 6px;
     height: 38px;
     padding: 0 16px;
     display: flex;
@@ -206,7 +209,7 @@ body {
 .controls { 
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
     align-items: center; 
     margin-top: 15px; 
 }
@@ -241,7 +244,8 @@ body {
     box-sizing: border-box !important;  /* includes padding in width calculation */
 }
 /* Selected item in the box */
-.choices__list--single {
+.choices__list--single,
+.choices__list--single .choices__item {
     padding: 0 !important;
     margin: 0 !important;
     display: flex;
@@ -318,7 +322,7 @@ data-type* means any type that contains select-one, like select-one-groups */
     /* Language button */
 .lang-dropdown-wrapper {
     position: relative;
-    width: 80px;
+    min-width: 80px;
     height: 38px;
     z-index: 200; /* above filters */
 }
@@ -331,10 +335,13 @@ data-type* means any type that contains select-one, like select-one-groups */
     width: 18px;
     height: 18px;
     color: var(--fgv-blue-dark);
-    pointer-events: none;  /* icon not clickable */
 }
 .lang-dropdown-wrapper .choices__inner {
     padding-left: 32px !important; /* space for the lucide language icon */
+}
+.choices[data-type*="select-one"]::after {
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
 }
 .lang-dropdown-wrapper:hover {
     border-color: var(--fgv-blue-dark);
@@ -346,9 +353,12 @@ data-type* means any type that contains select-one, like select-one-groups */
 .dropdown { 
     position: relative; 
     display: inline-block; 
-    flex: 1 1 200px; /* allows to grow if needed, starting from 200px */
-    min-width: 220px;
-    max-width: 300px;
+}
+.pagination-container .dropdown {
+    flex: none !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: auto !important;
 }
 .btn-outline { 
     border: 1px solid var(--fgv-gray-pale) !important; 
@@ -968,8 +978,6 @@ tr:hover {
 
 
 
-
-
     /* RESPONSIVE DESIGN */
 
 /* max 1024px | tablet, large phones */
@@ -1057,7 +1065,7 @@ tr:hover {
         grid-template-areas: 
             "logo actions"
             "title title";
-        gap: 15px 0;
+        gap: 10px 0;
         text-align: center;
     }
 
@@ -1069,7 +1077,7 @@ tr:hover {
     .brand-title { 
         grid-area: title;
         justify-self: center;
-        margin-top: 5px;
+        margin-top: 0;
     }
 
     .header-actions {
@@ -1077,40 +1085,166 @@ tr:hover {
         justify-self: end;
     }
 
-    .logo-dint { height: 50px; }
-    .brand-title h1 { font-size: 18px; }
-    .subtitle { font-size: 11px; }
+    .brand-header { padding: 10px 15px; }
+    .logo-dint { height: 45px; }
+    .brand-title h1 { font-size: 16px; }
+    .subtitle { font-size: 10px; margin-top: 2px; }
 
+    /* Compact sub-header */
+    .details-subheader {
+        padding: 0.75rem 15px;
+        gap: 8px;
+    }
+    #page-title {
+        font-size: 1.1rem;
+    }
+    #filter-summary {
+        font-size: 0.75rem;
+        margin-top: 2px;
+    }
+    .controls {
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .mobile-filter-btn {
+        padding: 8px;
+        font-size: 13px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+    .btn-outline {
+        height: 34px;
+        font-size: 12px;
+        padding: 0 10px;
+    }
+    .choices__inner {
+        height: 34px !important;
+        min-height: 34px !important;
+        font-size: 12px !important;
+        padding: 0 10px !important;
+    }
+    .btn-icon {
+        height: 34px;
+    }
+    .btn-close {
+        height: 34px;
+    }
     /* Reestruturação dos controlos e botões de filtro */
     .filters-collapse.open {
         grid-template-columns: 1fr;
+        gap: 10px;
     }
 
     /* Alinhamento da paginação */
     .pagination-container {
         justify-content: flex-start;
         width: 100%;
-        gap: 15px;
+        gap: 10px;
     }
     
     .limit-control, .range-control {
         width: 100%;
         justify-content: flex-start;
+        font-size: 12px;
+        gap: 5px;
     }
 
     .range-control .dropdown { width: auto; display: inline-block; }
     .limit-control .dropdown { width: auto; display: inline-block; }
+
+    .table-container { padding: 1rem 15px; }
+
+    /* columns and pagination controls in the same line in mobile */
+    .details-subheader > .controls:not(.filters-collapse) {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        width: 100%;
+        align-items: center;
+    }
+
+    /* dropdowns in controls don't stretch full width in mobile */
+    .details-subheader > .controls:not(.filters-collapse) .dropdown,
+    .details-subheader > .controls:not(.filters-collapse) .filter-btn,
+    .details-subheader > .controls:not(.filters-collapse) .pagination-container,
+    .details-subheader > .controls:not(.filters-collapse) .limit-control,
+    .details-subheader > .controls:not(.filters-collapse) .range-control {
+        width: auto !important;
+        min-width: 0 !important;
+    }
 }
 
 /* max 480px | small mobile */
 @media (max-width: 480px) {
-    .brand-header { padding: 15px; }
-    .logo-dint { height: 40px; }
-    .brand-title h1 { font-size: 16px; }
+    .brand-header { padding: 8px 10px; }
+    .logo-dint { height: 36px; }
+    .brand-title h1 { font-size: 14px; }
+    .subtitle { font-size: 9px; margin-top: 1px; }
     
     /* Oculta o texto "Fechar" para poupar espaço, preservando o ícone */
     .btn-close span { display: none; } 
-    .btn-close { padding: 0; width: 38px; justify-content: center; }
+    .btn-close { padding: 0; width: 32px; justify-content: center; height: 32px; }
+
+    /* Compact sub-header */
+    .details-subheader {
+        padding: 0.5rem 10px;
+        gap: 4px;
+    }
+    #page-title {
+        font-size: 1rem;
+    }
+    #filter-summary {
+        font-size: 0.7rem;
+    }
+    .controls {
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .lang-dropdown-wrapper {
+        min-width: 70px;
+    }
+    .lang-dropdown-wrapper .choices__inner {
+        padding-right: 20px !important;
+    }
+    .lang-dropdown-wrapper .choices[data-type*="select-one"]::after {
+        right: 8px !important;
+    }
+    .mobile-filter-btn {
+        padding: 6px;
+        font-size: 12px;
+        margin-top: 4px;
+        margin-bottom: 4px;
+    }
+    .btn-outline {
+        height: 32px;
+        font-size: 11px;
+        padding: 0 8px;
+    }
+    .choices__inner {
+        height: 32px !important;
+        min-height: 32px !important;
+        font-size: 11px !important;
+        padding: 0 8px !important;
+    }
+    .btn-icon {
+        height: 32px;
+        width: 32px;
+        min-width: 32px;
+    }
+    .limit-control, .range-control {
+        font-size: 11px;
+        gap: 4px;
+    }
+    
+    .table-container { padding: 0.75rem 10px; }
+
+    /* hide secondary text */
+    .limit-control > span {
+        display: none;
+    }
+    .total-count-label {
+        display: none;
+    }
 }
 
 @media (hover: hover) {
