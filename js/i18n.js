@@ -313,6 +313,11 @@ export const DICTIONARY = {
 
         // Detailse page
         details_page_title: "News details",
+        placeholder_start_date: "Start date...",
+        placeholder_end_date: "End date...",
+        placeholder_search: "Search...",
+        title_sort_by: "Sort by",
+        label_of: "of",
         btn_close: "Close",
         details_title_prefix: "News composing the FGV IMídIA on ",
         loading_filters: "Loading filters...",
@@ -477,6 +482,7 @@ export const DICTIONARY = {
 
         // Details page
         btn_close: "Cerrar",
+        label_of: "de",
         details_title_prefix: "Noticias que componen el FGV IMídIA el ",
         loading_filters: "Cargando filtros...",
         btn_choose_columns: "Elija las columnas visibles",

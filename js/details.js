@@ -81,6 +81,10 @@ function t(key) {
     return DICTIONARY[CURRENT_LANG][key] || key;
 }
 
+function tCategory(val) {
+    return DICTIONARY[CURRENT_LANG].category_options?.[val] || val;
+}
+
 function tEntity(val) {
     return DICTIONARY[CURRENT_LANG].entity_options?.[val] || val;
 }
@@ -99,6 +103,25 @@ function initLanguageSelector() {
                 { value: "es-ES", label: "ES" }
             ]
         });
+
+        // Hover for desktop devices (ignoring touch devices)
+        if (window.matchMedia("(hover: hover)").matches) {
+            const langWrapper = document.querySelector(".lang-dropdown-wrapper");
+            const choicesEl = choicesLanguage.containerOuter.element;
+            if (langWrapper && choicesEl) {
+                let langTimeout;
+                const openLang = () => { 
+                    clearTimeout(langTimeout); 
+                    choicesLanguage.showDropdown(); 
+                };
+                const closeLang = () => { 
+                    langTimeout = setTimeout(() => choicesLanguage.hideDropdown(), 300); 
+                };
+
+                langWrapper.addEventListener("mouseenter", openLang);
+                langWrapper.addEventListener("mouseleave", closeLang);
+            }
+        }
 
         document.getElementById("language-select").addEventListener("change", (e) => {
             CURRENT_LANG = e.target.value;
@@ -146,9 +169,35 @@ function translateUI() {
         }
     });
 
+    const searchInputs = document.querySelectorAll(".dropdown-search");
+    searchInputs.forEach(input => {
+        input.placeholder = t("placeholder_search");
+    });
+
+    const startInput = document.getElementById("start-date");
+    if (startInput) {
+        startInput.placeholder = t("placeholder_start_date");
+        if (startInput._flatpickr && startInput._flatpickr.altInput) {
+            startInput._flatpickr.altInput.placeholder = t("placeholder_start_date");
+        }
+    }
+    
+    const endInput = document.getElementById("end-date");
+    if (endInput) {
+        endInput.placeholder = t("placeholder_end_date");
+        if (endInput._flatpickr && endInput._flatpickr.altInput) {
+            endInput._flatpickr.altInput.placeholder = t("placeholder_end_date");
+        }
+    }
+
     COLUMNS.forEach(col => {
         col.label = t(col.labelKey);
-    })
+    });
+
+    const theadRow = document.getElementById("table-header");
+    if (theadRow && theadRow.innerHTML.trim() !== "") {
+        renderTableHeaders();
+    }
 }
 
 
@@ -178,7 +227,7 @@ function checkApplyButtonState() {
 }
 
 
-function initFilters(urlParams) {
+function initializeFilters(urlParams) {
     /* Initializes the filter UI components (categories, evaluator, evaluated, date range) based 
     on the current URL parameters and sets up event listeners to handle user interactions. */
     // Categories
@@ -266,12 +315,19 @@ function initFilters(urlParams) {
         altFormat: "d/m/Y H:i",    // How it appears to the user
         time_24hr: true,
         allowInput: true,          // Allow manual input
-        locale: localeMap[CURRENT_LANG] || "pt"
+        locale: localeMap[CURRENT_LANG] || "pt",
+        prevArrow: '<i data-lucide="chevron-left" class="icon-16"></i>',
+        nextArrow: '<i data-lucide="chevron-right" class="icon-16"></i>',
+        onReady: function() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
     };
 
     const startInput = document.getElementById("start-date");
     if (startInput) {
-        flatpickr(startInput, {
+        const fpStart = flatpickr(startInput, {
             ...dateConfig,
             defaultDate: pendingState.startDate || null,
             onChange: function(selectedDates, dateStr) {
@@ -279,11 +335,22 @@ function initFilters(urlParams) {
                 checkApplyButtonState();
             }
         });
+
+        if (window.matchMedia("(hover: hover)").matches) {
+            let startTimeout;
+            const openStart = () => { clearTimeout(startTimeout); fpStart.open(); };
+            const closeStart = () => { startTimeout = setTimeout(() => fpStart.close(), 300); };
+            
+            startInput.parentElement.addEventListener("mouseenter", openStart);
+            startInput.parentElement.addEventListener("mouseleave", closeStart);
+            fpStart.calendarContainer.addEventListener("mouseenter", openStart);
+            fpStart.calendarContainer.addEventListener("mouseleave", closeStart);
+        }
     }
 
     const endInput = document.getElementById("end-date");
     if (endInput) {
-        flatpickr(endInput, {
+        const fpEnd = flatpickr(endInput, {
             ...dateConfig,
             defaultDate: pendingState.endDate || null,
             onChange: function(selectedDates, dateStr) {
@@ -291,6 +358,16 @@ function initFilters(urlParams) {
                 checkApplyButtonState();
             }
         });
+        if (window.matchMedia("(hover: hover)").matches) {
+            let endTimeout;
+            const openEnd = () => { clearTimeout(endTimeout); fpEnd.open(); };
+            const closeEnd = () => { endTimeout = setTimeout(() => fpEnd.close(), 300); };
+
+            endInput.parentElement.addEventListener("mouseenter", openEnd);
+            endInput.parentElement.addEventListener("mouseleave", closeEnd);
+            fpEnd.calendarContainer.addEventListener("mouseenter", openEnd);
+            fpEnd.calendarContainer.addEventListener("mouseleave", closeEnd);
+        }
     }
 
     const btnApply = document.getElementById("btn-apply");
@@ -682,8 +759,27 @@ document.addEventListener("DOMContentLoaded", () => {
     
     updateFilterSummary(urlParams);
     renderColumnSelector();
-    initFilters(urlParams); 
+    initializeFilters(urlParams); 
     fetchData(urlParams);
+
+    const mobilefilterBtn = document.getElementById("mobile-filter-toggle");
+    const filterWrapper = document.getElementById("filters-wrapper");
+    const mobileFilterText = document.getElementById("mobile-filter-text");
+    
+    if (mobilefilterBtn && filterWrapper && mobileFilterText) {
+        mobilefilterBtn.addEventListener("click", () => {
+            const isOpen = filterWrapper.classList.toggle("open");
+            mobilefilterBtn.classList.toggle("expanded");
+
+            if (isOpen) {
+                mobileFilterText.setAttribute("data-i18n", "btn_hide_filters");
+                mobileFilterText.textContent = t("btn_hide_filters") || "Ocultar filtros";
+            } else {
+                mobileFilterText.setAttribute("data-i18n", "btn_show_filters");
+                mobileFilterText.textContent = t("btn_show_filters") || "Mostrar filtros";
+            }
+        });
+    }
 
     const btnClose = document.getElementById("btn-close");
     if (btnClose) {
@@ -748,11 +844,11 @@ function handleSort(col) {
     if (currentSortColumn === col.key) {
         if (currentSortDirection === "asc") {
             currentSortDirection = "desc";
-            console.log(`Column "${col.label}" is currently sorted in ascending order. Toggling to descending.`);
+            //console.log(`Column "${col.label}" is currently sorted in ascending order. Toggling to descending.`);
         } else {
             currentSortColumn = "date";
             currentSortDirection = "asc";
-            console.log(`Column "${col.label}" is currently sorted in descending order. Resetting to default sorting by date in ascending order.`);
+            //console.log(`Column "${col.label}" is currently sorted in descending order. Resetting to default sorting by date in ascending order.`);
         }
     } else {
         currentSortColumn = col.key;
@@ -786,7 +882,7 @@ function renderTableHeaders() {
                 if (currentSortColumn === col.key) {
                     iconName = currentSortDirection === "asc" ? "arrow-up-narrow-wide" : "arrow-down-wide-narrow";
                     iconClass = "th-icon-active"; 
-                    console.log(`Column "${col.label}" is currently sorted in ${currentSortDirection} order.`);
+                    //console.log(`Column "${col.label}" is currently sorted in ${currentSortDirection} order.`);
                 }
 
                 th.innerHTML = `
@@ -798,9 +894,9 @@ function renderTableHeaders() {
                     </div>
                 `;
                 th.addEventListener("click", () => handleSort(col));
-                console.log(`Column "${col.label}" is sortable. Click to sort.`);
+                //console.log(`Column "${col.label}" is sortable. Click to sort.`);
             } else {
-                console.log(`Column "${col.label}" does not support sorting.`);
+                //console.log(`Column "${col.label}" does not support sorting.`);
                 // For columns that do not support sorting (e.g., full text blocks or URLs)
                 th.innerHTML = `<span>${col.label}</span>`;
             }
@@ -849,10 +945,17 @@ function renderTableBody(data) {
                 } else if (col.type === "number") {
                     td.textContent = value ? parseFloat(value).toFixed(2) : "-";
                     td.className = "font-mono font-bold";
-                    if (value < 3.5) td.style.color = "#ef4444";
-                    else if (value > 5.5) td.style.color = "#10b981";
+                    if (value < 3.5) {
+                        td.style.color = "#ef4444";
+                    } else if (value > 5.5) {
+                        td.style.color = "#10b981";
+                    }
                 } else {
-                    td.textContent = value || "-";
+                    if (col.key === 'category' && value) {
+                        td.textContent = tCategory(value) || "-";
+                    } else {
+                        td.textContent = value || "-";
+                    }
                 }
                 
                 tr.appendChild(td);
@@ -865,4 +968,3 @@ function renderTableBody(data) {
         lucide.createIcons();
     }
 }
-

@@ -21,11 +21,13 @@
     <!-- Ícones Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <!-- <link rel="stylesheet" href="./css/global.css"> -->
+
     <script type="module" src="./js/script.js" defer></script>
 </head>
-<body>
 
+<body>
     <!-- Menu lateral de navegação -->
     <nav class="side-nav">
         <a href="#top" class="nav-dot active" data-label="Filtros"></a>
@@ -51,11 +53,12 @@
                 </div>
 
                 <!-- Language dropdown -->
-                <div class="lang-dropdown-wrapper">
-                    <i data-lucide="languages" class="lang-icon"></i>
-                    <select id="language-select" class="lang-select"></select>
+                <div class="header-actions">
+                    <div class="lang-dropdown-wrapper">
+                        <i data-lucide="languages" class="lang-icon"></i>
+                        <select id="language-select" class="lang-select"></select>
+                    </div>
                 </div>
-            </div>
         </header>
 
         <!-- Barra de filtros -->
