@@ -1,386 +1,312 @@
-
 import { sql } from "@vercel/postgres";
 
+// Mapping frontend technical slugs to DB readable names (stored in 'slug' column)
+const CATEGORY_MAP = {
+    "artes_cultura_entretenimento_midia": "Artes, cultura, entretenimento e mídia",
+    "ciencia_tecnologia": "Ciência e tecnologia",
+    "conflito_guerra_paz": "Conflito, guerra e paz",
+    "crime_lei_justica": "Crime, lei e justiça",
+    "desastres_acidentes_emergencias": "Desastres, acidentes e emergências",
+    "economia_negocios_financas": "Economia, negócios e finanças",
+    "educacao": "Educação",
+    "esporte": "Esporte",
+    "estilo_vida_lazer": "Estilo de vida e lazer",
+    "interesse_humano": "Interesse humano",
+    "meio_ambiente": "Meio ambiente",
+    "meteorologia": "Meteorologia",
+    "nao_informado": "Não informado",
+    "politica": "Política",
+    "religiao_crencas": "Religião e crenças",
+    "saude": "Saúde",
+    "sociedade": "Sociedade",
+    "trabalho": "Trabalho"
+};
 
-function buildCommonFilters(query, params) {
-  // Basic WHERE clause used by all charts
-  const { evaluatorEntity, evaluatedEntity, category, period, startDate, endDate, politicalAlignment } = query;
-  const conditions = [];
-
-  if (evaluatorEntity) {
-    params.push(evaluatorEntity);
-    conditions.push(`evaluator_entity = $${params.length}`);
-  }
-
-  if (evaluatedEntity) {
-    //console.log("Adding evaluated_entity filter:", evaluatedEntity);
-    params.push(evaluatedEntity);
-    conditions.push(`evaluated_entity = $${params.length}`);
-  }
-
-  if (category) {
-    let categories = Array.isArray(category) ? category : [category];
-    if (!categories.includes("Todas")) {
-      params.push(categories);
-      conditions.push(`category = ANY($${params.length})`);
-    }
-  }
-
-  if (politicalAlignment) {
-    let alignments = Array.isArray(politicalAlignment) ? politicalAlignment : [politicalAlignment];
-    if (alignments.length > 0) {
-      params.push(alignments);
-      conditions.push(`political_alignment = ANY($${params.length})`);
-    }
-  }
-
-  // Dynamic time mode
-  if (period && period.startsWith("Last")) {
-    let interval;
-    if (period === "Last30d") interval = "30 days";
-    else if (period === "Last120d") interval = "120 days";
-    else if (period === "Last180d") interval = "180 days";
-    else if (period === "Last365d") interval = "365 days";
-
-    if (interval) {
-      params.push(interval);
-      conditions.push(`date >= NOW() - CAST($${params.length} AS INTERVAL)`);
-    }
-  }
-  // Fixed date range mode
-  else if (startDate && endDate) {
-    params.push(startDate);
-    conditions.push(`date::date >= $${params.length}::date`);
-    params.push(endDate);
-    conditions.push(`date::date <= $${params.length}::date`);
-  }
-
-  return conditions;
-}
-
-
-// GRADES HISTOGRAM
-async function getGradesChartData(request) {
-  const params = [];
-  const conditions = buildCommonFilters(request.query, params);
-
-  const query = `
-    SELECT 
-      round(grade) as grade_bucket,
-      COUNT(*) AS count
-    FROM noticias
-    ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
-    GROUP BY 
-      grade_bucket
-    ORDER BY 
-      grade_bucket ASC;
-  `;
-
-  const { rows } = await sql.query(query, params);
-  return rows;
-}
-
-
-// VOLUME CHART
-async function getVolumeChartData(request) {
-  const params = [];
-  const conditions = buildCommonFilters(request.query, params);
-  const { aggregation } = request.query;
-  let hours = parseFloat(aggregation); 
-
-  if (isNaN(hours) || hours <= 0) {
-      hours = 1;
-  }
-
-  params.push(`${hours} hours`);
-  const intervalParam = `$${params.length}`;
-
-  const query = `
-    SELECT 
-      date_bin(${intervalParam}::interval, date, TIMESTAMP '2025-01-01') AS time_period,
-      COUNT(*) AS news_count
-    FROM noticias
-    ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
-    GROUP BY 
-      time_period
-    ORDER BY 
-      time_period ASC;
-  `;
-  const { rows } = await sql.query(query, params);  
-
-  //console.log("Volume Chart Query:", query, params);
-  return rows;
-}
-
-
-// GAUGE CHART
-async function getGaugeData(request) {
-  const params = [];
-  
-  const gaugeQuery = { ...request.query }; 
-
-  //console.log("Gauge Query:", gaugeQuery);
-  const conditions = buildCommonFilters(gaugeQuery, params);
-  //console.log("Gauge Conditions:", conditions, params);
-  // if no start and end date provided => dynamic mode => recent day logic
-  const isStaticMode = gaugeQuery.startDate && gaugeQuery.endDate;
-  let timeCondition = "";
-  //console.log("isStaticMode:", isStaticMode);
-  if (!isStaticMode) {
-
-      let hours = parseFloat(gaugeQuery.aggregation);
-      if (isNaN(hours) || hours <= 0) {
-        hours = 1;
-      }
-      params.push(`${hours} hours`);
-      const intervalParam = `$${params.length}`;
-
-      const whereClauseBase = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
-
-      timeCondition = `
-        AND date_bin(${intervalParam}::interval, date, TIMESTAMP '2025-01-01') = (
-          SELECT date_bin(${intervalParam}::interval, MAX(date), TIMESTAMP '2025-01-01')
-          FROM noticias
-          ${whereClauseBase}
-        )
-      `;
-
-      // calculate IMíd.IA for 30 minutes window
-      /*
-      timeCondition = `
-        AND date >= (
-            SELECT MAX(date) 
-            FROM noticias 
-            ${whereClauseBase}
-        ) - INTERVAL '30 minutes'
-      `;
-      */
-  };
-
-  const whereClause = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "WHERE 1=1";
-  const query = `
-    SELECT AVG(grade) as average_grade
-    FROM noticias
-    ${whereClause}
-    ${timeCondition};
-  `;
-
-  //console.log("Query Details:", query, params);
-
-  const { rows } = await sql.query(query, params);
-  return rows;
-}
-
-
-// LINE CHART
-async function getLineChartData(request) {
-  const params = [];
-  const conditions = buildCommonFilters(request.query, params);
-  const { aggregation, category, politicalAlignment } = request.query;
-
-  // listas de seleção
-  const categories = category ? (Array.isArray(category) ? category : [category]) : [];
-  const alignments = politicalAlignment ? (Array.isArray(politicalAlignment) ? politicalAlignment : [politicalAlignment]) : [];
-
-  // flags de "Todos"
-  const catHasAll = categories.includes("Todas");
-  const polHasAll = alignments.includes("Consolidado");
-
-  // Se tivermos mais de 1 viés político selecionado, a prioridade é comparar os vieses.
-  // Nesse caso, o gráfico deve mostrar uma linha para cada viés (Ex: Democrata, Republicano).
-  const isMultiPolitical = alignments.length > 1;
-
-  let hours = parseFloat(aggregation);
-  if (isNaN(hours) || hours <= 0) {
-      hours = 1;
-    }
-  params.push(`${hours} hours`);
-  const intervalParam = `$${params.length}`;
-
-  let selectClause = "";
-  let groupClause = "";
-  let havingClause = "";
-
-  if (isMultiPolitical) {
-
-      if (polHasAll) {
-          selectClause = ", COALESCE(political_alignment, 'Consolidado') as series_label";
-          groupClause = ", ROLLUP(political_alignment)";
-          
-          const specificPols = alignments.filter(p => p !== "Consolidado");
-          if (specificPols.length > 0) {
-             params.push(specificPols);
-             havingClause = `HAVING political_alignment IS NULL OR political_alignment = ANY($${params.length})`;
-          } else {
-             havingClause = `HAVING political_alignment IS NULL`; 
-          }
-      } else {
-          selectClause = ", political_alignment as series_label";
-          groupClause = ", political_alignment";
-      }
-
-  } else {
-
-      if (catHasAll) {
-          selectClause = ", COALESCE(category, 'Todas') as series_label";
-          groupClause = ", ROLLUP(category)";
-          
-          const specificCats = categories.filter(c => c !== "Todas");
-          
-          if (specificCats.length > 0) {
-              params.push(specificCats);
-              havingClause = `HAVING category IS NULL OR category = ANY($${params.length})`;
-          } else {
-              havingClause = `HAVING category IS NULL`;
-          }
-
-      } else {
-          selectClause = ", category as series_label";
-          groupClause = ", category";
-      }
-  }
-
-  const query = `
-    SELECT 
-      date_bin(${intervalParam}::interval, date, TIMESTAMP '2025-01-01') AS time_period${selectClause},
-      AVG(grade) AS average_grade,
-      COUNT(*) AS news_count
-    FROM noticias
-    ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}
-    GROUP BY 
-      time_period${groupClause}
-    ${havingClause}
-    ORDER BY 
-      time_period ASC;
-  `;
-  
-  const { rows } = await sql.query(query, params);
-  return rows;
-}
-
-
-// NEWS DETAILS LIST
-async function getNewsList(request) {
+function buildDynamicSQL(query, requiredDimensions = []) {
     const params = [];
-    //console.log("Request Query:", request.query);
-    const { limit, offset, sort_by, sort_dir } = request.query;
-    //console.log("Received Details List Request with Query:", request.query);
-    //console.log("Details List Request - Limit:", limit, "Offset:", offset, "Sort By:", sort_by, "Sort Direction:", sort_dir);
-    //console.log("Target Date:", date, "Aggregation:", aggregation, "Limit:", limit);
-    const queryForFilters = { ...request.query };
-    delete queryForFilters.period; 
-    delete queryForFilters.limit;
-    delete queryForFilters.offset;
-    delete queryForFilters.sort_by;
-    delete queryForFilters.sort_dir;
+    const conditions = [];
     
-    const conditions = buildCommonFilters(queryForFilters, params);
-    
-    const whereClause = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
+    // No duplicate joins
+    const joins = new Set();
+    requiredDimensions.forEach(dim => joins.add(dim));
 
-    // Calculate the number of records | for pagination purposes
-    const countQuery = `
-        SELECT COUNT(*) AS total_count
-        FROM noticias
-        ${whereClause};
+    const { evaluator, evaluated, category, period, startDate, endDate } = query;
+
+    if (evaluator) {
+        joins.add("te_evaluator");
+        let evaluators = Array.isArray(evaluator) ? evaluator : [evaluator];
+        if (evaluators.length > 0 && !evaluators.includes("include_all")) {
+            params.push(evaluators);
+            conditions.push(`te_evaluator.slug = ANY($${params.length})`);
+        }   
+    }
+    if (evaluated) {
+        joins.add("te_evaluated");
+        let evaluateds = Array.isArray(evaluated) ? evaluated : [evaluated];
+        if (evaluateds.length > 0 && !evaluateds.includes("include_all")) {
+            params.push(evaluateds);
+            conditions.push(`te_evaluated.slug = ANY($${params.length})`);
+        }
+    }
+    if (category) {
+        joins.add("category");
+        let categories = Array.isArray(category) ? category : [category];
+        if (categories.length > 0 && !categories.includes("include_all")) {
+            const dbCategories = categories.map(cat => CATEGORY_MAP[cat] || cat);
+            params.push(dbCategories);
+            conditions.push(`c.slug = ANY($${params.length})`);
+        }
+    }
+
+    if (period && period.toLowerCase().startsWith("last")) {  // Dynamic time mode
+        const intervals = {
+            "last30d": "30 days",
+            "last120d": "120 days",
+            "last180d": "180 days",
+            "last365d": "365 days"
+        };
+        if (intervals[period]) {
+            params.push(intervals[period]);
+            conditions.push(`na.publication_date >= NOW() - CAST($${params.length} AS INTERVAL)`);
+        }
+    } else if (startDate && endDate) {          // Fixed date range mode
+        params.push(startDate);
+        conditions.push(`na.publication_date >= $${params.length}`);
+        params.push(endDate);
+        conditions.push(`na.publication_date <= $${params.length}`);
+    }
+
+    // tables 'analysis' e 'news_article'
+    let joinClause = `FROM analysis a JOIN news_article na ON a.news_id = na.id`;
+    
+    if (joins.has("category"))     joinClause += ` JOIN category c ON na.category_id = c.id`;
+    if (joins.has("te_evaluator")) joinClause += ` JOIN target_entity te_evaluator ON a.evaluator_id = te_evaluator.id`;
+    if (joins.has("te_evaluated")) joinClause += ` JOIN target_entity te_evaluated ON a.evaluated_id = te_evaluated.id`;
+    if (joins.has("source"))       joinClause += ` JOIN source s ON na.source_id = s.id`;
+    if (joins.has("language"))     joinClause += ` JOIN language l ON na.language_id = l.id`;
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    return { joinClause, whereClause, params };
+}
+
+
+async function getGradesChartData(request) {
+    const { joinClause, whereClause, params } = buildDynamicSQL(request.query, []);
+
+    const query = `
+        SELECT round(a.grade) as grade_bucket, COUNT(*) AS count
+            ${joinClause}
+            ${whereClause}
+        GROUP BY grade_bucket
+        ORDER BY grade_bucket ASC;
     `;
+    console.log("Grades Chart SQL:\n", query, "Params:", params);
+    const { rows } = await sql.query(query, params);
+    return rows;
+}
+
+
+async function getVolumeChartData(request) {
+    const { joinClause, whereClause, params } = buildDynamicSQL(request.query, []);
+    
+    let hours = parseFloat(request.query.aggregation); 
+    if (isNaN(hours) || hours <= 0) hours = 1;
+
+    params.push(`${hours} hours`);
+    const intervalParam = `$${params.length}`;
+
+    const query = `
+        SELECT 
+            date_bin(${intervalParam}::interval, na.publication_date, TIMESTAMP '2025-01-01') AS time_period,
+        COUNT(DISTINCT na.id) AS news_count
+            ${joinClause}
+            ${whereClause}
+        GROUP BY time_period
+        ORDER BY time_period ASC;
+    `;
+    console.log("Volume Chart SQL:\n", query, "Params:", params);
+    const { rows } = await sql.query(query, params);  
+    return rows;
+}
+
+
+async function getGaugeData(request) {
+    const { joinClause, whereClause, params } = buildDynamicSQL(request.query, []);
+
+    const isDynamic = !(request.query.startDate && request.query.endDate);
+    
+    let query;
+    if (isDynamic) {
+        let hours = parseFloat(request.query.aggregation);
+        if (isNaN(hours) || hours <= 0) hours = 1;
+        params.push(`${hours} hours`);
+        const intervalParam = `$${params.length}`;
+
+        query = `
+            SELECT AVG(a.grade) as average_grade
+            ${joinClause}
+            ${whereClause}
+            GROUP BY date_bin(${intervalParam}::interval, na.publication_date, TIMESTAMP '2025-01-01')
+            ORDER BY date_bin(${intervalParam}::interval, na.publication_date, TIMESTAMP '2025-01-01') DESC
+            LIMIT 1;
+        `;
+    } else {
+        query = `
+            SELECT AVG(a.grade) as average_grade
+            ${joinClause}
+            ${whereClause};
+        `;
+    }
+
+    const { rows } = await sql.query(query, params);
+    return rows;
+}
+
+
+async function getLineChartData(request) {
+    const { category, evaluator, aggregation } = request.query;
+
+    const categories = category ? (Array.isArray(category) ? category : [category]) : [];
+    const evaluators = evaluator ? (Array.isArray(evaluator) ? evaluator : [evaluator]) : [];
+
+    const catHasAll = categories.includes("include_all");
+    const isMultiEvaluator = evaluators.length > 1;
+
+    // Descobre quais dimensões PRECISAM estar no JOIN para o agrupamento (GROUP BY) funcionar
+    const requiredDimensions = [];
+    if (isMultiEvaluator) requiredDimensions.push('te_evaluator');
+    if (!isMultiEvaluator && !catHasAll && categories.length > 0) requiredDimensions.push('category');
+
+    const { joinClause, whereClause, params } = buildDynamicSQL(request.query, requiredDimensions);
+
+    let hours = parseFloat(aggregation);
+    if (isNaN(hours) || hours <= 0) hours = 1;
+    params.push(`${hours} hours`);
+    const intervalParam = `$${params.length}`;
+
+    let selectClause = "", groupClause = "", havingClause = "";
+
+    if (isMultiEvaluator) {
+        selectClause = ", te_evaluator.slug as series_label";
+        groupClause = ", te_evaluator.slug";
+    } else {
+        if (catHasAll) {
+            selectClause = ", COALESCE(c.slug, 'include_all') as series_label";
+            groupClause = ", ROLLUP(c.slug)";
+            const specificCats = categories.filter(cat => cat !== "include_all");
+            if (specificCats.length > 0) {
+                const dbCategories = specificCats.map(cat => CATEGORY_MAP[cat] || cat);
+                params.push(dbCategories);
+                havingClause = `HAVING c.slug IS NULL OR c.slug = ANY($${params.length})`;
+            } else {
+                havingClause = `HAVING c.slug IS NULL`;
+            }
+        } else {
+            selectClause = ", c.slug as series_label";
+            groupClause = ", c.slug";
+        }
+    }
+
+    const query = `
+        SELECT 
+        date_bin(${intervalParam}::interval, na.publication_date, TIMESTAMP '2025-01-01') AS time_period${selectClause},
+        AVG(a.grade) AS average_grade,
+        COUNT(DISTINCT na.id) AS news_count
+        ${joinClause}
+        ${whereClause}
+        GROUP BY time_period${groupClause}
+        ${havingClause}
+        ORDER BY time_period ASC;
+    `;
+    const { rows } = await sql.query(query, params);
+    return rows;
+}
+
+
+async function getNewsList(request) {
+    // Para listar as notícias, precisamos de todas as dimensões para exibir na tela
+    const { joinClause, whereClause, params } = buildDynamicSQL(request.query, ['category', 'source', 'language', 'te_evaluator', 'te_evaluated']);
+    
+    const { limit, offset, sort_by, sort_dir } = request.query;
+
+    const sortMap = {
+        "date": "na.publication_date",
+        "headline": "na.headline",
+        "source": "s.name",
+        "category": "c.slug",
+        "grade": "a.grade",
+        "analysis": "a.analysis_text"
+    };
+
+    let orderClause = "ORDER BY na.publication_date DESC, a.grade DESC";
+    if (sort_by && sortMap[sort_by]) {
+        const direction = (sort_dir && sort_dir.toUpperCase() === "ASC") ? "ASC" : "DESC";
+        orderClause = `ORDER BY ${sortMap[sort_by]} ${direction}`;
+    }
+
+    const countQuery = `SELECT COUNT(*) AS total_count ${joinClause} ${whereClause};`;
     const countResult = await sql.query(countQuery, params);
     const totalCount = parseInt(countResult.rows[0].total_count, 10);
 
-    // Ordering clause for standard fallback
-    let orderClause = "ORDER BY date DESC, grade DESC";
-    const allowedSortColumns = ["date", "headline", "source", "category", "grade", "analysis"];
-    if (sort_by && allowedSortColumns.includes(sort_by)) {
-        const direction = (sort_dir && sort_dir.toUpperCase() === "ASC") ? "ASC" : "DESC";
-        orderClause = `ORDER BY ${sort_by} ${direction}`;
-    }
-
-    // Retrieve the actual news records with limit and offset
     const limitVal = parseInt(limit, 10) || 50;
     const offsetVal = parseInt(offset, 10) || 0;
+    
     const query = `
         SELECT 
-            id,
-            date,
-            headline,
-            summary,
-            article_text,
-            url,
-            language,
-            source,
-            category,
-            grade,
-            analysis
-        FROM noticias
+            na.id, na.publication_date as date, na.headline, na.summary,
+            na.article_text, na.url, l.iso_code as language, s.name as source,
+            c.slug as category, a.grade, a.analysis_text as analysis,
+            te_evaluator.slug as evaluator_entity, te_evaluated.slug as evaluated_entity
+        ${joinClause}
         ${whereClause}
         ${orderClause}
-        LIMIT ${limitVal}
-        OFFSET ${offsetVal};
+        LIMIT ${limitVal} OFFSET ${offsetVal};
     `;
     const { rows } = await sql.query(query, params);
-    //console.log("News List Query:", query, params);
-    //console.log({ data: rows, total_count: totalCount });
 
     return { total_count: totalCount, data: rows };
 }
 
 
-// ROUTER
-export default async function handler(request, response) {
-  /* API route handler for all data requests from the frontend.
-     It parses the query parameters, determines which data to fetch based 
-     on the 'widget' parameter, and returns the data as JSON.
-  */
-
-  response.setHeader(
-    "Cache-Control",
-    "public, s-maxage=3600, stale-while-revalidate=86400"
-  );
-  
-  const { widget } = request.query;
-  /*
-  request.query e.g.
-  {
-    "widget": "gauge",
-    "period": "Last365d",
-    "evaluatorEntity": "Argentina",
-    "evaluatedEntity": "Brasil",
-    "category": [
-      "Meio ambiente",
-      "Conflito, guerra e paz"
-    ],
-    limit: undefined,
-    offset: undefined
-  }
-  */
-  try {
-    let data;
-
-    switch (widget) {
-      case "grade":
-        data = await getGradesChartData(request);
-        //console.log("Grades Data:", data);
-        break;
-      case "volume":
-        data = await getVolumeChartData(request);
-        break;
-      case "gauge":
-        data = await getGaugeData(request);
-        break;
-      case "details":
-        data = await getNewsList(request);
-        break;
-      case "line":
-      default:
-        data = await getLineChartData(request);
-        break;
-    }
-
-    return response.status(200).json(data);
-
-  } catch (error) {
-    console.error("API error:", error);
-    return response.status(500).json({ error: "Failed to retrieve data." });
-  }
+async function getRelationships() {
+    const query = `
+        SELECT e.slug as evaluator_slug, t.slug as evaluated_slug
+        FROM target_entities_relationships ter
+        JOIN target_entity e ON ter.evaluator_id = e.id
+        JOIN target_entity t ON ter.evaluated_id = t.id
+    `;
+    const { rows } = await sql.query(query);
+    
+    // Convert rows to a map: { evaluator_slug: [evaluated_slug1, ...] }
+    const relationshipMap = {};
+    rows.forEach(row => {
+        if (!relationshipMap[row.evaluator_slug]) {
+            relationshipMap[row.evaluator_slug] = [];
+        }
+        relationshipMap[row.evaluator_slug].push(row.evaluated_slug);
+    });
+    return relationshipMap;
 }
 
+
+export default async function handler(request, response) {
+  response.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+  
+  try {
+        let data;
+        switch (request.query.widget) {
+        case "grade":   data = await getGradesChartData(request); break;
+        case "volume":  data = await getVolumeChartData(request); break;
+        case "gauge":   data = await getGaugeData(request); break;
+        case "details": data = await getNewsList(request); break;
+        case "relationships": data = await getRelationships(); break;
+        case "line":
+        default:        data = await getLineChartData(request); break;
+        }
+        return response.status(200).json(data);
+    } catch (error) {
+        console.error("API error:", error);
+        return response.status(500).json({ error: "Failed to retrieve data." });
+    }
+}

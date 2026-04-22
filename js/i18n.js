@@ -102,40 +102,42 @@ export const DICTIONARY = {
             "year_2025": "2025",
             "year_2026": "2026",
             "dec2025_jan2026": "Dez de 2025 a Fev de 2026",
-            "Last30d": "Últimos 30 dias",
-            "Last120d": "Últimos 120 dias",
-            "Last180d": "Últimos 180 dias",
-            "Last365d": "Últimos 365 dias"
-        },
+            "last30d": "Últimos 30 dias",
+            "last120d": "Últimos 120 dias",
+            "last180d": "Últimos 180 dias",
+            "last365d": "Últimos 365 dias"
+            },
 
-        category_options: {
-            // "key": "label"
-            "Todas": "Todas",
-            "Artes, cultura, entretenimento e mídia": "Artes, cultura, entretenimento e mídia",
-            "Ciência e tecnologia": "Ciência e tecnologia",
-            "Conflito, guerra e paz": "Conflito, guerra e paz",
-            "Crime, lei e justiça": "Crime, lei e justiça",
-            "Desastres, acidentes e emergências": "Desastres, acidentes e emergências",
-            "Economia, negócios e finanças": "Economia, negócios e finanças",
-            "Educação": "Educação",
-            "Esporte": "Esporte",
-            "Estilo de vida e lazer": "Estilo de vida e lazer",
-            "Interesse humano": "Interesse humano",
-            "Meio ambiente": "Meio ambiente",
-            "Meteorologia": "Meteorologia",
-            "Política": "Política",
-            "Religião e crenças": "Religião e crenças",
-            "Saúde": "Saúde",
-            "Sociedade": "Sociedade",
-            "Trabalho": "Trabalho"
+            category_options: {
+            "include_all": "Todas",
+            "artes_cultura_entretenimento_midia": "Artes, cultura, entretenimento e mídia",
+            "ciencia_tecnologia": "Ciência e tecnologia",
+            "conflito_guerra_paz": "Conflito, guerra e paz",
+            "crime_lei_justica": "Crime, lei e justiça",
+            "desastres_acidentes_emergencias": "Desastres, acidentes e emergências",
+            "economia_negocios_financas": "Economia, negócios e finanças",
+            "educacao": "Educação",
+            "esporte": "Esporte",
+            "estilo_vida_lazer": "Estilo de vida e lazer",
+            "interesse_humano": "Interesse humano",
+            "meio_ambiente": "Meio ambiente",
+            "meteorologia": "Meteorologia",
+            "nao_informado": "Não informado",
+            "politica": "Política",
+            "religiao_crencas": "Religião e crenças",
+            "saude": "Saúde",
+            "sociedade": "Sociedade",
+            "trabalho": "Trabalho"
         },
 
         entity_options: {
-            // "key": "label"
-            "EUA": "Estados Unidos",
-            "Argentina": "Argentina",
-            "Brasil": "Brasil",
-            "Presidente Trump": "Presidente Trump"
+            "argentina": "Argentina",
+            "brasil": "Brasil",
+            "eua": "Estados Unidos (Geral)",
+            "eua_democratas": "EUA (Democratas)",
+            "eua_independentes": "EUA (Independentes)",
+            "eua_republicanos": "EUA (Republicanos)",
+            "presidente_trump": "Presidente Trump"
         },
 
         political_options: {
@@ -153,6 +155,7 @@ export const DICTIONARY = {
         btn_choose_columns: "Escolha as colunas visíveis",
         label_show: "Exibir:",
         label_news_count: "notícias",
+        placeholder_search: "Procurar...",
         col_date: "Data",
         col_headline: "Manchete",
         col_summary: "Resumo",
@@ -268,40 +271,42 @@ export const DICTIONARY = {
             "year_2025": "2025",
             "year_2026": "2026",
             "dec2025_jan2026": "Dec 2025 to Feb 2026",
-            "Last30d": "Last 30 days",
-            "Last120d": "Last 120 days",
-            "Last180d": "Last 180 days",
-            "Last365d": "Last 365 days"
+            "last30d": "Last 30 days",
+            "last120d": "Last 120 days",
+            "last180d": "Last 180 days",
+            "last365d": "Last 365 days"
         },
         
         category_options: {
-            // "key": "label"
-            "Todas": "All",
-            "Artes, cultura, entretenimento e mídia": "Arts, culture, entertainment and media",
-            "Ciência e tecnologia": "Science and technology",
-            "Conflito, guerra e paz": "Conflict, war and peace",
-            "Crime, lei e justiça": "Crime, law and justice",
-            "Desastres, acidentes e emergências": "Disaster, accident and emergency incident",
-            "Economia, negócios e finanças": "Economy, business and finance",
-            "Educação": "Education",
-            "Esporte": "Sport",
-            "Estilo de vida e lazer": "Lifestyle and leisure",
-            "Interesse humano": "Human interest",
-            "Meio ambiente": "Environment",
-            "Meteorologia": "Weather",
-            "Política": "Politics",
-            "Religião e crenças": "Religion and belief",
-            "Saúde": "Health",
-            "Sociedade": "Society",
-            "Trabalho": "Labour"
+            "include_all": "All",
+            "artes_cultura_entretenimento_midia": "Arts, culture, entertainment and media",
+            "ciencia_tecnologia": "Science and technology",
+            "conflito_guerra_paz": "Conflict, war and peace",
+            "crime_lei_justica": "Crime, law and justice",
+            "desastres_acidentes_emergencias": "Disaster, accident and emergency incident",
+            "economia_negocios_financas": "Economy, business and finance",
+            "educacao": "Education",
+            "esporte": "Sport",
+            "estilo_vida_lazer": "Lifestyle and leisure",
+            "interesse_humano": "Human interest",
+            "meio_ambiente": "Environment",
+            "meteorologia": "Weather",
+            "nao_informado": "Not informed",
+            "politica": "Politics",
+            "religiao_crencas": "Religion and belief",
+            "saude": "Health",
+            "sociedade": "Society",
+            "trabalho": "Labour"
         },
 
         entity_options: {
-            // "key": "label"
-            "EUA": "United States",
-            "Argentina": "Argentina",
-            "Brasil": "Brazil",
-            "Presidente Trump": "President Trump"
+            "argentina": "Argentina",
+            "brasil": "Brazil",
+            "eua": "United States (General)",
+            "eua_democratas": "USA (Democrats)",
+            "eua_independentes": "USA (Independents)",
+            "eua_republicanos": "USA (Republicans)",
+            "presidente_trump": "President Trump"
         },
 
         political_options: {
@@ -437,40 +442,42 @@ export const DICTIONARY = {
             "year_2025": "2025",
             "year_2026": "2026",
             "dec2025_jan2026": "Dic 2025 a Feb 2026",
-            "Last30d": "Últimos 30 días",
-            "Last120d": "Últimos 120 días",
-            "Last180d": "Últimos 180 días",
-            "Last365d": "Últimos 365 días"
-        },
-        
-        category_options: {
-            // "key": "label"
-            "Todas": "Todas",
-            "Artes, cultura, entretenimento e mídia": "Artes, cultura, entretenimiento y medios",
-            "Ciência e tecnologia": "Ciencia y tecnología",
-            "Conflito, guerra e paz": "Conflicto, guerra y paz",
-            "Crime, lei e justiça": "Crimen, ley y justicia",
-            "Desastres, acidentes e emergências": "Desastres, accidentes y emergencias",
-            "Economia, negócios e finanças": "Economía, negocios y finanzas",
-            "Educação": "Educación",
-            "Esporte": "Deporte",
-            "Estilo de vida e lazer": "Estilo de vida y tiempo libre",
-            "Interesse humano": "Interés humano",
-            "Meio ambiente": "Medio ambiente",
-            "Meteorologia": "Meteorología",
-            "Política": "Política",
-            "Religião e crenças": "Religión y creencias",
-            "Saúde": "Salud",
-            "Sociedade": "Sociedad",
-            "Trabalho": "Trabajo"
+            "last30d": "Últimos 30 dias",
+            "last120d": "Últimos 120 dias",
+            "last180d": "Últimos 180 dias",
+            "last365d": "Últimos 365 dias"
+            },
+
+            category_options: {
+            "include_all": "Todas",
+            "artes_cultura_entretenimento_midia": "Artes, cultura, entretenimiento y medios",
+            "ciencia_tecnologia": "Ciencia y tecnología",
+            "conflito_guerra_paz": "Conflicto, guerra y paz",
+            "crime_lei_justica": "Crimen, ley y justicia",
+            "desastres_acidentes_emergencias": "Desastres, accidentes y emergencias",
+            "economia_negocios_financas": "Economía, negocios y finanzas",
+            "educacao": "Educación",
+            "esporte": "Deporte",
+            "estilo_vida_lazer": "Estilo de vida y tiempo libre",
+            "interesse_humano": "Interés humano",
+            "meio_ambiente": "Medio ambiente",
+            "meteorologia": "Meteorología",
+            "nao_informado": "No informado",
+            "politica": "Política",
+            "religiao_crencas": "Religión y creencias",
+            "saude": "Salud",
+            "sociedade": "Sociedad",
+            "trabalho": "Trabajo"
         },
 
         entity_options: {
-            // "key": "label"
-            "EUA": "Estados Unidos",
-            "Argentina": "Argentina",
-            "Brasil": "Brasil",
-            "Presidente Trump": "Presidente Trump"
+            "argentina": "Argentina",
+            "brasil": "Brasil",
+            "eua": "Estados Unidos (General)",
+            "eua_democratas": "EE.UU. (Demócratas)",
+            "eua_independentes": "EE.UU. (Independientes)",
+            "eua_republicanos": "EE.UU. (Republicanos)",
+            "presidente_trump": "Presidente Trump"
         },
 
         political_options: {
@@ -488,6 +495,7 @@ export const DICTIONARY = {
         btn_choose_columns: "Elija las columnas visibles",
         label_show: "Mostrar:",
         label_news_count: "noticias",
+        placeholder_search: "Buscar...",
         col_date: "Fecha",
         col_headline: "Titular",
         col_summary: "Resumen",
@@ -501,3 +509,4 @@ export const DICTIONARY = {
         table_link_view: "Ver",
     }
 };
+;

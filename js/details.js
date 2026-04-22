@@ -1,6 +1,5 @@
-const API_ENDPOINT = "/api/data";
 import { DICTIONARY } from "./i18n.js";
-import { fetchDetailsData } from "./api_adapter.js";
+import { fetchDetailsData, fetchRelationships } from "./api_adapter.js";
 
 // Global state variables
 let CURRENT_LANG = "pt-BR";
@@ -13,7 +12,7 @@ let currentSortColumn = "date";
 let currentSortDirection = "asc";
 
 let appState = {
-    category: [],
+    category: ["include_all"],
     startDate: "",
     endDate: "",
     evaluatorEntity: [],
@@ -62,19 +61,7 @@ let visibleColumns = {
     url: true
 };
 
-// testando
-// const RELATIONSHIPS = {
-//     "EUA": ["Presidente Trump", "Brasil", "Argentina"],
-//     "Argentina": ["Brasil", "EUA"],
-//     "Brasil": ["Argentina", "EUA"],
-//     "Presidente Trump": []
-// }
-
-const RELATIONSHIPS = {
-    // Evaluator: [Evaluated]
-    "Argentina": ["Brasil"],
-    "EUA": ["Presidente Trump"]
-};
+let RELATIONSHIPS = {};
 
 
 function t(key) {
@@ -104,23 +91,9 @@ function initLanguageSelector() {
             ]
         });
 
-        // Hover for desktop devices (ignoring touch devices)
-        if (window.matchMedia("(hover: hover)").matches) {
-            const langWrapper = document.querySelector(".lang-dropdown-wrapper");
-            const choicesEl = choicesLanguage.containerOuter.element;
-            if (langWrapper && choicesEl) {
-                let langTimeout;
-                const openLang = () => { 
-                    clearTimeout(langTimeout); 
-                    choicesLanguage.showDropdown(); 
-                };
-                const closeLang = () => { 
-                    langTimeout = setTimeout(() => choicesLanguage.hideDropdown(), 300); 
-                };
-
-                langWrapper.addEventListener("mouseenter", openLang);
-                langWrapper.addEventListener("mouseleave", closeLang);
-            }
+        const langWrapper = document.querySelector(".lang-dropdown-wrapper");
+        if (langWrapper) {
+            enableHoverToChoices(choicesLanguage, langWrapper);
         }
 
         document.getElementById("language-select").addEventListener("change", (e) => {
@@ -149,6 +122,56 @@ function initLanguageSelector() {
 }
 
 
+/**
+ * Helper to enable hover behavior on Choices instances
+ * @param {Choices} choicesInstance 
+ * @param {HTMLElement} wrapperElement 
+ */
+function enableHoverToChoices(choicesInstance, wrapperElement) {
+    if (!choicesInstance || !wrapperElement || !window.matchMedia("(hover: hover)").matches) return;
+
+    let timeout;
+    const open = () => {
+        clearTimeout(timeout);
+        choicesInstance.showDropdown();
+    };
+    const close = () => {
+        timeout = setTimeout(() => {
+            choicesInstance.hideDropdown();
+        }, 300);
+    };
+
+    wrapperElement.addEventListener("mouseenter", open);
+    wrapperElement.addEventListener("mouseleave", close);
+}
+
+/**
+ * Helper to enable hover behavior on generic .dropdown elements
+ * @param {HTMLElement} dropdownElement 
+ */
+function enableHoverToGenericDropdown(dropdownElement) {
+    if (!dropdownElement || !window.matchMedia("(hover: hover)").matches) return;
+
+    let timeout;
+    const open = () => {
+        clearTimeout(timeout);
+        // Close other open dropdowns first to avoid overlaps
+        document.querySelectorAll(".dropdown.is-open").forEach(d => {
+            if (d !== dropdownElement) d.classList.remove("is-open");
+        });
+        dropdownElement.classList.add("is-open");
+    };
+    const close = () => {
+        timeout = setTimeout(() => {
+            dropdownElement.classList.remove("is-open");
+        }, 300);
+    };
+
+    dropdownElement.addEventListener("mouseenter", open);
+    dropdownElement.addEventListener("mouseleave", close);
+}
+
+
 function translateUI() {
     /* Translate all text elements with data-i18n attribute and also handles image 
     translations for elements with the data-i18n-img attribute. */
@@ -173,6 +196,15 @@ function translateUI() {
     searchInputs.forEach(input => {
         input.placeholder = t("placeholder_search");
     });
+
+    const mobileFilterBtn = document.getElementById("mobile-filter-toggle");
+    const mobileFilterText = document.getElementById("mobile-filter-text");
+    const filtersWrapper = document.getElementById("filters-wrapper");
+
+    if (mobileFilterBtn && filtersWrapper && mobileFilterText) {
+        const isOpen = filtersWrapper.classList.contains("open");
+        mobileFilterText.textContent = isOpen ? t("btn_hide_filters") : t("btn_show_filters");
+    }
 
     const startInput = document.getElementById("start-date");
     if (startInput) {
@@ -227,11 +259,21 @@ function checkApplyButtonState() {
 }
 
 
-function initializeFilters(urlParams) {
+async function initializeFilters(urlParams) {
     /* Initializes the filter UI components (categories, evaluator, evaluated, date range) based 
     on the current URL parameters and sets up event listeners to handle user interactions. */
+    
+    // Fetch dynamic relationships from DB
+    try {
+        RELATIONSHIPS = await fetchRelationships();
+    } catch (err) {
+        console.error("Error fetching relationships:", err);
+    }
+
     // Categories
     appState.category = urlParams.getAll("category").sort() || [];
+    if (appState.category.length === 0) appState.category = ["include_all"];
+    
     appState.startDate = urlParams.get("startDate") || "";
     appState.endDate = urlParams.get("endDate") || "";
     appState.evaluatorEntity = urlParams.getAll("evaluatorEntity").sort() || [];
@@ -252,7 +294,7 @@ function initializeFilters(urlParams) {
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.value = cat;
-            checkbox.checked = pendingState.category.includes(cat) || pendingState.category.length === 0;
+            checkbox.checked = pendingState.category.includes(cat);
             
             checkbox.addEventListener("change", (e) => {
                 if (e.target.checked) {
@@ -262,17 +304,20 @@ function initializeFilters(urlParams) {
                 } else { /* unchecked */
                     pendingState.category = pendingState.category.filter(c => c !== cat);
                 }
+                enforceMultiSelectConstraints("category");
                 checkApplyButtonState();
+                renderCategorySummary();
             });
             
             label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(" " + t(cat)));
+            label.appendChild(document.createTextNode(" " + tCategory(cat)));
             catContent.appendChild(label);
         });
     }
 
     setupEntityDropdown("evaluatorEntity");
     setupEntityDropdown("evaluatedEntity");
+    renderCategorySummary();
 
     function setupEntityDropdown(type) {
         const containerId = type === "evaluatorEntity" ? "evaluator-selector" : "evaluated-selector";
@@ -280,9 +325,12 @@ function initializeFilters(urlParams) {
         if (!container) return;
 
         // Estrutura interna com campo de busca fixo e lista rolável
+        const pText = t("placeholder_search");
+        const fPlaceholder = (pText === "placeholder_search") ? "Procurar..." : pText;
+
         container.innerHTML = `
             <div class="dropdown-search-wrapper">
-                <input type="text" class="dropdown-search" placeholder="Buscar...">
+                <input type="text" class="dropdown-search" placeholder="${fPlaceholder}">
             </div>
             <div class="options-list"></div>
         `;
@@ -388,7 +436,11 @@ function initializeFilters(urlParams) {
             
             currentUrl.searchParams.delete("evaluatorEntity");
             appState.evaluatorEntity.forEach(e => currentUrl.searchParams.append("evaluatorEntity", e));
-            if (appState.evaluatorEntity.includes("EUA")) currentUrl.searchParams.delete("politicalAlignment");
+            
+            // Standardize: if EUA is not selected, remove politicalAlignment
+            if (!appState.evaluatorEntity.includes("eua")) {
+                currentUrl.searchParams.delete("politicalAlignment");
+            }
 
             currentUrl.searchParams.delete("evaluatedEntity");
             appState.evaluatedEntity.forEach(e => currentUrl.searchParams.append("evaluatedEntity", e));
@@ -411,6 +463,52 @@ function initializeFilters(urlParams) {
             updateFilterSummary(currentUrl.searchParams);
             fetchData(currentUrl.searchParams);
         });
+    }
+}
+
+function enforceMultiSelectConstraints(changedKey) {
+    const keys = ["evaluatorEntity", "evaluatedEntity", "category"];
+    const changedVal = pendingState[changedKey];
+
+    if (Array.isArray(changedVal) && changedVal.length > 1) {
+        keys.forEach(k => {
+            if (k !== changedKey) {
+                const otherVal = pendingState[k];
+                if (Array.isArray(otherVal) && (otherVal.length > 1 || otherVal.length === 0)) {
+                    // Force to 1 selection if it had more, or keep empty/1
+                    const first = otherVal.length > 0 ? [otherVal[0]] : (k === "category" ? ["include_all"] : []);
+                    pendingState[k] = first;
+                }
+            }
+        });
+        // Sync UI
+        syncCheckboxesUI();
+        updateAllEntityOptions();
+    }
+}
+
+function syncCheckboxesUI() {
+    // Update Category checkboxes
+    const catContent = document.getElementById("category-selector");
+    if (catContent) {
+        const checkboxes = catContent.querySelectorAll("input[type='checkbox']");
+        checkboxes.forEach(cb => {
+            cb.checked = pendingState.category.includes(cb.value);
+        });
+        renderCategorySummary();
+    }
+}
+
+function renderCategorySummary() {
+    const summaryEl = document.getElementById("category-summary");
+    if (!summaryEl) return;
+    
+    if (pendingState.category.includes("include_all") || pendingState.category.length === 0) {
+        summaryEl.textContent = tCategory("include_all");
+    } else if (pendingState.category.length === 1) {
+        summaryEl.textContent = tCategory(pendingState.category[0]);
+    } else {
+        summaryEl.textContent = `${pendingState.category.length} selecionadas`;
     }
 }
 
@@ -507,6 +605,7 @@ function updateEntityOptions(type, searchTerm, optionsList) {
                 const idx = selectedOptions.indexOf(opt);
                 if (idx > -1) selectedOptions.splice(idx, 1);
             }
+            enforceMultiSelectConstraints(type);
             checkApplyButtonState();
             updateAllEntityOptions(); // Forces revaluation of restrictions in the opposite list
         });
@@ -642,16 +741,14 @@ function updateFilterSummary(urlParams) {
                 month: '2-digit',
                 year: '2-digit',
                 hour: '2-digit',
-                minute: '2-digit',
-                timeZone: "UTC" 
+                minute: '2-digit'
             });
             const endStr = endDateObj.toLocaleDateString(CURRENT_LANG, { 
                 day: '2-digit',
                 month: '2-digit',
                 year: '2-digit',
                 hour: '2-digit',
-                minute: '2-digit',
-                timeZone: "UTC" 
+                minute: '2-digit'
             });
             dateFormatted = `${startStr} - ${endStr}`;
         }
@@ -666,12 +763,11 @@ function updateFilterSummary(urlParams) {
     const filterSummary = document.getElementById("filter-summary");
     if (!filterSummary) return;
 
-    const translateEntity = (val) => DICTIONARY[CURRENT_LANG].entity_options?.[val] || val;
     const evaluatorEntities = urlParams.getAll("evaluatorEntity");
-    const evaluatorEntitiesStr = evaluatorEntities.length > 0 ? evaluatorEntities.map(translateEntity).join(", ") : t("not_specified");
+    const evaluatorEntitiesStr = evaluatorEntities.length > 0 ? evaluatorEntities.map(tEntity).join(", ") : t("not_specified");
 
     const evaluatedEntities = urlParams.getAll("evaluatedEntity");
-    const evaluatedEntitiesStr = evaluatedEntities.length > 0 ? evaluatedEntities.map(translateEntity).join(", ") : t("not_specified");
+    const evaluatedEntitiesStr = evaluatedEntities.length > 0 ? evaluatedEntities.map(tEntity).join(", ") : t("not_specified");
     
     filterSummary.textContent = `${t("evaluatorEntity")}: ${evaluatorEntitiesStr} | ${t("evaluatedEntity")}: ${evaluatedEntitiesStr}`;
 }
@@ -721,8 +817,8 @@ async function fetchData(urlParams) {
         aggregation: urlParams.get("aggregation"),
         sort_by: currentSortColumn,
         sort_dir: currentSortDirection,
-        evaluatorEntity: urlParams.getAll("evaluatorEntity"),
-        evaluatedEntity: urlParams.getAll("evaluatedEntity"),
+        evaluator: urlParams.getAll("evaluatorEntity"),
+        evaluated: urlParams.getAll("evaluatedEntity"),
         category: urlParams.getAll("category"),
         politicalAlignment: urlParams.getAll("politicalAlignment"),
     };
@@ -746,8 +842,14 @@ async function fetchData(urlParams) {
 }
 
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     initLanguageSelector();
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Initialize filters first so search inputs exist before translateUI
+    await initializeFilters(urlParams);
+    
     translateUI();
     initPaginationSelectors();
 
@@ -755,29 +857,24 @@ document.addEventListener("DOMContentLoaded", () => {
         lucide.createIcons();
     };
 
-    const urlParams = new URLSearchParams(window.location.search);
-    
     updateFilterSummary(urlParams);
     renderColumnSelector();
-    initializeFilters(urlParams); 
     fetchData(urlParams);
 
-    const mobilefilterBtn = document.getElementById("mobile-filter-toggle");
-    const filterWrapper = document.getElementById("filters-wrapper");
+    // Filter controls and mobile toggle
+    const mobileFilterBtn = document.getElementById("mobile-filter-toggle");
+    const filtersWrapper = document.getElementById("filters-wrapper");
     const mobileFilterText = document.getElementById("mobile-filter-text");
-    
-    if (mobilefilterBtn && filterWrapper && mobileFilterText) {
-        mobilefilterBtn.addEventListener("click", () => {
-            const isOpen = filterWrapper.classList.toggle("open");
-            mobilefilterBtn.classList.toggle("expanded");
 
-            if (isOpen) {
-                mobileFilterText.setAttribute("data-i18n", "btn_hide_filters");
-                mobileFilterText.textContent = t("btn_hide_filters") || "Ocultar filtros";
-            } else {
-                mobileFilterText.setAttribute("data-i18n", "btn_show_filters");
-                mobileFilterText.textContent = t("btn_show_filters") || "Mostrar filtros";
+    if (mobileFilterBtn && filtersWrapper) {
+        mobileFilterBtn.addEventListener("click", () => {
+            const isOpen = filtersWrapper.classList.toggle("open");
+            mobileFilterBtn.classList.toggle("expanded");
+            
+            if (mobileFilterText) {
+                mobileFilterText.textContent = isOpen ? t("btn_hide_filters") : t("btn_show_filters");
             }
+            if (typeof lucide !== "undefined") lucide.createIcons();
         });
     }
 
@@ -788,21 +885,38 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Apply hover to all generic dropdowns
+    document.querySelectorAll(".dropdown").forEach(enableHoverToGenericDropdown);
+
     // Global click-dropdown handler
     document.addEventListener("click", (e) => {
-        const btn = e.target.closest(".btn-outline");                       // clicked element is dropdown trigger button
+        const btn = e.target.closest(".btn-outline");
         if (btn && btn.parentElement.classList.contains("dropdown")) {
             const dropdown = btn.parentElement;
-            document.querySelectorAll(".dropdown.is-open").forEach(d => {   // Close other open dropdowns
+            document.querySelectorAll(".dropdown.is-open").forEach(d => {
                 if (d !== dropdown) d.classList.remove("is-open");
             });
-            dropdown.classList.toggle("is-open");                           // Toggle the 'is-open' class on the clicked dropdown
+            dropdown.classList.toggle("is-open");
         } else if (!e.target.closest(".dropdown-content")) {
             document.querySelectorAll(".dropdown.is-open").forEach(d => d.classList.remove("is-open"));
         }
     });
+
+    const brandHeader = document.querySelector(".brand-header");
+    const detailsSubheader = document.querySelector(".details-subheader");
+
     // Close buttons if scroll
     window.addEventListener("scroll", () => {
+        const scrollY = window.scrollY;
+
+        if (scrollY > 50) {
+            if (brandHeader) brandHeader.classList.add("compact");
+            if (detailsSubheader) detailsSubheader.classList.add("compact");
+        } else {
+            if (brandHeader) brandHeader.classList.remove("compact");
+            if (detailsSubheader) detailsSubheader.classList.remove("compact");
+        }
+
         document.querySelectorAll(".dropdown.is-open").forEach(d => {
             d.classList.remove("is-open");
         });

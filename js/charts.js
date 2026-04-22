@@ -352,6 +352,7 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
                     pan: { enabled: true, mode: "x" },
                     zoom: {
                         wheel: { enabled: true },
+                        pinch: { enabled: true },
                         drag: { enabled: true },
                         mode: "x"
                     }

@@ -1,4 +1,4 @@
-import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData } from "./api_adapter.js";
+import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships } from "./api_adapter.js";
 import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, clearLineChartSelection } from "./charts.js";
 import { DICTIONARY } from "./i18n.js";
 
@@ -10,10 +10,9 @@ const DEFAULT_CONFIG = {
     period: "year_2025",
     customStartDate: "2025-01-01",
     customEndDate: "2025-06-30",
-    evaluatorEntity: ["Argentina"],
-    evaluatedEntity: ["Brasil"],
-    category: ["Todas"],
-    politicalAlignment: null,
+    evaluatorEntity: ["argentina"],
+    evaluatedEntity: ["brasil"],
+    category: ["include_all"],
     aggregation: 1
 };
 let appState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -34,23 +33,19 @@ const PERIODS_CONFIG = {
         { value: "dec2025_jan2026", start: "2025-12-01", end: "2026-02-10" }
     ],
     dynamic: [
-        { value: "Last30d" },
-        { value: "Last120d" },
-        { value: "Last180d" },
-        { value: "Last365d" }
+        { value: "last30d" },
+        { value: "last120d" },
+        { value: "last180d" },
+        { value: "last365d" }
     ]
 };
 
 const CATEGORIESLIST = Object.keys(DICTIONARY["pt-BR"].category_options);
 
-const RELATIONSHIPS = {
-    // Evaluator: [Evaluated]
-    "Argentina": ["Brasil"],
-    "EUA": ["Presidente Trump"]
-};
+let RELATIONSHIPS = {};
 
 // References for Choices instances
-let choicesPeriod, choicesCategory, choicesEvaluatorEntity, choicesEvaluatedEntity, choicesPolitical, choicesLanguage;
+let choicesPeriod, choicesCategory, choicesEvaluatorEntity, choicesEvaluatedEntity, choicesLanguage;
 let currentClickedDate = null;
 let pollingInterval = null;
 
@@ -65,9 +60,6 @@ function tPeriod(val) {
 }
 function tCategory(val) {
     return DICTIONARY[CURRENT_LANG].category_options[val] || val;
-}
-function tPolitical(val) {
-    return DICTIONARY[CURRENT_LANG].political_options[val] || val;
 }
 
 function translateUI() {
@@ -111,7 +103,6 @@ function translateUI() {
     // filters
     updateChoicesLabels(choicesEvaluatorEntity, tEntity);
     updateChoicesLabels(choicesEvaluatedEntity, tEntity);
-    updateChoicesLabels(choicesPolitical, tPolitical);
     updateChoicesLabels(choicesCategory, tCategory);
     updatePeriodDropdown(pendingState.isDynamic);
 
@@ -136,35 +127,52 @@ function updateChoicesLabels(choiceInstance, translatorFunc) {
 
 async function fetchOptionsFromDB(targetType, filterValue) {
     return new Promise(resolve => {
-        setTimeout(() => {
-            let options = [];
-            if (targetType === "evaluated") {
-                if (!filterValue || filterValue.length === 0) {
-                    options = [...new Set(Object.values(RELATIONSHIPS).flat())];
-                } else {
-                    const allowed = new Set();
-                    filterValue.forEach(rev => {
-                        if (RELATIONSHIPS[rev]) RELATIONSHIPS[rev].forEach(item => allowed.add(item));
-                    });
-                    options = [...allowed];
-                }
-            } else if (targetType === "evaluator") {
-                if (!filterValue || filterValue.length === 0) {
-                    options = Object.keys(RELATIONSHIPS);
-                } else {
-                    const evaluators = [];
-                    Object.keys(RELATIONSHIPS).forEach(rev => {
-                        const targets = RELATIONSHIPS[rev];
-                        if (filterValue.some(val => targets.includes(val))) {
-                            evaluators.push(rev);
-                        }
-                    });
-                    options = evaluators;
-                }
+        const allEvaluators = Object.keys(RELATIONSHIPS);
+        const allEvaluated = [...new Set(Object.values(RELATIONSHIPS).flat())];
+
+        let options = [];
+        if (targetType === "evaluated") {
+            const validSet = new Set();
+            if (!filterValue || filterValue.length === 0) {
+                allEvaluated.forEach(e => validSet.add(e));
+            } else {
+                filterValue.forEach(rev => {
+                    if (RELATIONSHIPS[rev]) RELATIONSHIPS[rev].forEach(item => validSet.add(item));
+                });
             }
             
-            resolve(options.map(label => ({ value: label, label: tEntity(label) })));
-        }, 50); 
+            options = allEvaluated.map(opt => ({
+                value: opt,
+                label: tEntity(opt),
+                disabled: !validSet.has(opt)
+            }));
+        } else if (targetType === "evaluator") {
+            const validSet = new Set();
+            if (!filterValue || filterValue.length === 0) {
+                allEvaluators.forEach(e => validSet.add(e));
+            } else {
+                allEvaluators.forEach(rev => {
+                    const targets = RELATIONSHIPS[rev];
+                    if (filterValue.some(val => targets.includes(val))) {
+                        validSet.add(rev);
+                    }
+                });
+            }
+            
+            options = allEvaluators.map(opt => ({
+                value: opt,
+                label: tEntity(opt),
+                disabled: !validSet.has(opt)
+            }));
+        }
+
+        // Sort: valid first, then alphabetically
+        options.sort((a, b) => {
+            if (a.disabled !== b.disabled) return a.disabled ? 1 : -1;
+            return a.label.localeCompare(b.label);
+        });
+
+        resolve(options);
     });
 }
 
@@ -182,22 +190,9 @@ function initLanguageSelector() {
             ]
         });
 
-        if (window.matchMedia("(hover: hover)").matches) {
-            const langWrapper = document.querySelector(".lang-dropdown-wrapper");
-            const choicesEl = choicesLanguage.containerOuter.element;
-            if (langWrapper && choicesEl) {
-                let langTimeout;
-                const openLang = () => { 
-                    clearTimeout(langTimeout); 
-                    choicesLanguage.showDropdown(); 
-                };
-                const closeLang = () => { 
-                    langTimeout = setTimeout(() => choicesLanguage.hideDropdown(), 300); 
-                };
-
-                langWrapper.addEventListener("mouseenter", openLang);
-                langWrapper.addEventListener("mouseleave", closeLang);
-            }
+        const langWrapper = document.querySelector(".lang-dropdown-wrapper");
+        if (langWrapper) {
+            enableHoverToChoices(choicesLanguage, langWrapper);
         }
 
         const langSelect = document.getElementById("language-select");
@@ -227,6 +222,7 @@ async function initializeFilters() {
         removeItemButton: true, 
         searchEnabled: true, 
         placeholderValue: "Selecione...", 
+        searchPlaceholderValue: t("placeholder_search") || "Procurar...",
         itemSelectText: "", 
         shouldSort: true, 
         editItems: false, 
@@ -242,6 +238,13 @@ async function initializeFilters() {
         position: "bottom" 
     };
 
+    // Fetch dynamic relationships from DB
+    try {
+        RELATIONSHIPS = await fetchRelationships();
+    } catch (err) {
+        console.error("Error fetching relationships:", err);
+    }
+
     if (typeof Choices !== "undefined") {
         const evalEl = document.getElementById("evaluatorEntity");
         if (evalEl) {
@@ -249,27 +252,23 @@ async function initializeFilters() {
             const initialEvaluatorEntities = await fetchOptionsFromDB("evaluator", []); 
             choicesEvaluatorEntity.setChoices(initialEvaluatorEntities, "value", "label", true);
             choicesEvaluatorEntity.setChoiceByValue(appState.evaluatorEntity);
+            enableHoverToChoices(choicesEvaluatorEntity, evalEl.closest(".filter-group"));
         }
         
-        const polEl = document.getElementById("politicalAlignment");
-        if (polEl) {
-            choicesPolitical = new Choices(polEl, multiOpts);
-            const polList = ["Democratas", "Republicanos", "Independentes"];
-            choicesPolitical.setChoices(polList.map(p => ({ value: p, label: p, selected: p === "Independentes" })), "value", "label", true);
-        }
-
         const evaluatedEl = document.getElementById("evaluatedEntity");
         if (evaluatedEl) {
             choicesEvaluatedEntity = new Choices(evaluatedEl, multiOpts);
             const initialEvaluated = await fetchOptionsFromDB("evaluated", appState.evaluatorEntity);
             choicesEvaluatedEntity.setChoices(initialEvaluated, "value", "label", true);
             choicesEvaluatedEntity.setChoiceByValue(appState.evaluatedEntity);
+            enableHoverToChoices(choicesEvaluatedEntity, evaluatedEl.closest(".filter-group"));
         }
 
         const periodEl = document.getElementById("period");
         if (periodEl) {
             choicesPeriod = new Choices(periodEl, singleOpts);
             updatePeriodDropdown(appState.isDynamic);
+            enableHoverToChoices(choicesPeriod, periodEl.closest(".filter-group"));
         }
 
         const aggregationInput = document.getElementById("aggregation");
@@ -280,7 +279,8 @@ async function initializeFilters() {
         const catEl = document.getElementById("category");
         if (catEl) {
             choicesCategory = new Choices(catEl, multiOpts);
-            choicesCategory.setChoices(CATEGORIESLIST.map(c => ({ value: c, label: c, selected: c === "Todas" })), "value", "label", true);
+            choicesCategory.setChoices(CATEGORIESLIST.map(c => ({ value: c, label: c, selected: c === "include_all" })), "value", "label", true);
+            enableHoverToChoices(choicesCategory, catEl.closest(".filter-group"));
         }
 
         setupFilterListeners();
@@ -288,7 +288,6 @@ async function initializeFilters() {
     
     translateUI();
     updateToggleVisual(pendingState.isDynamic);
-    checkEvaluatorContext(appState.evaluatorEntity);
     checkApplyButtonState();
     
     const langWrapper = document.querySelector(".lang-dropdown-wrapper");
@@ -299,6 +298,29 @@ async function initializeFilters() {
             }
         });
     }
+}
+
+/**
+ * Helper to enable hover behavior on Choices instances
+ * @param {Choices} choicesInstance 
+ * @param {HTMLElement} wrapperElement 
+ */
+function enableHoverToChoices(choicesInstance, wrapperElement) {
+    if (!choicesInstance || !wrapperElement || !window.matchMedia("(hover: hover)").matches) return;
+
+    let timeout;
+    const open = () => {
+        clearTimeout(timeout);
+        choicesInstance.showDropdown();
+    };
+    const close = () => {
+        timeout = setTimeout(() => {
+            choicesInstance.hideDropdown();
+        }, 300);
+    };
+
+    wrapperElement.addEventListener("mouseenter", open);
+    wrapperElement.addEventListener("mouseleave", close);
 }
 
 function setupFilterListeners() {
@@ -327,13 +349,15 @@ function setupFilterListeners() {
     if (evaluatorEntitySelect) {
         evaluatorEntitySelect.addEventListener("change", async () => {
             onFilterChange("evaluatorEntity", choicesEvaluatorEntity, true);
-            checkEvaluatorContext(pendingState.evaluatorEntity);
             
             const newOptions = await fetchOptionsFromDB("evaluated", pendingState.evaluatorEntity);
             const currentSelected = choicesEvaluatedEntity.getValue(true);
             choicesEvaluatedEntity.clearStore();
             choicesEvaluatedEntity.setChoices(newOptions, "value", "label", true);
-            const validSelection = currentSelected.filter(s => newOptions.find(o => o.value === s));
+            const validSelection = (Array.isArray(currentSelected) ? currentSelected : [currentSelected]).filter(s => {
+                const opt = newOptions.find(o => o.value === s);
+                return opt && !opt.disabled;
+            });
             if(validSelection.length > 0) {
                 choicesEvaluatedEntity.setChoiceByValue(validSelection);
             }
@@ -346,6 +370,20 @@ function setupFilterListeners() {
     if (evaluatedEntitySelect) {
         evaluatedEntitySelect.addEventListener("change", async () => {
             onFilterChange("evaluatedEntity", choicesEvaluatedEntity, true);
+            
+            const newOptions = await fetchOptionsFromDB("evaluator", pendingState.evaluatedEntity);
+            const currentSelected = choicesEvaluatorEntity.getValue(true);
+            choicesEvaluatorEntity.clearStore();
+            choicesEvaluatorEntity.setChoices(newOptions, "value", "label", true);
+            const validSelection = (Array.isArray(currentSelected) ? currentSelected : [currentSelected]).filter(s => {
+                const opt = newOptions.find(o => o.value === s);
+                return opt && !opt.disabled;
+            });
+            if(validSelection.length > 0) {
+                choicesEvaluatorEntity.setChoiceByValue(validSelection);
+            }
+
+            pendingState.evaluatorEntity = choicesEvaluatorEntity.getValue(true);
         });
     }
 
@@ -371,11 +409,6 @@ function setupFilterListeners() {
         categorySelect.addEventListener("change", () => onFilterChange('category', choicesCategory, true));
     }
 
-    const politicalSelect = document.getElementById("politicalAlignment");
-    if (politicalSelect) {
-        politicalSelect.addEventListener("change", () => onFilterChange('politicalAlignment', choicesPolitical, true));
-    }
-    
     const aggregationInput = document.getElementById("aggregation");
     if (aggregationInput) {
         aggregationInput.addEventListener("input", () => {
@@ -414,13 +447,16 @@ function enforceMultiSelectConstraints(changedKey) {
         keys.forEach(k => {
             if (k !== changedKey) {
                 const otherVal = pendingState[k];
-                if (Array.isArray(otherVal) && otherVal.length > 1) {
-                    const first = otherVal[0];
-                    pendingState[k] = [first];
+                if (Array.isArray(otherVal) && (otherVal.length > 1 || otherVal.length === 0)) {
+                    // Force to 1 selection if it had more, or keep empty/1
+                    const first = otherVal.length > 0 ? [otherVal[0]] : [];
+                    pendingState[k] = first;
                     
-                    if (k === "evaluatorEntity" && choicesEvaluatorEntity) { choicesEvaluatorEntity.removeActiveItems(); choicesEvaluatorEntity.setChoiceByValue(first); }
-                    if (k === "evaluatedEntity" && choicesEvaluatedEntity) { choicesEvaluatedEntity.removeActiveItems(); choicesEvaluatedEntity.setChoiceByValue(first); }
-                    if (k === "category" && choicesCategory) { choicesCategory.removeActiveItems(); choicesCategory.setChoiceByValue(first); }
+                    const instance = k === "evaluatorEntity" ? choicesEvaluatorEntity : (k === "evaluatedEntity" ? choicesEvaluatedEntity : choicesCategory);
+                    if (instance) {
+                        instance.removeActiveItems();
+                        if (first.length > 0) instance.setChoiceByValue(first);
+                    }
                 }
             }
         });
@@ -433,7 +469,6 @@ function checkApplyButtonState() {
         if(Array.isArray(copy.evaluatorEntity)) copy.evaluatorEntity.sort();
         if(Array.isArray(copy.evaluatedEntity)) copy.evaluatedEntity.sort();
         if(Array.isArray(copy.category)) copy.category.sort();
-        if(Array.isArray(copy.politicalAlignment)) copy.politicalAlignment.sort();
         copy.aggregation = parseFloat(copy.aggregation);
 
         return JSON.stringify(copy);
@@ -517,25 +552,6 @@ function updateToggleVisual(isDynamic) {
     if (dynamicToggle) dynamicToggle.checked = isDynamic;
 }
 
-function checkEvaluatorContext(evaluatorEntities) {
-    const hasUS = Array.isArray(evaluatorEntities) ? evaluatorEntities.includes("EUA") : evaluatorEntities === "EUA";
-    const politicalGroup = document.getElementById("political-filter-group");
-    
-    if (hasUS) {
-        if (politicalGroup) politicalGroup.classList.remove("hidden");
-        pendingState.politicalAlignment = ["Independentes"];
-    } else {
-        if (politicalGroup) politicalGroup.classList.add("hidden");
-        pendingState.politicalAlignment = null;
-        
-        if(choicesPolitical) {
-            choicesPolitical.removeActiveItems();
-            choicesPolitical.setChoiceByValue("Independentes");
-            pendingState.politicalAlignment = null;
-        }
-    }
-}
-
 function processAndUpdateHistogramChart(apiData) {
     const fullBuckets = [1, 2, 3, 4, 5, 6, 7];
     const labels = fullBuckets.map(String);
@@ -581,7 +597,6 @@ function processAndUpdateVolumeChart(apiData) {
         return 0;
     }
 
-    const divisor = (appState.politicalAlignment && appState.politicalAlignment.length > 0) ? appState.politicalAlignment.length : 1;
     const labels = [];
     const values = [];
     let total = 0;
@@ -595,8 +610,6 @@ function processAndUpdateVolumeChart(apiData) {
         labels.push(labelStr);
 
         let count = parseInt(row.news_count, 10);
-        count = Math.round(count / divisor);
-
         values.push(count);
         total += count;
     });
@@ -691,7 +704,6 @@ function updateEvolutionHeader(totalNews) {
     } else {
         const formatDate = (isoDate) => {
             if (!isoDate) return "??";
-            const d = new Date(isoDate);
             const parts = isoDate.split('-');
             return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`;
         };
@@ -778,9 +790,6 @@ function processAndUpdateLineChart(apiData) {
         if (translatedLabel === labelName) {
             translatedLabel = tCategory(labelName);
         }
-        if (translatedLabel === labelName) {
-            translatedLabel = tPolitical(labelName);
-        }
         return { label: translatedLabel, data: alignedData };
     });
 
@@ -838,10 +847,9 @@ async function updateDashboard() {
     }
 
     const apiFilters = {
-        evaluatorEntity: appState.evaluatorEntity, 
-        evaluatedEntity: appState.evaluatedEntity, 
+        evaluator: appState.evaluatorEntity, 
+        evaluated: appState.evaluatedEntity, 
         category: appState.category,
-        politicalAlignment: appState.politicalAlignment, 
         aggregation: appState.aggregation
     };
     
@@ -951,6 +959,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const filterSection = document.getElementById("filters-container");
+    const brandHeader = document.querySelector(".brand-header");
     const navDots = document.querySelectorAll(".nav-dot");
     const sections = document.querySelectorAll("header, section, main");
     const confirmPopup = document.getElementById("chart-popup");
@@ -958,12 +967,12 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("scroll", () => {
         const scrollY = window.scrollY;
 
-        if (filterSection) {
-            if (scrollY > 200) {
-                filterSection.classList.add("compact");
-            } else if (scrollY < 50) {
-                filterSection.classList.remove("compact");
-            }
+        if (scrollY > 50) {
+            if (filterSection) filterSection.classList.add("compact");
+            if (brandHeader) brandHeader.classList.add("compact");
+        } else {
+            if (filterSection) filterSection.classList.remove("compact");
+            if (brandHeader) brandHeader.classList.remove("compact");
         }
 
         let current = "";
@@ -1019,9 +1028,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (appState.category) {
                 appState.category.forEach(c => params.append("category", c));
-            }
-            if (appState.politicalAlignment) {
-                appState.politicalAlignment.forEach(p => params.append("politicalAlignment", p));
             }
 
             window.open(`details.html?${params.toString()}`, "_blank");

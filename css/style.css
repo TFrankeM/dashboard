@@ -138,6 +138,19 @@ body {
     background-color: #f3f4f6;
     padding: 20px 40px;
     border-bottom: 1px solid var(--fgv-blue-dark);
+    transition: all 0.3s ease;
+}
+
+.brand-header.compact {
+    padding: 10px 40px;
+}
+
+.brand-header.compact .subtitle {
+    display: none;
+}
+
+.brand-header.compact .logo-dint {
+    height: 40px;
 }
 
 .header-content {
@@ -298,7 +311,7 @@ data-type* means any type that contains select-one, like select-one-groups */
     left: 0 !important;
     right: auto !important;     
     word-break: keep-all !important; /* prevents breaking words, keeps dropdown width consistent */
-    text-align: center !important;
+    text-align: left !important;
 }
 /* Edge-to-edge Hover Options */
 .choices__list--dropdown .choices__item {
@@ -349,7 +362,14 @@ data-type* means any type that contains select-one, like select-one-groups */
     border-color: var(--fgv-blue-dark);
 }
 
+/* Center ONLY language options */
+.lang-dropdown-wrapper .choices__list--dropdown {
+    text-align: center !important;
+}
 
+.lang-dropdown-wrapper .choices__list--dropdown .choices__item {
+    text-align: center !important;
+}
 
 
 /* FILTERS */
@@ -792,6 +812,7 @@ input:checked + .slider:before {
     width: 100%; 
     height: 100%;
     overflow: hidden;
+    touch-action: pan-y;
 }
 
 /* Gauge */

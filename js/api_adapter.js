@@ -9,7 +9,7 @@ const API_ENDPOINT = "/api/data";
 function buildApiUrl(filters, widgetType) {
     /* Builds the URL with parameters 
     filters := Object containing filter parameters
-    widgetType := "grade", "volume", "gauge", "line" or "details"
+    widgetType := "grade", "volume", "gauge", "line", "details" or "relationships"
     */
 
     const url_params = new URLSearchParams();
@@ -22,19 +22,19 @@ function buildApiUrl(filters, widgetType) {
         url_params.append("endDate", filters.endDate);
     };
 
-     if (filters.evaluatorEntity) {
-        if (Array.isArray(filters.evaluatorEntity)) {
-            filters.evaluatorEntity.forEach(ev => url_params.append("evaluatorEntity", ev));
+     if (filters.evaluator) {
+        if (Array.isArray(filters.evaluator)) {
+            filters.evaluator.forEach(ev => url_params.append("evaluator", ev));
         } else {
-            url_params.append("evaluatorEntity", filters.evaluatorEntity);
+            url_params.append("evaluator", filters.evaluator);
         }
     };
 
-    if (filters.evaluatedEntity) {
-        if (Array.isArray(filters.evaluatedEntity)) {
-            filters.evaluatedEntity.forEach(ent => url_params.append("evaluatedEntity", ent));
+    if (filters.evaluated) {
+        if (Array.isArray(filters.evaluated)) {
+            filters.evaluated.forEach(ent => url_params.append("evaluated", ent));
         } else {
-            url_params.append("evaluatedEntity", filters.evaluatedEntity);
+            url_params.append("evaluated", filters.evaluated);
         }
     };
 
@@ -50,14 +50,6 @@ function buildApiUrl(filters, widgetType) {
         }
     };
 
-    if (filters.politicalAlignment) {
-        if (Array.isArray(filters.politicalAlignment)) {
-            filters.politicalAlignment.forEach(p => url_params.append("politicalAlignment", p));
-        } else {
-            url_params.append("politicalAlignment", filters.politicalAlignment);
-        }
-    }
-    
     // Filters for details section
     if (filters.limit !== undefined && filters.limit !== null) {
         url_params.append("limit", filters.limit);
@@ -125,5 +117,9 @@ export async function fetchLineChartData(filters) {
 
 export async function fetchDetailsData(filters) {
     return await fetchFromApi(filters, "details");
+}
+
+export async function fetchRelationships() {
+    return await fetchFromApi({}, "relationships") || {};
 }
 

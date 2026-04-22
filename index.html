@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title data-i18n="main_page_title">FGV IMídIA | Sala de Situação </title>
 
     <!-- FavIcon -->
@@ -122,22 +122,14 @@
                         <input type="number" id="aggregation" min="0.25" step="0.5" class="input-aggregation">
                     </div>
                     
-                    <div class="filter-group hidden" id="political-filter-group">
-                        <label for="politicalAlignment">
-                            <span data-i18n="label_political">Alinhamento político</span>
-                            <span class="info-icon" data-i18n-tooltip="tooltip_political">?</span>
-                        </label>
-                        <select id="politicalAlignment" multiple></select>
-                    </div>
-
-                    <div class="filter-group span-2">
+                    <div class="filter-group">
                         <label for="category">
-                            <span data-i18n="label_category">Categorias</span>
+                            <span data-i18n="label_category">Categoria</span>
                             <span class="info-icon" data-i18n-tooltip="tooltip_category">?</span>
                         </label>
                         <select id="category" multiple></select>
                     </div>
-                    
+
                     <div class="filter-apply">
                         <button class="btn-apply disabled" id="btn-apply" disabled>
                             <i data-lucide="check-circle" class="icon-sm"></i>
@@ -260,16 +252,6 @@
             </div>
         </section>
 
-        <!-- 
-        <div class="card metric-card placeholder-card">
-            <div class="placeholder-content">
-                <i data-lucide="hammer" class="placeholder-icon"></i>
-                <h3>Em Desenvolvimento.</h3>
-                <p>Aguarde</p>
-            </div>
-        </div> 
-        -->
-
         <!-- Footer -->
         <footer class="dashboard-footer">
             <div class="footer-content">
@@ -298,4 +280,3 @@
 </body>
 
 </html>
-

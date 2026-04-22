@@ -99,7 +99,21 @@ body {
     background-color: #f3f4f6;
     padding: 20px 40px;
     border-bottom: 1px solid var(--fgv-blue-dark);
+    transition: all 0.3s ease;
 }
+
+.brand-header.compact {
+    padding: 10px 40px;
+}
+
+.brand-header.compact .subtitle {
+    display: none;
+}
+
+.brand-header.compact .logo-dint {
+    height: 40px;
+}
+
 .header-content {
     display: grid;
     grid-template-columns: 1fr auto 1fr;;
@@ -147,8 +161,8 @@ body {
 /* right actions | languages and close button */
 .header-actions {
     justify-self: end;
-    letter-spacing: 1px;
     display: flex; /* horizontal layout */
+    align-items: center;
     gap: 15px;
 }   
 
@@ -190,6 +204,19 @@ body {
     align-items: flex-end;
     flex-wrap: wrap;
     gap: 15px;
+    transition: all 0.3s ease;
+}
+
+.details-subheader.compact {
+    padding: 0.5rem 2rem;
+}
+
+.details-subheader.compact #page-title {
+    font-size: 1rem;
+}
+
+.details-subheader.compact #filter-summary {
+    display: none;
 }
 .details-context {
     display: flex;
@@ -298,7 +325,7 @@ data-type* means any type that contains select-one, like select-one-groups */
     left: 0 !important;
     right: auto !important;     
     word-break: keep-all !important; /* prevents breaking words, keeps dropdown width consistent */
-    text-align: center !important;
+    text-align: left !important;
 }
 /* Edge-to-edge Hover Options */
 .choices__list--dropdown .choices__item {
@@ -321,7 +348,9 @@ data-type* means any type that contains select-one, like select-one-groups */
 
     /* Language button */
 .lang-dropdown-wrapper {
+    justify-self: end;
     position: relative;
+    width: 80px;
     min-width: 80px;
     height: 38px;
     z-index: 200; /* above filters */
@@ -347,6 +376,14 @@ data-type* means any type that contains select-one, like select-one-groups */
     border-color: var(--fgv-blue-dark);
 }
 
+/* Center ONLY language options */
+.lang-dropdown-wrapper .choices__list--dropdown {
+    text-align: center !important;
+}
+
+.lang-dropdown-wrapper .choices__list--dropdown .choices__item {
+    text-align: center !important;
+}
 
     /* Custom click dropdowns | control buttons (category, columns, evaluator, evaluated) */
 /* divs dropdown */
@@ -1008,6 +1045,12 @@ tr:hover {
         align-content: start;
         animation: fadeIn 0.3s ease;
     }
+
+    .filter-divider {
+        grid-column: 1 / -1; /* Ocupa as duas colunas */
+        width: 100%;
+        margin: 5px 0;
+    }
     
     /* Make sure inputs and dropdowns take full width when stacked */
     .filters-collapse .dropdown, 
@@ -1107,46 +1150,76 @@ tr:hover {
         margin-top: 10px;
     }
     .mobile-filter-btn {
-        padding: 8px;
-        font-size: 13px;
-        margin-top: 5px;
-        margin-bottom: 5px;
+    display: none; /* hidden in big screens */
+    width: 100%;
+    padding: 12px;
+    background-color: var(--fgv-blue-dark);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: "Gotham", sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 10px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.mobile-filter-btn:hover {
+    background-color: var(--fgv-blue-navy);
+}
+
+.mobile-filter-btn .chevron {
+    transition: transform 0.3s ease;
+}
+
+.mobile-filter-btn.expanded .chevron {
+    transform: rotate(180deg);
+}
+
+.filters-collapse {
+    display: block; /* Visible by default on desktop */
+}
+
+@media (max-width: 1024px) {
+    .mobile-filter-btn {
+        display: flex;
     }
-    .btn-outline {
-        height: 34px;
-        font-size: 12px;
-        padding: 0 10px;
+    .filters-collapse {
+        display: none;
+        width: 100%;
     }
-    .choices__inner {
-        height: 34px !important;
-        min-height: 34px !important;
-        font-size: 12px !important;
-        padding: 0 10px !important;
-    }
-    .btn-icon {
-        height: 34px;
-    }
-    .btn-close {
-        height: 34px;
-    }
-    /* Reestruturação dos controlos e botões de filtro */
     .filters-collapse.open {
+        display: grid;
         grid-template-columns: 1fr;
         gap: 10px;
+        animation: fadeIn 0.3s ease;
     }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
     /* Alinhamento da paginação */
     .pagination-container {
         justify-content: flex-start;
         width: 100%;
         gap: 10px;
+        flex-direction: column;
+        align-items: flex-start;
     }
     
     .limit-control, .range-control {
         width: 100%;
         justify-content: flex-start;
         font-size: 12px;
-        gap: 5px;
+        gap: 8px;
+        flex-wrap: wrap;
     }
 
     .range-control .dropdown { width: auto; display: inline-block; }
@@ -1156,11 +1229,9 @@ tr:hover {
 
     /* columns and pagination controls in the same line in mobile */
     .details-subheader > .controls:not(.filters-collapse) {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: flex-start;
         width: 100%;
-        align-items: center;
     }
 
     /* dropdowns in controls don't stretch full width in mobile */
@@ -1204,10 +1275,10 @@ tr:hover {
         min-width: 70px;
     }
     .lang-dropdown-wrapper .choices__inner {
-        padding-right: 20px !important;
+        padding-right: 25px !important;
     }
     .lang-dropdown-wrapper .choices[data-type*="select-one"]::after {
-        right: 8px !important;
+        right: 12px !important;
     }
     .mobile-filter-btn {
         padding: 6px;
