@@ -43,6 +43,8 @@ const COLUMNS = [
     { key: "article_text", labelKey: "col_article_text", expandable: true , sortable: false },
     { key: "source", labelKey: "col_source", expandable: true , sortable: true },
     { key: "category", labelKey: "col_category", expandable: false, sortable: true },
+    { key: "evaluator_entity", labelKey: "col_evaluator", expandable: false, sortable: true },
+    { key: "evaluated_entity", labelKey: "col_evaluated", expandable: false, sortable: true },
     { key: "grade", labelKey: "col_grade", type: "number", expandable: false, sortable: true },
     { key: "analysis", labelKey: "col_analysis", expandable: true , sortable: false },
     { key: "url", labelKey: "col_link", type: "link", expandable: false, sortable: false },
@@ -56,9 +58,11 @@ let visibleColumns = {
     source: true, 
     summary: false, 
     article_text: false, 
-    analysis: true, 
+    evaluator_entity: false,
+    evaluated_entity: false,
     grade: true, 
-    url: true
+    analysis: true, 
+    url: true,
 };
 
 let RELATIONSHIPS = {};
@@ -1065,8 +1069,10 @@ function renderTableBody(data) {
                         td.style.color = "#10b981";
                     }
                 } else {
-                    if (col.key === 'category' && value) {
+                    if (col.key === "category" && value) {
                         td.textContent = tCategory(value) || "-";
+                    } else if ((col.key === "evaluator_entity" || col.key === "evaluated_entity") && value) {
+                        td.textContent = tEntity(value) || "-";
                     } else {
                         td.textContent = value || "-";
                     }

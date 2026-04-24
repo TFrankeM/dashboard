@@ -140,13 +140,6 @@ export const DICTIONARY = {
             "presidente_trump": "Presidente Trump"
         },
 
-        political_options: {
-            // "key": "label"
-            "Democratas": "Democratas",
-            "Republicanos": "Republicanos",
-            "Independentes": "Independentes"
-        },
-
         // Details page
         details_page_title: "Detalhes das notícias",
         btn_close: "Fechar",
@@ -162,6 +155,8 @@ export const DICTIONARY = {
         col_article_text: "Texto do artigo",
         col_source: "Fonte",
         col_category: "Categoria",
+        col_evaluator: "Ente avaliador",
+        col_evaluated: "Ente avaliado",
         col_analysis: "Análise",
         col_grade: "Nota do IMídIA",
         col_link: "Link",
@@ -309,13 +304,6 @@ export const DICTIONARY = {
             "presidente_trump": "President Trump"
         },
 
-        political_options: {
-            // "key": "label"
-            "Democratas": "Democrats",
-            "Republicanos": "Republicans",
-            "Independentes": "Independents"
-        },
-
         // Detailse page
         details_page_title: "News details",
         placeholder_start_date: "Start date...",
@@ -335,8 +323,10 @@ export const DICTIONARY = {
         col_article_text: "Article text",
         col_source: "Source",
         col_category: "Category",
+        col_evaluator: "Evaluator entity",
+        col_evaluated: "Evaluated entity",
         col_analysis: "Analysis",
-        col_grade: "IMídIA Grade",
+        col_grade: "IMídIA grade",
         col_link: "Link",
         click_to_expand: "Click to expand",
         table_link_view: "View",
@@ -480,13 +470,6 @@ export const DICTIONARY = {
             "presidente_trump": "Presidente Trump"
         },
 
-        political_options: {
-            // "key": "label"
-            "Democratas": "Demócratas",
-            "Republicanos": "Republicanos",
-            "Independentes": "Independientes"
-        },
-
         // Details page
         btn_close: "Cerrar",
         label_of: "de",
@@ -502,6 +485,8 @@ export const DICTIONARY = {
         col_article_text: "Texto del artículo",
         col_source: "Fuente",
         col_category: "Categoría",
+        col_evaluator: "Entidad evaluadora",
+        col_evaluated: "Entidad evaluada",
         col_analysis: "Análisis",
         col_grade: "Nota de IMídIA",
         col_link: "Enlace",
