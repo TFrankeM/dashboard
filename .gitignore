@@ -29,3 +29,15 @@ venv/
 .venv/
 env/
 .env/
+.vercel
+.env*.local
+
+# Dados brutos e código de tratamento/ingestão (NÃO publicar — só o site)
+*.xlsx
+*.xls
+*.xlsb
+etl/
+
+# Arquivos de rascunho / não usados no site
+teste.html
+js/index copy.js

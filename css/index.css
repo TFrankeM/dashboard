@@ -1,0 +1,275 @@
+/* css/index.css */
+
+body { 
+    margin: 0; 
+    padding: 0; 
+    background-color: #020617; 
+    overflow: hidden; 
+    font-family: 'Inter', sans-serif; 
+}
+
+/* Animações suaves para a transição dos dados numéricos */
+.fade-enter { 
+    opacity: 0; 
+    transform: translateY(10px); 
+}
+
+.fade-enter-active { 
+    opacity: 1; 
+    transform: translateY(0); 
+    transition: opacity 500ms, transform 500ms; 
+}
+
+/* Brilho no botão da Sala de Situação */
+.glow-button {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+    transition: all 0.3s ease;
+}
+
+.glow-button:hover {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.8);
+    transform: scale(1.02);
+}
+
+/* ============================================================
+   CARTÕES COM ESTÉTICA "CIRCUITO / TECNOLÓGICA"
+   ============================================================ */
+.info-stack {
+    width: 460px;
+    max-width: 42vw;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.tech-card {
+    position: relative;
+    background-color: rgba(10, 18, 35, 0.55);
+    /* grade fina de fundo, lembrando uma placa de circuito */
+    background-image:
+        linear-gradient(rgba(96,165,250,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(96,165,250,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    border: 1px solid rgba(96,165,250,0.22);
+    border-radius: 6px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow:
+        0 0 0 1px rgba(2, 6, 23, 0.4),
+        0 18px 40px -20px rgba(0,0,0,0.8),
+        inset 0 0 40px -28px rgba(96,165,250,0.6);
+    overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.hero-card {
+    padding: 28px 30px 30px;
+    cursor: pointer;
+}
+.hero-card:hover {
+    border-color: rgba(96,165,250,0.55);
+    box-shadow:
+        0 0 0 1px rgba(2,6,23,0.4),
+        0 22px 50px -20px rgba(0,0,0,0.85),
+        inset 0 0 50px -24px rgba(96,165,250,0.9);
+}
+
+/* Cantos tipo colchete, com nó luminoso */
+.tech-corner {
+    position: absolute;
+    width: 14px; height: 14px;
+    border: 0 solid rgba(96,165,250,0.85);
+    pointer-events: none;
+}
+.tech-corner::after {
+    content: "";
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #60a5fa;
+    box-shadow: 0 0 6px 1px rgba(96,165,250,0.9);
+}
+.tech-corner.tl { top: 7px; left: 7px; border-top-width: 1.5px; border-left-width: 1.5px; }
+.tech-corner.tr { top: 7px; right: 7px; border-top-width: 1.5px; border-right-width: 1.5px; }
+.tech-corner.bl { bottom: 7px; left: 7px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.tech-corner.br { bottom: 7px; right: 7px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+.tech-corner.tl::after { top: -2px; left: -2px; }
+.tech-corner.tr::after { top: -2px; right: -2px; }
+.tech-corner.bl::after { bottom: -2px; left: -2px; }
+.tech-corner.br::after { bottom: -2px; right: -2px; }
+
+/* Linha de varredura */
+.tech-scan {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(96,165,250,0.7), transparent);
+    opacity: 0;
+    animation: techScan 6s linear infinite;
+    pointer-events: none;
+}
+@keyframes techScan {
+    0%   { transform: translateY(0);     opacity: 0; }
+    12%  { opacity: 0.5; }
+    88%  { opacity: 0.5; }
+    100% { transform: translateY(200px); opacity: 0; }
+}
+
+/* Cabeçalho do card */
+.tech-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.tech-led {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 8px 1px rgba(52,211,153,0.9);
+    animation: techPulse 1.8s ease-in-out infinite;
+}
+@keyframes techPulse {
+    0%,100% { opacity: 1; }
+    50%     { opacity: 0.3; }
+}
+.tech-kicker {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #60a5fa;
+}
+.tech-counter {
+    margin-left: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: rgba(148,163,184,0.8);
+}
+
+.hero-number {
+    font-size: 3.4rem;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    background: linear-gradient(180deg, #ffffff 0%, #bfdbfe 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.hero-label {
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.tech-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+.tech-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(148,163,184,0.6);
+}
+.tech-hint svg { width: 12px; height: 12px; }
+.tech-nodes { display: inline-flex; align-items: center; gap: 6px; }
+.tech-nodes i {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(96,165,250,0.35);
+    position: relative;
+}
+.tech-nodes i + i::before {
+    content: "";
+    position: absolute;
+    left: -6px; top: 50%;
+    width: 6px; height: 1px;
+    background: rgba(96,165,250,0.25);
+}
+
+/* Linha do tempo (countdown de 10s) */
+.tech-timeline {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 3px;
+    background: rgba(96,165,250,0.1);
+}
+.tech-timeline-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(59,130,246,0.4), #60a5fa);
+    box-shadow: 0 0 10px 1px rgba(96,165,250,0.8);
+}
+
+/* Conector tipo trilha de circuito entre os cards */
+.circuit-link {
+    position: relative;
+    height: 26px;
+    width: 1.5px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, rgba(96,165,250,0.5), rgba(96,165,250,0.15));
+}
+.circuit-node {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #0a1223;
+    border: 1.5px solid #60a5fa;
+    box-shadow: 0 0 8px 1px rgba(96,165,250,0.7);
+}
+
+/* Mini cards (novas caixas de indicadores) */
+.mini-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+.mini-card {
+    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.mini-card:hover {
+    border-color: rgba(96,165,250,0.5);
+    transform: translateY(-2px);
+}
+.mini-label {
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(96,165,250,0.85);
+}
+.mini-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    line-height: 1.1;
+}
+.mini-unit {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #60a5fa;
+}
+.mini-sub {
+    font-size: 0.7rem;
+    color: rgba(148,163,184,0.7);
+}
+
+/* Responsivo: empilha as mini caixas em telas estreitas */
+@media (max-width: 900px) {
+    .info-stack { width: 92vw; max-width: 92vw; }
+    .mini-grid { grid-template-columns: 1fr; }
+}

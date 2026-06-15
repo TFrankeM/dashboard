@@ -132,6 +132,18 @@ body {
     width: auto;
 }
 
+/* Logo clicável -> volta para a tela inicial (index.html) */
+.home-link {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.home-link:hover {
+    opacity: 0.75;
+    transform: scale(1.03);
+}
+
 /* title - center */
 .brand-title {
     justify-self: center;   /* Align in the center */

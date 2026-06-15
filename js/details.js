@@ -196,6 +196,13 @@ function translateUI() {
         }
     });
 
+    document.querySelectorAll("[data-i18n-title]").forEach(el => {
+        const key = el.getAttribute("data-i18n-title");
+        if (texts[key]) {
+            el.setAttribute("title", texts[key]);
+        }
+    });
+
     const searchInputs = document.querySelectorAll(".dropdown-search");
     searchInputs.forEach(input => {
         input.placeholder = t("placeholder_search");

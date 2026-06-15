@@ -91,6 +91,14 @@ function translateUI() {
         }
     });
 
+    // title attributes (native tooltips, ex: link "voltar" na logo)
+    document.querySelectorAll("[data-i18n-title]").forEach(el => {
+        const key = el.getAttribute("data-i18n-title");
+        if (texts[key]) {
+            el.setAttribute("title", texts[key]);
+        }
+    });
+
     // tooltips
     document.querySelectorAll("[data-i18n-tooltip]").forEach(el => {
         const key = el.getAttribute("data-i18n-tooltip");

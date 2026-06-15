@@ -1,4 +1,11 @@
-import { sql } from "@vercel/postgres";
+import { createPool } from "@vercel/postgres";
+
+// @vercel/postgres looks only for the POSTGRES_URL env var. In this project the
+// Vercel-managed variable is exposed as POSTGRES_URL_backup, so we resolve the
+// connection string explicitly and fall back to it.
+const sql = createPool({
+    connectionString: process.env.POSTGRES_URL || process.env.POSTGRES_URL_backup,
+});
 
 // Mapping frontend technical slugs to DB readable names (stored in 'slug' column)
 const CATEGORY_MAP = {

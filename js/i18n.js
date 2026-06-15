@@ -1,12 +1,13 @@
 
 export const DICTIONARY = {
     "pt-BR" : {
-        main_page_title: "FGV IMídIA | Sala de Situación",
+        main_page_title: "FGV IIBEx | Sala de Situación",
         app_logo: "assets/logodint_pt.svg",
 
         // General
-        app_title: "FGV IMídIA",
-        app_subtitle: "Indicador de Imagem na Mídia Digital",
+        app_title: "FGV IIBEx",
+        app_subtitle: "Indicador da Imagem do Brasil no Exterior",
+        home_link: "Voltar à tela inicial",
         filter_section_title: "Filtros",
         mode_static: "Modo estático",
         mode_dynamic: "Modo dinâmico",
@@ -31,17 +32,17 @@ export const DICTIONARY = {
         btn_hide_filters: "Ocultar filtros",
 
         // Tooltips
-        tooltip_mode: "<b>Modo Estático</b>: calcula o FGV IMídIA no período definido. <br><b>Modo Dinâmico</b>: atualiza o FGV IMídIA a cada 30 min.",
-        tooltip_period: "Define o intervalo de tempo do FGV IMídIA.",
+        tooltip_mode: "<b>Modo Estático</b>: calcula o FGV IIBEx no período definido. <br><b>Modo Dinâmico</b>: atualiza o FGV IIBEx a cada 30 min.",
+        tooltip_period: "Define o intervalo de tempo do FGV IIBEx.",
         tooltip_evaluatorEntity: "País ou entidade que avalia a imagem do ente em avaliação.",
         tooltip_political: "Selecione um alinhamento para comparar até cinco categorias. Selecione até cinco alinhamentos para comparar suas visões sobre uma única categoria.",
         tooltip_evaluatedEntity: "País ou entidade que é o objeto de avaliação por parte do ente avaliador.",
         tooltip_category: "Filtra as categorias avaliadas. Selecione até cinco categorias simultaneamente.",
         tooltip_aggregation: "Define o intervalo em horas para agrupar os dados (ex: 0.5 para 30min, 24 para um dia).",
-        tooltip_histogram: "Frequência de notícias agrupadas pela nota de 1 a 7 do IMídIA.",
+        tooltip_histogram: "Frequência de notícias agrupadas pela nota de 1 a 7 do IIBEx.",
         tooltip_volume: "Total de publicações capturadas e processadas pelo motor de análise.",
-        tooltip_gauge: "FGV IMídIA <br>Escala de 1 a 7.",
-        tooltip_evolution: "Evolução do FGV IMídIA.",
+        tooltip_gauge: "FGV IIBEx <br>Escala de 1 a 7.",
+        tooltip_evolution: "Evolução do FGV IIBEx.",
         
         // Image labels
         image_extremely_negative: "Imagem extremamente negativa",
@@ -66,7 +67,7 @@ export const DICTIONARY = {
         chart_volume_tooltip_unit_plural: "notícias analisadas",
         
         // Gauge chart
-        chart_gauge_title: "FGV IMídIA",
+        chart_gauge_title: "FGV IIBEx",
         last_update: "Última atualização: ",
 
         // Evolution chart
@@ -76,13 +77,13 @@ export const DICTIONARY = {
         evo_date_connector: " nos ",
         evo_date_connector_static: " de ",
         evo_date_connector_static_to: " a ",
-        chart_line_y_axis_title: "FGV IMídIA",
+        chart_line_y_axis_title: "FGV IIBEx",
         chart_line_tooltip_avg: "Nota média",
         chart_line_tooltip_count: "Quantidade de notícias",
         btn_reset: "Redefinir zoom",
 
         // Popup see details
-        popup_text: "Entenda o IMídIA de ",
+        popup_text: "Entenda o IIBEx de ",
         btn_view_news: "Veja as notícias",
         btn_cancel: "Cancelar",
 
@@ -143,7 +144,7 @@ export const DICTIONARY = {
         // Details page
         details_page_title: "Detalhes das notícias",
         btn_close: "Fechar",
-        details_title_prefix: "Notícias que compõem o FGV IMídIA em ",
+        details_title_prefix: "Notícias que compõem o FGV IIBEx em ",
         loading_filters: "Carregando filtros...",
         btn_choose_columns: "Escolha as colunas visíveis",
         label_show: "Exibir:",
@@ -158,19 +159,20 @@ export const DICTIONARY = {
         col_evaluator: "Ente avaliador",
         col_evaluated: "Ente avaliado",
         col_analysis: "Análise",
-        col_grade: "Nota do IMídIA",
+        col_grade: "Nota do IIBEx",
         col_link: "Link",
         click_to_expand: "Clique para expandir",
         table_link_view: "Veja",
     },
     "en-US": {
-        main_page_title: "FGV IMídIA | Situation Room",
+        main_page_title: "FGV IIBEx | Situation Room",
 
         app_logo: "assets/logodint_en.svg",
 
         // General
-        app_title: "FGV IMídIA",
-        app_subtitle: "Foreign Image Indicator",
+        app_title: "FGV IIBEx",
+        app_subtitle: "Indicator of Brazil's Image Abroad",
+        home_link: "Back to home screen",
         filter_section_title: "Filters",
         mode_static: "Static mode: 2025",
         mode_dynamic: "Dynamic mode",
@@ -195,17 +197,17 @@ export const DICTIONARY = {
         btn_hide_filters: "Hide filters", 
 
         // Tooltips
-        tooltip_mode: "<b>Static Mode</b>: calculates the FGV IMídIA for the defined period. <br><b>Dynamic Mode</b>: updates the FGV IMídIA every 30 minutes.",
-        tooltip_period : "Defines the time interval of the FGV IMídIA.",
+        tooltip_mode: "<b>Static Mode</b>: calculates the FGV IIBEx for the defined period. <br><b>Dynamic Mode</b>: updates the FGV IIBEx every 30 minutes.",
+        tooltip_period : "Defines the time interval of the FGV IIBEx.",
         tooltip_evaluatorEntity: "Country or entity that evaluates the image of the assessed entity.",
         tooltip_political: "Select one alignment to compare up to five categories. Select up to five alignments to compare their views on a single category.",
         tooltip_evaluatedEntity: "Country or entity that is the object of evaluation by the reviewing entity.",
         tooltip_category: "Filters the evaluated categories. Select up to five categories simultaneously.",
         tooltip_aggregation: "Defines the interval in hours to aggregate the data (e.g., 0.5 for 30 min, 24 for one day).",
-        tooltip_histogram: "Frequency of news grouped by IMídIA scores from 1 to 7.",
+        tooltip_histogram: "Frequency of news grouped by IIBEx scores from 1 to 7.",
         tooltip_volume: "Total number of publications captured and processed by the analysis engine.",
-        tooltip_gauge: "FGV IMídIA <br>Scale from 1 to 7.",
-        tooltip_evolution: "Evolution of the FGV IMídIA.",
+        tooltip_gauge: "FGV IIBEx <br>Scale from 1 to 7.",
+        tooltip_evolution: "Evolution of the FGV IIBEx.",
 
         // Image labels
         image_extremely_negative: "Extremely negative image",
@@ -230,23 +232,23 @@ export const DICTIONARY = {
         chart_volume_tooltip_unit_plural: "news items analyzed",
         
         // Gauge chart
-        chart_gauge_title: "FGV IMídIA",
+        chart_gauge_title: "FGV IIBEx",
         last_update: "Last update: ",
 
         // Evolution chart
         evo_title_prefix: "Evaluator: ",
         evo_title_separator: " | Evaluated: ",
-        evo_subtitle_prefix: "Evolution of Foreign Image Indicator ",
+        evo_subtitle_prefix: "Evolution of Indicator of Brazil's Image Abroad ",
         evo_date_connector: " in the ",
         evo_date_connector_static: " from ",
         evo_date_connector_static_to: " to ",
-        chart_line_y_axis_title: "FGV IMídIA",
+        chart_line_y_axis_title: "FGV IIBEx",
         chart_line_tooltip_avg: "Average grade",
         chart_line_tooltip_count: "News quantity",
         btn_reset: "Reset",
 
         // Popup see details
-        popup_text: "Understand the IMídIA of ",
+        popup_text: "Understand the IIBEx of ",
         btn_view_news: "View news",
         btn_cancel: "Cancelar",
 
@@ -312,7 +314,7 @@ export const DICTIONARY = {
         title_sort_by: "Sort by",
         label_of: "of",
         btn_close: "Close",
-        details_title_prefix: "News composing the FGV IMídIA on ",
+        details_title_prefix: "News composing the FGV IIBEx on ",
         loading_filters: "Loading filters...",
         btn_choose_columns: "Choose visible columns",
         label_show: "Show:",
@@ -326,7 +328,7 @@ export const DICTIONARY = {
         col_evaluator: "Evaluator entity",
         col_evaluated: "Evaluated entity",
         col_analysis: "Analysis",
-        col_grade: "IMídIA grade",
+        col_grade: "IIBEx grade",
         col_link: "Link",
         click_to_expand: "Click to expand",
         table_link_view: "View",
@@ -335,8 +337,9 @@ export const DICTIONARY = {
         app_logo: "assets/logodint_es.svg",
 
         // General
-        app_title: "FGV IMídIA",
-        app_subtitle: "Indicador de Imagen en Medios Digitales",
+        app_title: "FGV IIBEx",
+        app_subtitle: "Indicador de la Imagen de Brasil en el Exterior",
+        home_link: "Volver a la pantalla inicial",
         filter_section_title: "Filtros",
         mode_static: "Modo estático: 2025",
         mode_dynamic: "Modo dinámico",
@@ -361,17 +364,17 @@ export const DICTIONARY = {
         btn_hide_filters: "Ocultar filtros",    
 
         // Tooltips
-        tooltip_mode: "<b>Modo Estático</b>: calcula el FGV IMídIA en el período definido. <br><b>Modo Dinámico</b>: actualiza el FGV IMídIA cada 30 minutos.",
-        tooltip_period: "Define el intervalo de tiempo del FGV IMídIA.",
+        tooltip_mode: "<b>Modo Estático</b>: calcula el FGV IIBEx en el período definido. <br><b>Modo Dinámico</b>: actualiza el FGV IIBEx cada 30 minutos.",
+        tooltip_period: "Define el intervalo de tiempo del FGV IIBEx.",
         tooltip_evaluatorEntity: "País o entidad que evalúa la imagen del ente evaluado.",
         tooltip_political: "Seleccione una alineación para comparar hasta cinco categorías. Seleccione hasta cinco alineaciones para comparar sus visiones sobre una sola categoría.",
         tooltip_evaluatedEntity: "País o entidad que es objeto de evaluación por parte del ente evaluador.",
         tooltip_category: "Filtra las categorías evaluadas. Seleccione hasta cinco categorías simultáneamente.",
         tooltip_aggregation: "Define el intervalo en horas para agrupar los datos (ej.: 0.5 para 30 min, 24 para un día).",
-        tooltip_histogram: "Frecuencia de noticias agrupadas por la puntuación del <br>IMídIA de 1 a 7.",
+        tooltip_histogram: "Frecuencia de noticias agrupadas por la puntuación del <br>IIBEx de 1 a 7.",
         tooltip_volume: "Total de publicaciones capturadas y procesadas por el motor de análisis.",
-        tooltip_gauge: "FGV IMídIA <br>Escala de 1 a 7.",
-        tooltip_evolution: "Evolución del FGV IMídIA.",
+        tooltip_gauge: "FGV IIBEx <br>Escala de 1 a 7.",
+        tooltip_evolution: "Evolución del FGV IIBEx.",
 
         // Image labels
         image_extremely_negative: "Imagem extremadamente negativa",
@@ -396,7 +399,7 @@ export const DICTIONARY = {
         chart_volume_tooltip_unit_plural: "noticias analizadas",
         
         // Gauge chart
-        chart_gauge_title: "FGV IMídIA",
+        chart_gauge_title: "FGV IIBEx",
         last_update: "Última actualización: ",
 
         // Evolution chart
@@ -406,13 +409,13 @@ export const DICTIONARY = {
         evo_date_connector: " en los ",
         evo_date_connector_static: " de ",
         evo_date_connector_static_to: " a ",
-        chart_line_y_axis_title: "FGV IMídIA",
+        chart_line_y_axis_title: "FGV IIBEx",
         chart_line_tooltip_avg: "Nota media",
         chart_line_tooltip_count: "Cantidad de noticias",
         btn_reset: "Restablecer",
 
         // Popup see details
-        popup_text: "Entienda el IMídIA de ",
+        popup_text: "Entienda el IIBEx de ",
         btn_view_news: "Ver noticias",
         btn_cancel: "Cancelar",
 
@@ -473,7 +476,7 @@ export const DICTIONARY = {
         // Details page
         btn_close: "Cerrar",
         label_of: "de",
-        details_title_prefix: "Noticias que componen el FGV IMídIA el ",
+        details_title_prefix: "Noticias que componen el FGV IIBEx el ",
         loading_filters: "Cargando filtros...",
         btn_choose_columns: "Elija las columnas visibles",
         label_show: "Mostrar:",
@@ -488,7 +491,7 @@ export const DICTIONARY = {
         col_evaluator: "Entidad evaluadora",
         col_evaluated: "Entidad evaluada",
         col_analysis: "Análisis",
-        col_grade: "Nota de IMídIA",
+        col_grade: "Nota de IIBEx",
         col_link: "Enlace",
         click_to_expand: "Haga clic para expandir",
         table_link_view: "Ver",

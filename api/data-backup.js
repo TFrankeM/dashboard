@@ -148,7 +148,7 @@ async function getGaugeData(request) {
         )
       `;
 
-      // calculate IMíd.IA for 30 minutes window
+      // calculate IIBEx for 30 minutes window
       /*
       timeCondition = `
         AND date >= (

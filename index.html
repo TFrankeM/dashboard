@@ -2,281 +2,116 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title data-i18n="main_page_title">FGV IMídIA | Sala de Situação </title>
-
-    <!-- FavIcon -->
-    <link rel="icon" href="assets/favicon.png" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dado Concreto - Monitor Global</title>
     
-    <!-- Bib externas -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <!-- Tailwind CSS para estilização rápida -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Libraries for 3D globe -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/globe.gl@2.32.1/dist/globe.gl.min.js"></script>
 
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script>
+    <!-- Estilos Locais -->
+    <link rel="stylesheet" href="./css/index.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-
-    <!-- Ícones Lucide -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <link rel="stylesheet" href="./css/style.css">
-    <!-- <link rel="stylesheet" href="./css/global.css"> -->
-
-    <script type="module" src="./js/script.js" defer></script>
+    <!-- Script Local com 'defer' para garantir que o DOM carregou -->
+    <script src="./js/index.js" defer></script>
 </head>
+<body class="text-slate-200">
 
-<body>
-    <!-- Menu lateral de navegação -->
-    <nav class="side-nav">
-        <a href="#top" class="nav-dot active" data-label="Filtros"></a>
-        <a href="#metrics" class="nav-dot" data-label="Métricas principais"></a>
-        <a href="#evolution" class="nav-dot" data-label="Evolução temporal"></a>
-    </nav>
+    <!-- Container do Globo 3D: Deslocado propositadamente para a esquerda via CSS -->
+    <div id="globeViz" class="absolute top-0 bottom-0 z-0 cursor-grab active:cursor-grabbing" style="left: -35vw; width: 135vw;"></div>
 
-    <div class="dashboard-wrapper">
+    <!-- Overlay de Interface (UI) -->
+    <div class="absolute inset-0 z-10 flex flex-col justify-between pointer-events-none p-8">
         
-        <header class="brand-header" id="top">
-            <div class="header-content">
-                <!-- FGV logo -->
-                <div class="logo-wrapper">
-                    <img src="assets/logodint_pt.svg" alt="Logo FGV" class="logo-dint" data-i18n-img="app_logo">
-                </div>
-
-                <!-- index name -->
-                <div class="brand-title">
-                    <div>
-                        <h1 data-i18n="app_title">FGV IMídIA</h1>
-                        <span class="subtitle" data-i18n="app_subtitle">Indicador de Imagem na Mídia Digital</span>
-                    </div>
-                </div>
-
-                <!-- Language dropdown -->
-                <div class="header-actions">
-                    <div class="lang-dropdown-wrapper">
-                        <i data-lucide="languages" class="lang-icon"></i>
-                        <select id="language-select" class="lang-select"></select>
-                    </div>
-                </div>
-        </header>
-
-        <!-- Barra de filtros -->
-        <section class="sticky-filters" id="filters-container">
-           <div class="filters-header">
-                <h2>
-                    <i data-lucide="sliders-horizontal" class="icon-sm"></i>
-                    <span data-i18n="filter_section_title">Filtros</span>
-                </h2> 
-                
-                <!-- Toggle Dinâmico -->
-                <div class="toggle-container">
-                    <span id="mode-label" class="toggle-label" data-i18n="mode_static">Modo estático</span>
-
-                    <label class="switch">
-                        <input type="checkbox" id="dynamic-mode">
-                        <span class="slider round"></span>
-                    </label>
-
-                    <span class="info-icon" data-i18n-tooltip="tooltip_mode">?</span>
-                </div>
+        <!-- Header -->
+        <header class="flex justify-between items-center w-full">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+                <h1 class="text-xl tracking-widest font-light text-slate-300">
+                    <strong class="font-bold text-white">DADO</strong> CONCRETO
+                </h1>
             </div>
             
-            <button id="mobile-filter-toggle" class="mobile-filter-btn">
-                <i data-lucide="filter" class="icon-sm"></i>
-                <span id="mobile-filter-text" data-i18n="btn_show_filters">Mostrar filtros</span>
-                <i data-lucide="chevron-down" class="icon-sm chevron"></i>
+            <!-- Botão Direto para a Sala de Situação -->
+            <button id="btn-enter-dashboard" class="pointer-events-auto glow-button bg-blue-600/20 border border-blue-500/50 backdrop-blur-md text-blue-400 px-6 py-2.5 rounded-full font-medium tracking-wide flex items-center gap-2">
+                ACESSAR SALA DE SITUAÇÃO
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </button>
+        </header>
 
-            <div id="filters-wrapper" class="filters-collapse">
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label for="evaluatorEntity">
-                            <span data-i18n="label_evaluatorEntity">Quem avalia</span>
-                            <span class="info-icon" data-i18n-tooltip="tooltip_evaluatorEntity">?</span>
-                        </label>
-                        <select id="evaluatorEntity" multiple></select>
-                    </div>
+        <!-- Área Central de Dados -->
+        <main class="flex-1 flex items-center justify-end w-full max-w-7xl mx-auto">
+            <div class="info-stack pointer-events-auto">
 
-                    <div class="filter-group">
-                        <label for="evaluatedEntity">
-                            <span data-i18n="label_evaluatedEntity">Quem é avaliado</span>
-                            <span class="info-icon" data-i18n-tooltip="tooltip_evaluatedEntity">?</span>
-                        </label>
-                        <select id="evaluatedEntity" multiple></select>
-                    </div>
+                <!-- Card principal rotativo (estética "circuito") -->
+                <div id="dataCard" class="tech-card hero-card">
+                    <span class="tech-corner tl"></span>
+                    <span class="tech-corner tr"></span>
+                    <span class="tech-corner bl"></span>
+                    <span class="tech-corner br"></span>
+                    <span class="tech-scan"></span>
 
-                    <div class="filter-group">
-                        <label for="period">
-                            <span data-i18n="label_period">Período</span>
-                            <span class="info-icon" data-i18n-tooltip="tooltip_period">?</span>
-                        </label>
-                        <select id="period"></select>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label for="aggregation">
-                            <span data-i18n="label_aggregation">Agregação (em horas)</span>
-                            <span class="info-icon" data-i18n-tooltip="tooltip_aggregation">?</span>
-                        </label>
-                        <input type="number" id="aggregation" min="0.25" step="0.5" class="input-aggregation">
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label for="category">
-                            <span data-i18n="label_category">Categoria</span>
-                            <span class="info-icon" data-i18n-tooltip="tooltip_category">?</span>
-                        </label>
-                        <select id="category" multiple></select>
+                    <div class="tech-head">
+                        <span class="tech-led"></span>
+                        <span class="tech-kicker">Monitoramento Ativo</span>
+                        <span class="tech-counter"><span id="slideIndex">01</span> / <span id="slideTotal">06</span></span>
                     </div>
 
-                    <div class="filter-apply">
-                        <button class="btn-apply disabled" id="btn-apply" disabled>
-                            <i data-lucide="check-circle" class="icon-sm"></i>
-                            <span data-i18n="btn_apply">Aplicar mudanças</span>
-                        </button>
+                    <!-- Valores Dinâmicos -->
+                    <div id="dataContent" class="fade-enter-active">
+                        <h2 id="dataNumber" class="hero-number">1.216.457</h2>
+                        <p id="dataLabel" class="hero-label">Notícias processadas no acervo</p>
                     </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Executive summary -->
-        <main class="main-content" id="metrics">
-            <!-- Container left: grades histogram -->
-             <div class="card metric-card">
-                <div class="card-header">
-                    <div>    
-                        <div class="card-header-title-group">
-                            <h3 data-i18n="chart_histogram_title">Frequência de notas</h3>
-                            <span class="info-icon" data-i18n-tooltip="tooltip_histogram">?</span>
-                        </div>
+                    <div class="tech-foot">
+                        <span class="tech-hint">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            Clique ou aguarde
+                        </span>
+                        <span class="tech-nodes"><i></i><i></i><i></i></span>
                     </div>
-                    <i data-lucide="chart-no-axes-column" class="card-icon"></i>
-                </div>
-                <div class="card-desc">
-                    <span data-i18n="chart_histogram_desc">Distribuição do sentimento das notícias</span>
-                </div>
-                <div class="card-body">
-                    <div class="canvas-container skeleton">
-                        <div class="skeleton-overlay">
-                            <div class="css-spinner"></div>
-                            <span data-i18n="loading_data">Carregando...</span>
-                        </div>
 
-                        <canvas id="gradesChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Container center: quantity of news -->
-            <div class="card metric-card">
-                <div class="card-header">
-                    <div class="card-header-title-group">
-                        <h3 data-i18n="chart_volume_title">Quantidade de notícias</h3>
-                        <span class="info-icon" data-i18n-tooltip="tooltip_volume">?</span>
-                    </div>
-                    
-                    <i data-lucide="chart-spline" class="card-icon"></i>
+                    <!-- Linha do tempo (avanço automático a cada 10s) -->
+                    <div class="tech-timeline"><div id="timelineFill" class="tech-timeline-fill"></div></div>
                 </div>
 
-                <div class="card-desc">
-                    <span id="total-news">...</span>
-                </div>
+                <!-- Conector tipo trilha de circuito -->
+                <div class="circuit-link"><span class="circuit-node"></span></div>
 
-                <div class="card-body">
-                    <div class="canvas-container skeleton">
-                        <div class="skeleton-overlay">
-                            <div class="css-spinner"></div>
-                            <span data-i18n="loading_data">Carregando...</span>
-                        </div>
-                        
-                        <canvas id="volumeChart"></canvas>
+                <!-- Novas caixas: indicadores reais -->
+                <div class="mini-grid">
+                    <div class="tech-card mini-card">
+                        <span class="tech-corner tl"></span><span class="tech-corner br"></span>
+                        <span class="mini-label">Nota média · Brasil</span>
+                        <span class="mini-value">4.19 <span class="mini-unit">/ 7</span></span>
+                        <span class="mini-sub">Imagem neutra</span>
+                    </div>
+                    <div class="tech-card mini-card">
+                        <span class="tech-corner tl"></span><span class="tech-corner br"></span>
+                        <span class="mini-label">Idioma predominante</span>
+                        <span class="mini-value">ES <span class="mini-unit">69%</span></span>
+                        <span class="mini-sub">Espanhol</span>
+                    </div>
+                    <div class="tech-card mini-card">
+                        <span class="tech-corner tl"></span><span class="tech-corner br"></span>
+                        <span class="mini-label">Atualizado até</span>
+                        <span class="mini-value">12 <span class="mini-unit">jan 26</span></span>
+                        <span class="mini-sub">Cobertura contínua</span>
                     </div>
                 </div>
-            </div>
 
-            <!-- Container direita: gauge -->
-            <div class="card metric-card">
-                <div class="card-header">
-                    <div class="card-header-title-group">
-                        <h3 data-i18n="chart_gauge_title">FGV IMídIA</h3>
-                        <span class="info-icon" data-i18n-tooltip="tooltip_gauge">?</span>
-                    </div>
-                    <i data-lucide="gauge" class="card-icon"></i>
-                </div>
-                <div class="card-body centered">
-                    <div class="gauge-wrapper skeleton">
-                        <div class="skeleton-overlay">
-                            <div class="css-spinner"></div>
-                            <span data-i18n="loading_data">Carregando...</span>
-                        </div>
-
-                        <canvas id="gaugeChart"></canvas>
-                        <div id="gaugeValueText" class="gauge-value-text">0.0</div>
-                        <div id="gaugeDescription" class="gauge-description"> </div>
-                    </div>
-                    <p class="gauge-footer">
-                        <i data-lucide="clock" class="icon-xs"></i> <span data-i18n="last_update">Atualizado a cada 30min</span>
-                    </p>
-                </div>
             </div>
         </main>
-        
-        <!-- Container evolução temporal -->
-        <section class="evolution-section" id="evolution">
-            <div class="card full-width-card">
-                <div class="card-header-row">
-                    <div>
-                        <div class="card-header-title-group">
-                            <h3 id="evolution-title">FGV IMídIA</h3>
-                            <span class="info-icon" data-i18n-tooltip="tooltip_evolution">?</span>
-                        </div>
-                        <p class="card-desc" id="evolution-subtitle">
-                            ...
-                        </p>
-                    </div>
-                    <div class="chart-controls">
-                        <button id="resetZoomBtn" class="reset-btn">
-                            <i data-lucide="rotate-ccw" class="icon-xs"></i> <span data-i18n="btn_reset">Redefinir</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="line-chart-container skeleton">    
-                    <div class="skeleton-overlay">
-                        <div class="css-spinner"></div>
-                        <span data-i18n="loading_data">Carregando...</span>
-                    </div>
-                    
-                    <canvas id="lineChart"></canvas>
-                </div>
-            </div>
-        </section>
 
         <!-- Footer -->
-        <footer class="dashboard-footer">
-            <div class="footer-content">
-                <p>
-                    &copy; 2026 <a href="https://dint.fgv.br/" target="_blank" class="link_dint_site">Diretoria Internacional da Fundação Getulio Vargas</a>
-                </p>
-                <p class="sub-footer">
-                    <span data-i18n="footer_description">Em desenvolvimento • </span>
-                    <a href="mailto:international.affairs@fgv.br" class="link_to_email">international.affairs@fgv.br</a>
-                </p>
-            </div>
+        <footer class="w-full flex justify-between text-xs text-slate-600 font-mono">
+            <p>FGV Diretoria Internacional</p>
+            <p>COBERTURA: AGO 2024 — JAN 2026 • SISTEMA ONLINE</p>
         </footer>
-    </div>
 
-    <!-- Pop-up drill-down de noticias -->
-     <div id="chart-popup" class="chart-popup hidden">
-        <div class="popup-content">
-            <p><span data-i18n="popup_text">Entenda o IMíd.IA de</span> <span id="popup-date">--</span>?</p>
-            <div class="popup-actions">
-                <button id="popup-confirm" class="btn-confirm" data-i18n="btn_view_news">Veja as notícias</button>
-                <button id="popup-cancel" class="btn-cancel" data-i18n="btn_cancel">Cancelar</button>
-            </div>
-        </div>
-        <div class="popup-arrow"></div>
     </div>
 </body>
-
 </html>
