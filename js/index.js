@@ -1,13 +1,4 @@
-/*
-    Landing page "Dado Concreto" — globo 3D + cartão de estatísticas.
-    Todos os números abaixo são REAIS, extraídos do banco Neon (jun/2026).
-    Eles são preenchidos manualmente aqui; não se atualizam sozinhos quando
-    o banco muda (atualização futura, quando os dados forem renovados).
-*/
-
-// ----------------------------------------------------------------------------
-// 1. ESTATÍSTICAS REAIS (cartão rotativo)
-// ----------------------------------------------------------------------------
+// Cartão rotativo: estatistica real, mas atualizada manualmente
 const stats = [
     { number: "1.216.457", label: "Notícias processadas no acervo" },
     { number: "1.957.973", label: "Análises geradas por I.A." },
@@ -17,11 +8,8 @@ const stats = [
     { number: "504",       label: "Dias de cobertura contínua" }
 ];
 
-// ----------------------------------------------------------------------------
-// 2. PAÍSES MONITORADOS (centróides aproximados + código ISO de 3 letras)
-//    O Brasil é o HUB: o sujeito do indicador (imagem do Brasil no exterior).
-//    As "linhas" partem das fontes pelo mundo e convergem para o Brasil.
-// ----------------------------------------------------------------------------
+// Países monitorados. Centróides aproximados + código ISO
+// Brasil é HUB: imagem do Brasil no exterior
 const COUNTRIES = {
     BRA: { lat: -10.0, lng: -53.0,  name: "Brasil" },
     ARG: { lat: -38.4, lng: -63.6,  name: "Argentina" },
@@ -42,20 +30,17 @@ const COUNTRIES = {
     AUS: { lat: -25.3, lng: 133.8,  name: "Austrália" }
 };
 
-const HUB = "BRA";  // o ente avaliado: o Brasil
+const HUB = "BRA";
 const SOURCES = Object.keys(COUNTRIES).filter(c => c !== HUB);
 
-const HEX_BASE   = "rgba(125,170,240,0.16)";  // pontos em repouso — sutil (como a grade dos cards)
-const HEX_ACTIVE = "rgba(96,165,250,0.82)";   // país aceso (linha presente) — azul médio
-const HEX_HUB    = "rgba(188,224,255,0.97)";  // Brasil (sempre aceso) — azul-claro luminoso, distinto dos acesos
+const HEX_BASE   = "rgba(125,170,240,0.16)";
+const HEX_ACTIVE = "rgba(96,165,250,0.82)";
+const HEX_HUB    = "rgba(188,224,255,0.97)";
 
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ------------------------------------------------------------------------
-    // CARTÃO ROTATIVO DE DADOS — avança por clique OU a cada 10s,
-    // com uma "linha do tempo" que mostra o tempo passando.
-    // ------------------------------------------------------------------------
+    // Cartao rotativo de dados
     const SLIDE_MS = 10000;
     let currentIndex = 0;
     let slideTimer = null;
@@ -119,11 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         dataCard.addEventListener('click', () => {
             nextStat();
-            startAutoplay();   // reinicia a contagem de 10s após o clique
+            startAutoplay();   // reinicia contagem de 10s após clique
         });
     }
 
-    // Redireciona para a Sala de Situação (painel de gráficos)
+    // Redireciona para Sala de Situação
     if (btnEnterDashboard) {
         btnEnterDashboard.addEventListener('click', () => {
             window.location.href = "dashboard.html";
@@ -131,27 +116,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // ------------------------------------------------------------------------
     // GLOBO 3D
-    // ------------------------------------------------------------------------
     const globeContainer = document.getElementById("globeViz");
     if (!globeContainer) return;
 
     let countryFeatures = [];
 
-    // Contagem de "linhas" ativas por país (>0 => aceso). Permite que vários
-    // arcos sobre o mesmo país não apaguem antes da hora.
+    // Contagem de linhas ativas por país (>0 => aceso)
+    // Permite que vários arcos sobre o mesmo país não apaguem antes da hora
     const highlightCounts = new Map();
 
-    // Código ISO confiável: o dataset do globe.gl marca alguns países como
-    // "-99" em ISO_A3; nesse caso caímos para ADM0_A3.
+    // dataset do globe.gl marca alguns países como "-99" em ISO_A3. Código correto em ADM0_A3
     function isoOf(props) {
         const a = props.ISO_A3;
         return (a && a !== "-99") ? a : props.ADM0_A3;
     }
 
     function refreshPolygons() {
-        // Reaplica o accessor de cor dos pontos para forçar a re-renderização.
         world.hexPolygonColor(world.hexPolygonColor());
     }
 
@@ -174,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .atmosphereColor("#3b82f6")
         .atmosphereAltitude(0.13)
 
-        // Países como GRADE DE PONTOS
+        // Países como grade de pontos
         .hexPolygonsData([])
         .hexPolygonResolution(3)
         .hexPolygonMargin(0.4)
@@ -198,14 +179,14 @@ document.addEventListener('DOMContentLoaded', () => {
         .arcDashAnimateTime(d => d.flightTime)
         .arcsTransitionDuration(0)
 
-        // Pulsos de radar (rings) nos pontos monitorados
+        // Pulsos de radar nos pontos monitorados
         .ringColor(d => d.color)
         .ringMaxRadius(d => d.maxR)
         .ringPropagationSpeed(d => d.speed)
         .ringRepeatPeriod(d => d.period)
         .ringAltitude(0.006);
 
-    // Esfera escura sutil (os pontos flutuam sobre ela)
+    // Esfera escura. Pontos flutuam sobre ela
     const globeMaterial = world.globeMaterial();
     globeMaterial.color.set("#060c1c");
     globeMaterial.transparent = true;
@@ -216,9 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     world.width(globeContainer.clientWidth);
     world.height(globeContainer.clientHeight);
 
-    // ------------------------------------------------------------------------
-    // PULSOS DE RADAR (rings) — pulso contínuo no Brasil + pulso na chegada
-    // ------------------------------------------------------------------------
+    // Pulso de radar: contínuo no Brasil, e na chegada nos outros paises
     let rings = [{
         lat: COUNTRIES[HUB].lat, lng: COUNTRIES[HUB].lng,
         maxR: 4, speed: 2.5, period: 2200,
@@ -235,15 +214,13 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { rings = rings.filter(r => r !== ring); world.ringsData(rings); }, 1300);
     }
 
-    // ------------------------------------------------------------------------
-    // EMISSÃO DE ARCOS (linhas de dados) ligada aos destaques e aos pulsos
-    // ------------------------------------------------------------------------
+    // Linhas de dados ligadas aos destaques e aos pulsos
     let arcsData = [];
 
     function spawnArc() {
         if (countryFeatures.length === 0) return;
 
-        // 70% das linhas convergem para o Brasil; 30% ligam outros pares.
+        // 70% das linhas convergem para o Brasil; 30% ligam outros pares
         const toHub = Math.random() < 0.7;
         const srcIso = SOURCES[Math.floor(Math.random() * SOURCES.length)];
         let dstIso = HUB;
@@ -267,16 +244,16 @@ document.addEventListener('DOMContentLoaded', () => {
         arcsData = [...arcsData, arc];
         world.arcsData(arcsData);
 
-        // a linha está saindo da origem -> acende a origem
+        // linha saindo da origem -> acende a origem
         lightUp(srcIso);
 
         // chegada ao destino
         setTimeout(() => {
-            lightDown(srcIso);                       // a linha deixou a origem
-            if (dstIso !== HUB) lightUp(dstIso);     // a linha entrou no destino
+            lightDown(srcIso);                       // linha deixa origem
+            if (dstIso !== HUB) lightUp(dstIso);     // linha entra destino
             pingRing(dst);                           // pulso de radar na chegada
 
-            // remove o arco e apaga o destino depois de um breve brilho
+            // remove o arco e apaga o destino
             setTimeout(() => {
                 arcsData = arcsData.filter(a => a !== arc);
                 world.arcsData(arcsData);
@@ -287,7 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, flightTime);
     }
 
-    // GeoJSON dos países
     fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
         .then(res => res.json())
         .then(countries => {
@@ -295,14 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
             world.hexPolygonsData(countryFeatures);
             world.ringsData(rings);
 
-            // dispara as linhas só depois de termos os pontos para acender
             spawnArc();
             setInterval(spawnArc, 1000);
         });
 
-    // ------------------------------------------------------------------------
-    // CÂMARA, ROTAÇÃO E INTERATIVIDADE
-    // ------------------------------------------------------------------------
+    // Câmera, rotação e interatividade
     world.pointOfView({ lat: 2, lng: -45, altitude: 1 }, 0);
 
     world.controls().autoRotate = true;
@@ -311,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
     world.controls().enableDamping = true;
     world.controls().dampingFactor = 0.05;
 
-    // Inércia: mantém o sentido da rotação após o arrasto do rato
+    // Inércia após arrastar mouse
     let lastAzimuthalAngle = 0;
 
     world.controls().addEventListener('start', () => {
@@ -336,3 +309,4 @@ document.addEventListener('DOMContentLoaded', () => {
         world.height(globeContainer.clientHeight);
     });
 });
+
