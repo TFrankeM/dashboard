@@ -1408,3 +1408,64 @@ input:checked + .slider:before {
     }
     .chart-controls { width: 100%; justify-content: flex-end; }
 }
+
+/* ===== News drawer (quick read of a clicked chart point) ===== */
+.news-drawer { position: fixed; inset: 0; z-index: 1200; }
+.news-drawer.hidden { display: none; }
+body.drawer-open { overflow: hidden; }
+
+.drawer-backdrop { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.45); }
+.drawer-panel {
+    position: absolute; top: 0; right: 0; height: 100%;
+    width: min(440px, 92vw);
+    background: #fff;
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.18);
+    display: flex; flex-direction: column;
+    animation: drawerIn 0.25s ease;
+}
+@keyframes drawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+/* Left-edge handle to resize the panel width */
+.drawer-resize { position: absolute; top: 0; left: 0; width: 8px; height: 100%; cursor: ew-resize; z-index: 3; }
+.drawer-resize::after {
+    content: ""; position: absolute; top: 0; left: 0; width: 2px; height: 100%;
+    background: transparent; transition: background 0.15s;
+}
+.drawer-resize:hover::after, body.drawer-resizing .drawer-resize::after { background: var(--fgv-blue-light, #008BC9); }
+body.drawer-resizing { user-select: none; cursor: ew-resize; }
+
+.drawer-header {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: 18px 20px; border-bottom: 1px solid #e5e7eb;
+}
+.drawer-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--fgv-blue-dark, #003A79); }
+.drawer-header h3 { margin: 3px 0 0; font-size: 1.05rem; color: #0f172a; }
+.drawer-meta { margin: 2px 0 0; font-size: 0.8rem; color: #64748b; }
+.drawer-close { border: none; background: transparent; cursor: pointer; color: #64748b; padding: 4px; border-radius: 6px; line-height: 0; }
+.drawer-close:hover { background: #f1f5f9; color: #0f172a; }
+
+.drawer-toolbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 20px; border-bottom: 1px solid #eef2f7;
+}
+.drawer-sort { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #475569; }
+.drawer-sort select { font-size: 0.8rem; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; cursor: pointer; }
+.drawer-open-full { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; font-weight: 600; color: var(--fgv-blue-dark, #003A79); background: none; border: none; cursor: pointer; }
+.drawer-open-full i { width: 14px; height: 14px; }
+
+.drawer-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.drawer-state { color: #64748b; font-size: 0.85rem; text-align: center; padding: 30px 10px; }
+
+.news-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; transition: box-shadow 0.2s; }
+.news-card:hover { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06); }
+.news-card-head { display: flex; gap: 10px; }
+.grade-chip { flex: none; width: 30px; height: 30px; border-radius: 8px; color: #fff; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
+.news-headline { margin: 0; font-size: 0.92rem; line-height: 1.3; color: #0f172a; }
+.news-meta { margin: 3px 0 0; font-size: 0.72rem; color: #64748b; }
+.news-analysis { margin: 10px 0 0; font-size: 0.82rem; line-height: 1.45; color: #334155; }
+.news-analysis.clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.news-card-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.read-more { background: none; border: none; padding: 0; cursor: pointer; font-size: 0.76rem; font-weight: 600; color: var(--fgv-blue-dark, #003A79); }
+.news-original { display: inline-flex; align-items: center; gap: 3px; font-size: 0.76rem; color: #64748b; text-decoration: none; }
+.news-original:hover { color: var(--fgv-blue-dark, #003A79); }
+.news-original i { width: 13px; height: 13px; }

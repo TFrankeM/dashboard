@@ -268,16 +268,37 @@
         </footer>
     </div>
 
-    <!-- Pop-up drill-down de noticias -->
-     <div id="chart-popup" class="chart-popup hidden">
-        <div class="popup-content">
-            <p><span data-i18n="popup_text">Entenda o IIBEx de</span> <span id="popup-date">--</span>?</p>
-            <div class="popup-actions">
-                <button id="popup-confirm" class="btn-confirm" data-i18n="btn_view_news">Veja as notícias</button>
-                <button id="popup-cancel" class="btn-cancel" data-i18n="btn_cancel">Cancelar</button>
+    <!-- News drawer: quick read of a clicked chart point -->
+    <div id="news-drawer" class="news-drawer hidden" aria-hidden="true">
+        <div class="drawer-backdrop" data-drawer-close></div>
+        <aside class="drawer-panel" role="dialog" aria-modal="true">
+            <div class="drawer-resize" data-drawer-resize aria-hidden="true"></div>
+            <header class="drawer-header">
+                <div>
+                    <span class="drawer-eyebrow" data-i18n="drawer_heading">Notícias do ponto</span>
+                    <h3 id="drawer-date">--</h3>
+                    <p id="drawer-meta" class="drawer-meta"></p>
+                </div>
+                <button id="drawer-close" class="drawer-close" data-drawer-close aria-label="Fechar">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <div class="drawer-toolbar">
+                <label class="drawer-sort">
+                    <span data-i18n="drawer_sort_label">Ordenar</span>
+                    <select id="drawer-sort">
+                        <option value="grade-desc" data-i18n="sort_grade_desc">Maior nota</option>
+                        <option value="grade-asc" data-i18n="sort_grade_asc">Menor nota</option>
+                        <option value="date-desc" data-i18n="sort_date_desc">Mais recente</option>
+                    </select>
+                </label>
+                <button id="drawer-open-full" class="drawer-open-full">
+                    <span data-i18n="drawer_open_full">Ver tabela completa</span>
+                    <i data-lucide="arrow-up-right"></i>
+                </button>
             </div>
-        </div>
-        <div class="popup-arrow"></div>
+            <div id="drawer-body" class="drawer-body"></div>
+        </aside>
     </div>
 </body>
 

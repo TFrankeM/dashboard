@@ -1,4 +1,4 @@
-import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships } from "./api_adapter.js";
+import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships, fetchDetailsData } from "./api_adapter.js";
 import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, clearLineChartSelection } from "./charts.js";
 import { DICTIONARY } from "./i18n.js";
 
@@ -804,31 +804,15 @@ function processAndUpdateLineChart(apiData) {
     const confirmPopup = document.getElementById("chart-popup");
     const popupDateSpan = document.getElementById("popup-date");
 
-    const handlePointClick = (index, event, popupCoords) => {
-        const rawDateISO = sortedDates[index];
-        const startDateObj = new Date(rawDateISO);
+    const handlePointClick = (index) => {
+        const startDateObj = new Date(sortedDates[index]);
         const aggHours = parseFloat(appState.aggregation) || 24;
-        const endDateObj = new Date(startDateObj.getTime() + (aggHours * 60 * 60 * 1000));
-        
-        currentClickedDate = { 
+        currentClickedDate = {
             startDate: startDateObj.toISOString(),
-            endDate: endDateObj.toISOString(),
+            endDate: new Date(startDateObj.getTime() + aggHours * 3600 * 1000).toISOString(),
             aggregation: aggHours
         };
-
-        if (tooltipDates && popupDateSpan) {
-            popupDateSpan.textContent = tooltipDates[index];
-        }
-        
-        if (confirmPopup) {
-            const x = popupCoords ? popupCoords.x : event.native.clientX;
-            confirmPopup.style.left = `${x}px`;
-            confirmPopup.classList.remove("hidden");
-
-            const popupHeight = confirmPopup.offsetHeight;
-            const y = popupCoords ? popupCoords.y - popupHeight : event.native.clientY - popupHeight - 10;
-            confirmPopup.style.top = `${y}px`;
-        }
+        openNewsDrawer(tooltipDates ? tooltipDates[index] : "");
     };
 
     drawLineChart(lineChartCanvas, axisLabels, datasets, handlePointClick, {
@@ -837,6 +821,134 @@ function processAndUpdateLineChart(apiData) {
         tooltipNews: t("chart_line_tooltip_count"),
         originalDates: tooltipDates
     });
+}
+
+// ===== News drawer: quick read of the clicked point =====
+const GRADE_COLORS = ["#b91c1c", "#ef4444", "#fdae61", "#cbd5e1", "#84cc16", "#22c55e", "#15803d"];
+
+function gradeColor(g) {
+    const i = Math.min(7, Math.max(1, Math.round(g))) - 1;
+    return GRADE_COLORS[i] || "#cbd5e1";
+}
+
+function formatDrawerDate(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso || "";
+    return d.toLocaleString(CURRENT_LANG, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+}
+
+// Reuse the current filters to deep-link into the full details table
+function detailsUrlParams() {
+    const p = new URLSearchParams();
+    p.append("startDate", currentClickedDate.startDate);
+    p.append("endDate", currentClickedDate.endDate);
+    p.append("aggregation", appState.aggregation);
+    p.append("evaluatorEntity", appState.evaluatorEntity);
+    p.append("evaluatedEntity", appState.evaluatedEntity);
+    (appState.category || []).forEach(c => p.append("category", c));
+    return p.toString();
+}
+
+function newsCardHTML(n) {
+    const g = Number(n.grade);
+    const gradeLabel = isNaN(g) ? "–" : (g % 1 === 0 ? g : g.toFixed(1));
+    const analysis = n.analysis || "";
+    const long = analysis.length > 180;
+    const meta = [n.source, formatDrawerDate(n.date), n.category].filter(Boolean).map(escapeHtml).join(" · ");
+    return `
+        <article class="news-card">
+            <div class="news-card-head">
+                <span class="grade-chip" style="background:${gradeColor(g)}">${gradeLabel}</span>
+                <div>
+                    <h4 class="news-headline">${escapeHtml(n.headline || "—")}</h4>
+                    <p class="news-meta">${meta}</p>
+                </div>
+            </div>
+            ${analysis ? `<p class="news-analysis${long ? " clamp" : ""}">${escapeHtml(analysis)}</p>` : ""}
+            <div class="news-card-actions">
+                ${long ? `<button type="button" class="read-more">${t("read_more")}</button>` : "<span></span>"}
+                ${n.url ? `<a class="news-original" href="${encodeURI(n.url)}" target="_blank" rel="noopener">${t("read_original")} <i data-lucide="arrow-up-right"></i></a>` : ""}
+            </div>
+        </article>`;
+}
+
+async function loadDrawerNews(sort) {
+    const body = document.getElementById("drawer-body");
+    const meta = document.getElementById("drawer-meta");
+    if (!body || !currentClickedDate) return;
+    body.innerHTML = `<p class="drawer-state">${t("loading_data")}</p>`;
+
+    const [field, dir] = (sort || "grade-desc").split("-");
+    const res = await fetchDetailsData({
+        evaluator: appState.evaluatorEntity,
+        evaluated: appState.evaluatedEntity,
+        category: appState.category,
+        startDate: currentClickedDate.startDate,
+        endDate: currentClickedDate.endDate,
+        sort_by: field === "date" ? "date" : "grade",
+        sort_dir: (dir || "desc").toUpperCase(),
+        limit: 50,
+        offset: 0
+    });
+
+    const list = (res && res.data) || [];
+    const total = (res && res.total_count) || list.length;
+    if (meta) meta.textContent = `${total > list.length ? `${list.length}/${total}` : total} ${t("drawer_count_label")}`;
+
+    body.innerHTML = list.length ? list.map(newsCardHTML).join("") : `<p class="drawer-state">${t("drawer_empty")}</p>`;
+    if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+function openNewsDrawer(dateLabel) {
+    const drawer = document.getElementById("news-drawer");
+    if (!drawer || !currentClickedDate) return;
+    document.getElementById("drawer-date").textContent = dateLabel || formatDrawerDate(currentClickedDate.startDate);
+    drawer.classList.remove("hidden");
+    drawer.setAttribute("aria-hidden", "false");
+    document.body.classList.add("drawer-open");
+    const sort = document.getElementById("drawer-sort");
+    loadDrawerNews(sort ? sort.value : "grade-desc");
+}
+
+function closeNewsDrawer() {
+    const drawer = document.getElementById("news-drawer");
+    if (!drawer) return;
+    drawer.classList.add("hidden");
+    drawer.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("drawer-open");
+}
+
+// Drag the left edge to resize the panel; cards reflow to the new width
+function initDrawerResize() {
+    const handle = document.querySelector(".drawer-resize");
+    const panel = document.querySelector(".drawer-panel");
+    if (!handle || !panel) return;
+    const MIN = 320;
+    let dragging = false;
+
+    handle.addEventListener("pointerdown", (e) => {
+        dragging = true;
+        handle.setPointerCapture(e.pointerId);
+        document.body.classList.add("drawer-resizing");
+        e.preventDefault();
+    });
+    handle.addEventListener("pointermove", (e) => {
+        if (!dragging) return;
+        const max = Math.min(window.innerWidth * 0.92, 900);
+        panel.style.width = `${Math.min(max, Math.max(MIN, window.innerWidth - e.clientX))}px`;
+    });
+    const stop = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+        document.body.classList.remove("drawer-resizing");
+    };
+    handle.addEventListener("pointerup", stop);
+    handle.addEventListener("pointercancel", stop);
 }
 
 async function updateDashboard() {
@@ -1013,34 +1125,28 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    const popupCancel = document.getElementById("popup-cancel");
-    if (popupCancel) {
-        popupCancel.addEventListener("click", () => {
-            if (confirmPopup) confirmPopup.classList.add("hidden");
+    const newsDrawer = document.getElementById("news-drawer");
+    if (newsDrawer) {
+        initDrawerResize();
+        newsDrawer.querySelectorAll("[data-drawer-close]").forEach(el => el.addEventListener("click", closeNewsDrawer));
+
+        const drawerSort = document.getElementById("drawer-sort");
+        if (drawerSort) drawerSort.addEventListener("change", () => loadDrawerNews(drawerSort.value));
+
+        const openFull = document.getElementById("drawer-open-full");
+        if (openFull) openFull.addEventListener("click", () => {
+            if (currentClickedDate) window.open(`details.html?${detailsUrlParams()}`, "_blank");
         });
-    }
 
-    const popupConfirm = document.getElementById("popup-confirm");
-    if (popupConfirm) {
-        popupConfirm.addEventListener("click", () => {
-            if (!currentClickedDate) {
-                return;
-            }
-
-            const params = new URLSearchParams();
-            params.append("startDate", currentClickedDate.startDate);
-            params.append("endDate", currentClickedDate.endDate);
-            params.append("aggregation", appState.aggregation);
-            params.append("evaluatorEntity", appState.evaluatorEntity);
-            params.append("evaluatedEntity", appState.evaluatedEntity);
-
-            if (appState.category) {
-                appState.category.forEach(c => params.append("category", c));
-            }
-
-            window.open(`details.html?${params.toString()}`, "_blank");
-            if (confirmPopup) confirmPopup.classList.add("hidden");
+        // Toggle the "read more" clamp on each card
+        document.getElementById("drawer-body").addEventListener("click", (e) => {
+            const btn = e.target.closest(".read-more");
+            if (!btn) return;
+            const clamped = btn.closest(".news-card").querySelector(".news-analysis").classList.toggle("clamp");
+            btn.textContent = clamped ? t("read_more") : t("read_less");
         });
+
+        document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeNewsDrawer(); });
     }
 
     initializeFilters();
