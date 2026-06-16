@@ -45,9 +45,9 @@ const COUNTRIES = {
 const HUB = "BRA";  // o ente avaliado: o Brasil
 const SOURCES = Object.keys(COUNTRIES).filter(c => c !== HUB);
 
-const colorBaseCountry      = "#0f172a";  // país em repouso
-const colorActiveCountry    = "#fbbf24";  // país aceso (linha presente)
-const colorHubCountry       = "#10b981";  // Brasil (sempre aceso)
+const HEX_BASE   = "rgba(125,170,240,0.16)";  // pontos em repouso — sutil (como a grade dos cards)
+const HEX_ACTIVE = "rgba(96,165,250,0.82)";   // país aceso (linha presente) — azul médio
+const HEX_HUB    = "rgba(188,224,255,0.97)";  // Brasil (sempre aceso) — azul-claro luminoso, distinto dos acesos
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -151,8 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function refreshPolygons() {
-        // Reaplica o accessor de cor para forçar a re-renderização.
-        world.polygonCapColor(world.polygonCapColor());
+        // Reaplica o accessor de cor dos pontos para forçar a re-renderização.
+        world.hexPolygonColor(world.hexPolygonColor());
     }
 
     function lightUp(iso) {
@@ -171,47 +171,72 @@ document.addEventListener('DOMContentLoaded', () => {
         .backgroundColor("rgba(0,0,0,0)")
         .showGlobe(true)
         .showAtmosphere(true)
-        .atmosphereColor("#1e40af")
-        .atmosphereAltitude(0.25)
+        .atmosphereColor("#3b82f6")
+        .atmosphereAltitude(0.13)
 
-        // continentes
-        .polygonCapColor(d => {
+        // Países como GRADE DE PONTOS
+        .hexPolygonsData([])
+        .hexPolygonResolution(3)
+        .hexPolygonMargin(0.4)
+        .hexPolygonUseDots(true)
+        .hexPolygonAltitude(0.004)
+        .hexPolygonColor(d => {
             const iso = isoOf(d.properties);
-            if (iso === HUB) return colorHubCountry;            // Brasil sempre aceso
-            if (highlightCounts.has(iso)) return colorActiveCountry;
-            return colorBaseCountry;
+            if (iso === HUB) return HEX_HUB;            // Brasil sempre aceso
+            if (highlightCounts.has(iso)) return HEX_ACTIVE;
+            return HEX_BASE;
         })
-        .polygonsTransitionDuration(700)
-        .polygonSideColor(() => "rgba(15, 23, 42, 0.7)")
-        .polygonStrokeColor(() => "#1e3a8a")
+        .hexPolygonsTransitionDuration(400)
 
-        // arcos (as "linhas" de dados)
+        // Linhas de dados
         .arcColor("color")
-        .arcStroke(0.6)
-        .arcAltitudeAutoScale(0.45)
-        .arcDashLength(0.4)
-        .arcDashGap(4)
+        .arcStroke(0.3)
+        .arcAltitudeAutoScale(0.4)
+        .arcDashLength(0.5)
+        .arcDashGap(2.5)
         .arcDashInitialGap(() => 1)
         .arcDashAnimateTime(d => d.flightTime)
-        .arcsTransitionDuration(0);
+        .arcsTransitionDuration(0)
 
-    // oceano
-    const oceanMaterial = world.globeMaterial();
-    oceanMaterial.color.set("#0f172a");
-    oceanMaterial.transparent = true;
-    oceanMaterial.opacity = 0.05;
-    oceanMaterial.shininess = 0;
-    oceanMaterial.specular.set("#000000");
+        // Pulsos de radar (rings) nos pontos monitorados
+        .ringColor(d => d.color)
+        .ringMaxRadius(d => d.maxR)
+        .ringPropagationSpeed(d => d.speed)
+        .ringRepeatPeriod(d => d.period)
+        .ringAltitude(0.006);
+
+    // Esfera escura sutil (os pontos flutuam sobre ela)
+    const globeMaterial = world.globeMaterial();
+    globeMaterial.color.set("#060c1c");
+    globeMaterial.transparent = true;
+    globeMaterial.opacity = 0.95;
+    globeMaterial.shininess = 0;
+    globeMaterial.specular.set("#000000");
 
     world.width(globeContainer.clientWidth);
     world.height(globeContainer.clientHeight);
 
     // ------------------------------------------------------------------------
-    // EMISSÃO DE ARCOS conectada aos destaques de país
-    //   - ao surgir, a ORIGEM acende (a linha está saindo dela);
-    //   - ao chegar (após flightTime), a origem APAGA e o DESTINO acende;
-    //   - pouco depois o arco é removido e o destino apaga.
-    //   O Brasil (HUB) permanece sempre aceso, como sujeito do indicador.
+    // PULSOS DE RADAR (rings) — pulso contínuo no Brasil + pulso na chegada
+    // ------------------------------------------------------------------------
+    let rings = [{
+        lat: COUNTRIES[HUB].lat, lng: COUNTRIES[HUB].lng,
+        maxR: 4, speed: 2.5, period: 2200,
+        color: t => `rgba(188,224,255,${Math.sqrt(1 - t) * 0.4})`
+    }];
+
+    function pingRing(c) {
+        const ring = {
+            lat: c.lat, lng: c.lng, maxR: 3, speed: 3.2, period: 9e9,
+            color: t => `rgba(96,165,250,${(1 - t) * 0.55})`
+        };
+        rings = [...rings, ring];
+        world.ringsData(rings);
+        setTimeout(() => { rings = rings.filter(r => r !== ring); world.ringsData(rings); }, 1300);
+    }
+
+    // ------------------------------------------------------------------------
+    // EMISSÃO DE ARCOS (linhas de dados) ligada aos destaques e aos pulsos
     // ------------------------------------------------------------------------
     let arcsData = [];
 
@@ -235,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const arc = {
             startLat: src.lat, startLng: src.lng,
             endLat: dst.lat,   endLng: dst.lng,
-            color: ["#fbbf24", dstIso === HUB ? "#34d399" : "#60a5fa"],
+            color: ["rgba(96,165,250,0)", "rgba(147,197,253,0.9)"],
             flightTime
         };
 
@@ -249,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             lightDown(srcIso);                       // a linha deixou a origem
             if (dstIso !== HUB) lightUp(dstIso);     // a linha entrou no destino
+            pingRing(dst);                           // pulso de radar na chegada
 
             // remove o arco e apaga o destino depois de um breve brilho
             setTimeout(() => {
@@ -266,17 +292,18 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(countries => {
             countryFeatures = countries.features;
-            world.polygonsData(countryFeatures);
+            world.hexPolygonsData(countryFeatures);
+            world.ringsData(rings);
 
-            // dispara as linhas só depois de termos os polígonos para acender
+            // dispara as linhas só depois de termos os pontos para acender
             spawnArc();
-            setInterval(spawnArc, 850);
+            setInterval(spawnArc, 1000);
         });
 
     // ------------------------------------------------------------------------
     // CÂMARA, ROTAÇÃO E INTERATIVIDADE
     // ------------------------------------------------------------------------
-    world.pointOfView({ lat: 2, lng: -45, altitude: 2.4 }, 0);
+    world.pointOfView({ lat: 2, lng: -45, altitude: 1 }, 0);
 
     world.controls().autoRotate = true;
     world.controls().autoRotateSpeed = 0.25;
