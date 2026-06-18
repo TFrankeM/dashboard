@@ -1204,40 +1204,49 @@ document.addEventListener("DOMContentLoaded", function () {
     const sections = document.querySelectorAll("header, section, main");
     const confirmPopup = document.getElementById("chart-popup");
 
-    window.addEventListener("scroll", () => {
+    // Compact-header thresholds. The gap between them is hysteresis: shrinking the
+    // header reflows content and nudges scrollY, which with a single threshold would
+    // re-cross it and oscillate ("pulsing"). COMPACT_ON also sits past the header
+    // height so it collapses off-screen, never leaving a blank strip above the filters.
+    const COMPACT_ON = 110;
+    const COMPACT_OFF = 40;
+    let scrollTicking = false;
+
+    const onScrollFrame = () => {
+        scrollTicking = false;
         const scrollY = window.scrollY;
 
-        if (scrollY > 50) {
+        const isCompact = brandHeader && brandHeader.classList.contains("compact");
+        if (!isCompact && scrollY > COMPACT_ON) {
             if (filterSection) filterSection.classList.add("compact");
             if (brandHeader) brandHeader.classList.add("compact");
-        } else {
+        } else if (isCompact && scrollY < COMPACT_OFF) {
             if (filterSection) filterSection.classList.remove("compact");
             if (brandHeader) brandHeader.classList.remove("compact");
         }
 
         let current = "";
         sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            if (scrollY >= (sectionTop - 100)) {
-                current = section.getAttribute("id");
-            }
+            if (scrollY >= (section.offsetTop - 100)) current = section.getAttribute("id");
         });
-
         navDots.forEach(dot => {
-            dot.classList.remove("active");
-            if (dot.getAttribute("href").includes(current)) {
-                dot.classList.add("active");
-            }
+            dot.classList.toggle("active", dot.getAttribute("href").includes(current));
         });
 
         if (confirmPopup && !confirmPopup.classList.contains("hidden")) {
             confirmPopup.classList.add("hidden");
         }
-        if (typeof tippy !== "undefined" && tippy.hideAll) {
-            tippy.hideAll();
+        if (typeof tippy !== "undefined" && tippy.hideAll) tippy.hideAll();
+        clearLineChartSelection();   // cheap no-op when nothing is selected
+    };
+
+    // Coalesce scroll events to one update per frame.
+    window.addEventListener("scroll", () => {
+        if (!scrollTicking) {
+            scrollTicking = true;
+            requestAnimationFrame(onScrollFrame);
         }
-        clearLineChartSelection();
-    });
+    }, { passive: true });
 
     document.addEventListener("click", (e) => {
         if (confirmPopup && !e.target.closest("#chart-popup")) {

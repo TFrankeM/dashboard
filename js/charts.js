@@ -583,6 +583,7 @@ export function resetLineChartZoom() {
 }
 
 export function clearLineChartSelection() {
+    if (lineChartFixedIndex === null) return;   // nothing selected -> skip the redraw
     lineChartFixedIndex = null;
     if (lineInstance) lineInstance.update();
 }
