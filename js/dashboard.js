@@ -965,15 +965,20 @@ function renderSheet(bucket, animate = true) {
     if (!wrap) return;
     const list = newsstand[bucket];
     if (counter) counter.textContent = list.length ? `${newsstandIdx[bucket] + 1}/${list.length}` : "0/0";
-    if (!list.length) { wrap.innerHTML = `<p class="news-sheet-state">${t("newsstand_empty")}</p>`; return; }
+    const postit = document.getElementById(`postit-${bucket}`);
+    if (!list.length) {
+        wrap.innerHTML = `<p class="news-sheet-state">${t("newsstand_empty")}</p>`;
+        if (postit) postit.innerHTML = "";
+        return;
+    }
     const n = list[newsstandIdx[bucket]];
     const g = Number(n.grade);
     const face = bucket === "neg" ? "frown" : bucket === "pos" ? "smile" : "meh";   // sad / indifferent / happy
     const gradeStr = isNaN(g) ? "–" : (g % 1 === 0 ? g : g.toFixed(1));
     const meta = [formatDrawerDate(n.date), n.category, `Nota ${gradeStr}/7`].filter(Boolean).map(escapeHtml).join(" · ");
-    const body = n.analysis || n.article_text || "";
-    const html = `
-        <article class="news-sheet" data-action="next">
+    const body = n.article_text || n.summary || "";   // the actual news text (not the AI justification)
+    const sheetHtml = `
+        <article class="news-sheet">
             <div class="news-sheet-top">
                 <span class="news-sheet-face bucket-${bucket}"><i data-lucide="${face}"></i></span>
                 <div class="news-sheet-mast">
@@ -985,30 +990,47 @@ function renderSheet(bucket, animate = true) {
             ${n.summary ? `<p class="news-sheet-subtitle">${escapeHtml(n.summary)}</p>` : ""}
             ${body ? `<p class="news-sheet-body">${escapeHtml(body)}</p>` : ""}
             <div class="news-sheet-foot">
-                <span class="news-sheet-hint">${t("newsstand_next")} ›</span>
-                ${n.url ? `<a class="news-sheet-detail" href="${encodeURI(n.url)}" target="_blank" rel="noopener" data-stop>${t("newsstand_detail")} ↗</a>` : ""}
+                <span class="news-sheet-nav">
+                    <button type="button" class="news-page-btn" data-nav="prev">‹ ${t("newsstand_prev")}</button>
+                    <button type="button" class="news-page-btn" data-nav="next">${t("newsstand_next")} ›</button>
+                </span>
+                <span class="news-sheet-links">
+                    ${n.url ? `<a class="news-sheet-detail" href="${encodeURI(n.url)}" target="_blank" rel="noopener">${t("newsstand_detail")} ↗</a>` : ""}
+                    <button type="button" class="news-sheet-detail" data-details>${t("newsstand_table")} ⊞</button>
+                </span>
             </div>
         </article>`;
-    const paint = () => { wrap.innerHTML = html; if (typeof lucide !== "undefined") lucide.createIcons(); };
+    const postitHtml = n.analysis
+        ? `<div class="news-postit-title">${t("postit_title")}</div><p class="news-postit-body">${escapeHtml(n.analysis)}</p>`
+        : "";
+    const paint = () => {
+        wrap.innerHTML = sheetHtml;
+        if (postit) postit.innerHTML = postitHtml;
+        if (typeof lucide !== "undefined") lucide.createIcons();
+    };
     const old = animate ? wrap.querySelector(".news-sheet") : null;
     if (old) { old.classList.add("swap-out"); setTimeout(paint, 180); }
     else { paint(); }
 }
 
-function nextSheet(bucket) {
+function stepSheet(bucket, delta) {
     const list = newsstand[bucket];
     if (list.length < 2) return;
-    newsstandIdx[bucket] = (newsstandIdx[bucket] + 1) % list.length;
+    newsstandIdx[bucket] = (newsstandIdx[bucket] + delta + list.length) % list.length;
     renderSheet(bucket, true);
 }
 
 function initNewsstand() {
     const grid = document.getElementById("newsstand-grid");
     if (grid) grid.addEventListener("click", (e) => {
-        if (e.target.closest("[data-stop]")) return;     // let the "details" link work
-        const sheet = e.target.closest(".news-sheet");
-        const col = sheet && sheet.closest(".newsstand-col");
-        if (col) nextSheet(col.dataset.bucket);
+        const col = e.target.closest(".newsstand-col");
+        if (!col) return;
+        const bucket = col.dataset.bucket;
+        const nav = e.target.closest("[data-nav]");
+        if (nav) { stepSheet(bucket, nav.dataset.nav === "prev" ? -1 : 1); return; }
+        if (e.target.closest("[data-details]") && currentClickedDate) {
+            window.open(`details.html?${detailsUrlParams()}`, "_blank");
+        }
     });
     const sortBtn = document.getElementById("newsstand-sort");
     if (sortBtn) sortBtn.addEventListener("click", () => {
