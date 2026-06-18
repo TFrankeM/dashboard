@@ -968,25 +968,31 @@ function renderSheet(bucket, animate = true) {
     if (!list.length) { wrap.innerHTML = `<p class="news-sheet-state">${t("newsstand_empty")}</p>`; return; }
     const n = list[newsstandIdx[bucket]];
     const g = Number(n.grade);
-    const meta = [n.source, formatDrawerDate(n.date), n.category].filter(Boolean).map(escapeHtml).join(" · ");
+    const face = bucket === "neg" ? "frown" : bucket === "pos" ? "smile" : "meh";   // sad / indifferent / happy
+    const gradeStr = isNaN(g) ? "–" : (g % 1 === 0 ? g : g.toFixed(1));
+    const meta = [formatDrawerDate(n.date), n.category, `Nota ${gradeStr}/7`].filter(Boolean).map(escapeHtml).join(" · ");
+    const body = n.analysis || n.article_text || "";
     const html = `
         <article class="news-sheet" data-action="next">
-            <span class="news-sheet-stamp bucket-${bucket}">${isNaN(g) ? "–" : (g % 1 === 0 ? g : g.toFixed(1))}</span>
-            <p class="news-sheet-dateline">${meta}</p>
+            <div class="news-sheet-top">
+                <span class="news-sheet-face bucket-${bucket}"><i data-lucide="${face}"></i></span>
+                <div class="news-sheet-mast">
+                    <div class="news-sheet-source">${escapeHtml(n.source || "—")}</div>
+                    <p class="news-sheet-dateline">${meta}</p>
+                </div>
+            </div>
             <h4 class="news-sheet-headline">${escapeHtml(n.headline || "—")}</h4>
-            <p class="news-sheet-body">${escapeHtml(n.analysis || n.summary || "")}</p>
+            ${n.summary ? `<p class="news-sheet-subtitle">${escapeHtml(n.summary)}</p>` : ""}
+            ${body ? `<p class="news-sheet-body">${escapeHtml(body)}</p>` : ""}
             <div class="news-sheet-foot">
                 <span class="news-sheet-hint">${t("newsstand_next")} ›</span>
                 ${n.url ? `<a class="news-sheet-detail" href="${encodeURI(n.url)}" target="_blank" rel="noopener" data-stop>${t("newsstand_detail")} ↗</a>` : ""}
             </div>
         </article>`;
+    const paint = () => { wrap.innerHTML = html; if (typeof lucide !== "undefined") lucide.createIcons(); };
     const old = animate ? wrap.querySelector(".news-sheet") : null;
-    if (old) {
-        old.classList.add("swap-out");
-        setTimeout(() => { wrap.innerHTML = html; }, 180);
-    } else {
-        wrap.innerHTML = html;
-    }
+    if (old) { old.classList.add("swap-out"); setTimeout(paint, 180); }
+    else { paint(); }
 }
 
 function nextSheet(bucket) {
