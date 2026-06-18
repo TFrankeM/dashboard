@@ -62,6 +62,10 @@ body {
     color: var(--text-primary);
     margin: 0;
     overflow-x: hidden;
+    /* Disable scroll anchoring: when the header shrinks/grows on scroll, the
+       browser must NOT readjust scrollY to keep the visual position — that
+       readjustment is what re-crossed the threshold and caused the on/off loop. */
+    overflow-anchor: none;
 }
 
 .dashboard-wrapper {
@@ -146,7 +150,9 @@ body {
 }
 
 .brand-header.compact .subtitle {
-    display: none;
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
 }
 
 .brand-header.compact .logo-dint {
@@ -211,8 +217,11 @@ body {
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
-    display: block; 
+    display: block;
     margin-top: 4px;
+    max-height: 24px;
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease;
 }
 
 /* The definition of language button is after general definition of Choices.js */
