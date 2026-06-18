@@ -812,7 +812,7 @@ function processAndUpdateLineChart(apiData) {
             endDate: new Date(startDateObj.getTime() + aggHours * 3600 * 1000).toISOString(),
             aggregation: aggHours
         };
-        openNewsDrawer(tooltipDates ? tooltipDates[index] : "");
+        updateNewsstand(tooltipDates ? tooltipDates[index] : "");
     };
 
     drawLineChart(lineChartCanvas, axisLabels, datasets, handlePointClick, {
@@ -821,6 +821,9 @@ function processAndUpdateLineChart(apiData) {
         tooltipNews: t("chart_line_tooltip_count"),
         originalDates: tooltipDates
     });
+
+    // Newsstand defaults to the first data point; clicking a point changes it.
+    if (sortedDates.length) handlePointClick(0);
 }
 
 // ===== News drawer: quick read of the clicked point =====
@@ -920,6 +923,95 @@ function closeNewsDrawer() {
     drawer.classList.add("hidden");
     drawer.setAttribute("aria-hidden", "true");
     document.body.classList.remove("drawer-open");
+}
+
+// ===== Newsstand: 3-column newspaper view of the clicked point's news =====
+const newsstand = { neg: [], neu: [], pos: [] };
+const newsstandIdx = { neg: 0, neu: 0, pos: 0 };
+let newsstandSortDesc = true;
+
+const bucketOf = grade => { const g = Math.round(Number(grade)); return g <= 3 ? "neg" : g === 4 ? "neu" : "pos"; };
+
+async function updateNewsstand(dateLabel) {
+    const dateEl = document.getElementById("newsstand-date");
+    if (!currentClickedDate || !dateEl) return;
+    dateEl.textContent = dateLabel || formatDrawerDate(currentClickedDate.startDate);
+    ["neg", "neu", "pos"].forEach(b => {
+        const w = document.getElementById(`sheet-${b}`);
+        if (w) w.innerHTML = `<p class="news-sheet-state">${t("loading_data")}</p>`;
+    });
+    const res = await fetchDetailsData({
+        evaluator: appState.evaluatorEntity, evaluated: appState.evaluatedEntity,
+        category: appState.category,
+        startDate: currentClickedDate.startDate, endDate: currentClickedDate.endDate,
+        limit: 150, offset: 0
+    });
+    const list = (res && res.data) || [];
+    newsstand.neg = list.filter(n => bucketOf(n.grade) === "neg");
+    newsstand.neu = list.filter(n => bucketOf(n.grade) === "neu");
+    newsstand.pos = list.filter(n => bucketOf(n.grade) === "pos");
+    sortNewsstand();
+    ["neg", "neu", "pos"].forEach(b => { newsstandIdx[b] = 0; renderSheet(b, false); });
+}
+
+function sortNewsstand() {
+    const dir = newsstandSortDesc ? -1 : 1;
+    ["neg", "neu", "pos"].forEach(b => newsstand[b].sort((a, c) => dir * (new Date(a.date) - new Date(c.date))));
+}
+
+function renderSheet(bucket, animate = true) {
+    const wrap = document.getElementById(`sheet-${bucket}`);
+    const counter = document.getElementById(`count-${bucket}`);
+    if (!wrap) return;
+    const list = newsstand[bucket];
+    if (counter) counter.textContent = list.length ? `${newsstandIdx[bucket] + 1}/${list.length}` : "0/0";
+    if (!list.length) { wrap.innerHTML = `<p class="news-sheet-state">${t("newsstand_empty")}</p>`; return; }
+    const n = list[newsstandIdx[bucket]];
+    const g = Number(n.grade);
+    const meta = [n.source, formatDrawerDate(n.date), n.category].filter(Boolean).map(escapeHtml).join(" · ");
+    const html = `
+        <article class="news-sheet" data-action="next">
+            <span class="news-sheet-stamp bucket-${bucket}">${isNaN(g) ? "–" : (g % 1 === 0 ? g : g.toFixed(1))}</span>
+            <p class="news-sheet-dateline">${meta}</p>
+            <h4 class="news-sheet-headline">${escapeHtml(n.headline || "—")}</h4>
+            <p class="news-sheet-body">${escapeHtml(n.analysis || n.summary || "")}</p>
+            <div class="news-sheet-foot">
+                <span class="news-sheet-hint">${t("newsstand_next")} ›</span>
+                ${n.url ? `<a class="news-sheet-detail" href="${encodeURI(n.url)}" target="_blank" rel="noopener" data-stop>${t("newsstand_detail")} ↗</a>` : ""}
+            </div>
+        </article>`;
+    const old = animate ? wrap.querySelector(".news-sheet") : null;
+    if (old) {
+        old.classList.add("swap-out");
+        setTimeout(() => { wrap.innerHTML = html; }, 180);
+    } else {
+        wrap.innerHTML = html;
+    }
+}
+
+function nextSheet(bucket) {
+    const list = newsstand[bucket];
+    if (list.length < 2) return;
+    newsstandIdx[bucket] = (newsstandIdx[bucket] + 1) % list.length;
+    renderSheet(bucket, true);
+}
+
+function initNewsstand() {
+    const grid = document.getElementById("newsstand-grid");
+    if (grid) grid.addEventListener("click", (e) => {
+        if (e.target.closest("[data-stop]")) return;     // let the "details" link work
+        const sheet = e.target.closest(".news-sheet");
+        const col = sheet && sheet.closest(".newsstand-col");
+        if (col) nextSheet(col.dataset.bucket);
+    });
+    const sortBtn = document.getElementById("newsstand-sort");
+    if (sortBtn) sortBtn.addEventListener("click", () => {
+        newsstandSortDesc = !newsstandSortDesc;
+        const span = sortBtn.querySelector("span");
+        if (span) span.textContent = newsstandSortDesc ? t("newsstand_sort_recent") : t("newsstand_sort_old");
+        sortNewsstand();
+        ["neg", "neu", "pos"].forEach(b => { newsstandIdx[b] = 0; renderSheet(b, false); });
+    });
 }
 
 // Drag the left edge to resize the panel; cards reflow to the new width
@@ -1124,6 +1216,8 @@ document.addEventListener("DOMContentLoaded", function () {
             confirmPopup.classList.add("hidden");
         }
     });
+
+    initNewsstand();
 
     const newsDrawer = document.getElementById("news-drawer");
     if (newsDrawer) {

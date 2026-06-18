@@ -254,6 +254,49 @@
             </div>
         </section>
 
+        <!-- Newsstand: 3-column newspaper view of the clicked point's news -->
+        <section class="newsstand-section" id="newsstand">
+            <div class="card full-width-card">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-header-title-group">
+                            <h3 data-i18n="newsstand_title">Notícias do ponto</h3>
+                        </div>
+                        <p class="card-desc" id="newsstand-date">—</p>
+                    </div>
+                    <div class="chart-controls">
+                        <button id="newsstand-sort" class="reset-btn">
+                            <i data-lucide="arrow-down-up" class="icon-xs"></i>
+                            <span data-i18n="newsstand_sort_recent">Mais recentes</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="newsstand-grid" id="newsstand-grid">
+                    <div class="newsstand-col" data-bucket="neg">
+                        <div class="newsstand-col-head neg">
+                            <span data-i18n="bucket_neg">Negativas</span>
+                            <span class="newsstand-counter" id="count-neg">0/0</span>
+                        </div>
+                        <div class="news-sheet-wrap" id="sheet-neg"></div>
+                    </div>
+                    <div class="newsstand-col" data-bucket="neu">
+                        <div class="newsstand-col-head neu">
+                            <span data-i18n="bucket_neu">Neutras</span>
+                            <span class="newsstand-counter" id="count-neu">0/0</span>
+                        </div>
+                        <div class="news-sheet-wrap" id="sheet-neu"></div>
+                    </div>
+                    <div class="newsstand-col" data-bucket="pos">
+                        <div class="newsstand-col-head pos">
+                            <span data-i18n="bucket_pos">Positivas</span>
+                            <span class="newsstand-counter" id="count-pos">0/0</span>
+                        </div>
+                        <div class="news-sheet-wrap" id="sheet-pos"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Footer -->
         <footer class="dashboard-footer">
             <div class="footer-content">
