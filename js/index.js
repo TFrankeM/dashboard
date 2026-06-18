@@ -1,15 +1,48 @@
-// Cartão rotativo: estatistica real, mas atualizada manualmente
-const stats = [
-    { number: "1.216.457", label: "Notícias processadas no acervo" },
-    { number: "1.957.973", label: "Análises geradas por I.A." },
-    { number: "14.967",    label: "Fontes globais monitoradas" },
-    { number: "61",        label: "Idiomas acompanhados" },
-    { number: "18",        label: "Categorias temáticas cobertas" },
-    { number: "504",       label: "Dias de cobertura contínua" }
+import { DICTIONARY } from "./i18n.js";
+
+// Active UI language (pt-BR is the default). Options live in the i18n dictionary.
+let currentLang = "pt-BR";
+
+const t = key => (DICTIONARY[currentLang] && DICTIONARY[currentLang][key]) || key;
+const fmtNumber = n => Number(n).toLocaleString(currentLang);
+
+// Average grade (1–7) → image-label key, matching the dashboard histogram buckets.
+const GRADE_IMAGE_KEYS = {
+    1: "image_extremely_negative",
+    2: "image_very_negative",
+    3: "image_slightly_negative",
+    4: "image_neutral",
+    5: "image_slightly_positive",
+    6: "image_very_positive",
+    7: "image_extremely_positive"
+};
+const gradeImageKey = grade =>
+    GRADE_IMAGE_KEYS[Math.min(7, Math.max(1, Math.round(Number(grade))))];
+
+// Localized language name from an ISO code (e.g. "es" → "Espanhol" / "Spanish").
+const languageName = code => {
+    const fallback = String(code).toUpperCase();
+    try {
+        const name = new Intl.DisplayNames([currentLang], { type: "language" }).of(String(code).toLowerCase());
+        return name ? name.charAt(0).toUpperCase() + name.slice(1) : fallback;
+    } catch {
+        return fallback;
+    }
+};
+
+// Rotating hero stats. Values are overwritten by /api/data?widget=stats when
+// available; these act as a fallback. Labels are resolved per language at render.
+let stats = [
+    { value: 1216457, key: "stat_total_news" },
+    { value: 1957973, key: "stat_total_analyses" },
+    { value: 14967,   key: "stat_total_sources" },
+    { value: 61,      key: "stat_total_languages" },
+    { value: 18,      key: "stat_total_categories" },
+    { value: 504,     key: "stat_coverage_days" }
 ];
 
-// Países monitorados. Centróides aproximados + código ISO
-// Brasil é HUB: imagem do Brasil no exterior
+// Monitored countries: approximate centroids + ISO code. Brazil is the hub
+// (the subject whose image abroad is tracked).
 const COUNTRIES = {
     BRA: { lat: -10.0, lng: -53.0,  name: "Brasil" },
     ARG: { lat: -38.4, lng: -63.6,  name: "Argentina" },
@@ -40,10 +73,11 @@ const HEX_HUB    = "rgba(188,224,255,0.97)";
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Cartao rotativo de dados
+    // Rotating data card
     const SLIDE_MS = 10000;
     let currentIndex = 0;
     let slideTimer = null;
+    let lastStats = null;   // latest /api/data payload, kept for re-render on language change
 
     const dataCard      = document.getElementById('dataCard');
     const contentEl     = document.getElementById('dataContent');
@@ -57,16 +91,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const pad2 = n => String(n).padStart(2, '0');
 
     function renderStat(i) {
-        if (numEl) numEl.innerText = stats[i].number;
-        if (lblEl) lblEl.innerText = stats[i].label;
+        if (numEl) numEl.innerText = fmtNumber(stats[i].value);
+        if (lblEl) lblEl.innerText = t(stats[i].key);
         if (idxEl) idxEl.innerText = pad2(i + 1);
+    }
+
+    function renderMiniCards(s) {
+        const grade = document.getElementById('stat-grade');
+        const gradeSub = document.getElementById('stat-grade-sub');
+        if (grade && s.avg_grade_brasil != null) {
+            grade.innerHTML = `${s.avg_grade_brasil} <span class="mini-unit">/ 7</span>`;
+            // Sub label follows the grade so it stays correct as the data shifts.
+            if (gradeSub) gradeSub.textContent = t(gradeImageKey(s.avg_grade_brasil));
+        }
+
+        const lang = document.getElementById('stat-lang');
+        const langSub = document.getElementById('stat-lang-sub');
+        if (lang && s.top_language) {
+            lang.innerHTML = `${String(s.top_language).toUpperCase()} <span class="mini-unit">${Math.round(s.top_language_pct)}%</span>`;
+            // Resolve the full language name from the code, per current language.
+            if (langSub) langSub.textContent = languageName(s.top_language);
+        }
+
+        const dateEl = document.getElementById('stat-date');
+        if (dateEl && s.last_date) {
+            const d = new Date(s.last_date);
+            const mon = d.toLocaleString(currentLang, { month: 'short', timeZone: 'UTC' }).replace('.', '');
+            dateEl.innerHTML = `${pad2(d.getUTCDate())} <span class="mini-unit">${mon} ${String(d.getUTCFullYear()).slice(2)}</span>`;
+        }
     }
 
     function restartTimeline() {
         if (!timelineFill) return;
         timelineFill.style.transition = 'none';
         timelineFill.style.width = '0%';
-        void timelineFill.offsetWidth;                       // força reflow
+        void timelineFill.offsetWidth;                       // force reflow
         timelineFill.style.transition = `width ${SLIDE_MS}ms linear`;
         timelineFill.style.width = '100%';
     }
@@ -104,29 +163,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
         dataCard.addEventListener('click', () => {
             nextStat();
-            startAutoplay();   // reinicia contagem de 10s após clique
+            startAutoplay();   // restart the 10s countdown after a click
         });
     }
 
-    // Redireciona para Sala de Situação
+    // Fill the cards from site_stats (computed at ingestion, not per visitor).
+    // The hardcoded values act as a fallback if the endpoint is unavailable.
+    fetch("/api/data?widget=stats")
+        .then(r => r.ok ? r.json() : null)
+        .then(s => {
+            if (!s || s.total_news == null) return;
+            lastStats = s;
+
+            const values = {
+                stat_total_news: s.total_news,
+                stat_total_analyses: s.total_analyses,
+                stat_total_sources: s.total_sources,
+                stat_total_languages: s.total_languages,
+                stat_total_categories: s.total_categories,
+                stat_coverage_days: s.coverage_days
+            };
+            stats.forEach(item => { if (values[item.key] != null) item.value = values[item.key]; });
+
+            if (totalEl) totalEl.innerText = pad2(stats.length);
+            renderStat(currentIndex % stats.length);
+            renderMiniCards(s);
+        })
+        .catch(() => {});
+
+    // Navigate to the dashboard
     if (btnEnterDashboard) {
-        btnEnterDashboard.addEventListener('click', () => {
+        btnEnterDashboard.addEventListener("click", () => {
             window.location.href = "dashboard.html";
         });
     }
 
 
-    // GLOBO 3D
+    // Language switch: re-translate the overlay and re-render locale-aware
+    // values, with a brief fade on the translated regions during the swap.
+    const uiOverlay = document.getElementById('ui-overlay');
+    const langSwitch = document.getElementById('lang-switch');
+
+    function translatePage() {
+        const dict = DICTIONARY[currentLang];
+        if (!dict) return;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (dict[key]) el.textContent = dict[key];
+        });
+        document.documentElement.lang = currentLang;
+        renderStat(currentIndex % stats.length);
+        if (lastStats) renderMiniCards(lastStats);
+    }
+
+    if (langSwitch) {
+        langSwitch.addEventListener('click', e => {
+            const btn = e.target.closest('.lang-opt');
+            if (!btn) return;
+            const lang = btn.dataset.lang;
+            if (lang === currentLang || !DICTIONARY[lang]) return;
+
+            currentLang = lang;
+            langSwitch.querySelectorAll('.lang-opt')
+                .forEach(b => b.classList.toggle('is-active', b === btn));
+
+            if (uiOverlay) {
+                uiOverlay.classList.add('lang-switching');     // fade out
+                setTimeout(() => {
+                    translatePage();                           // swap while hidden
+                    uiOverlay.classList.remove('lang-switching'); // fade back in
+                }, 200);
+            } else {
+                translatePage();
+            }
+        });
+    }
+
+
+    // 3D globe
     const globeContainer = document.getElementById("globeViz");
     if (!globeContainer) return;
 
     let countryFeatures = [];
 
-    // Contagem de linhas ativas por país (>0 => aceso)
-    // Permite que vários arcos sobre o mesmo país não apaguem antes da hora
+    // Active-arc count per country (>0 = lit). Lets overlapping arcs on the same
+    // country keep it lit until the last one leaves.
     const highlightCounts = new Map();
 
-    // dataset do globe.gl marca alguns países como "-99" em ISO_A3. Código correto em ADM0_A3
+    // Some countries carry ISO_A3 "-99" in this dataset; fall back to ADM0_A3.
     function isoOf(props) {
         const a = props.ISO_A3;
         return (a && a !== "-99") ? a : props.ADM0_A3;
@@ -155,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .atmosphereColor("#3b82f6")
         .atmosphereAltitude(0.13)
 
-        // Países como grade de pontos
+        // Countries rendered as a dot grid
         .hexPolygonsData([])
         .hexPolygonResolution(3)
         .hexPolygonMargin(0.4)
@@ -163,13 +287,13 @@ document.addEventListener('DOMContentLoaded', () => {
         .hexPolygonAltitude(0.004)
         .hexPolygonColor(d => {
             const iso = isoOf(d.properties);
-            if (iso === HUB) return HEX_HUB;            // Brasil sempre aceso
+            if (iso === HUB) return HEX_HUB;            // Brazil is always lit
             if (highlightCounts.has(iso)) return HEX_ACTIVE;
             return HEX_BASE;
         })
         .hexPolygonsTransitionDuration(400)
 
-        // Linhas de dados
+        // Data arcs
         .arcColor("color")
         .arcStroke(0.3)
         .arcAltitudeAutoScale(0.4)
@@ -179,14 +303,14 @@ document.addEventListener('DOMContentLoaded', () => {
         .arcDashAnimateTime(d => d.flightTime)
         .arcsTransitionDuration(0)
 
-        // Pulsos de radar nos pontos monitorados
+        // Radar pulses on monitored points
         .ringColor(d => d.color)
         .ringMaxRadius(d => d.maxR)
         .ringPropagationSpeed(d => d.speed)
         .ringRepeatPeriod(d => d.period)
         .ringAltitude(0.006);
 
-    // Esfera escura. Pontos flutuam sobre ela
+    // Dark sphere; the dots float above it.
     const globeMaterial = world.globeMaterial();
     globeMaterial.color.set("#060c1c");
     globeMaterial.transparent = true;
@@ -197,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     world.width(globeContainer.clientWidth);
     world.height(globeContainer.clientHeight);
 
-    // Pulso de radar: contínuo no Brasil, e na chegada nos outros paises
+    // Radar rings: continuous on Brazil, plus one on each arc arrival.
     let rings = [{
         lat: COUNTRIES[HUB].lat, lng: COUNTRIES[HUB].lng,
         maxR: 4, speed: 2.5, period: 2200,
@@ -214,13 +338,12 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { rings = rings.filter(r => r !== ring); world.ringsData(rings); }, 1300);
     }
 
-    // Linhas de dados ligadas aos destaques e aos pulsos
     let arcsData = [];
 
     function spawnArc() {
         if (countryFeatures.length === 0) return;
 
-        // 70% das linhas convergem para o Brasil; 30% ligam outros pares
+        // 70% of arcs converge on Brazil; 30% link other pairs.
         const toHub = Math.random() < 0.7;
         const srcIso = SOURCES[Math.floor(Math.random() * SOURCES.length)];
         let dstIso = HUB;
@@ -244,16 +367,14 @@ document.addEventListener('DOMContentLoaded', () => {
         arcsData = [...arcsData, arc];
         world.arcsData(arcsData);
 
-        // linha saindo da origem -> acende a origem
-        lightUp(srcIso);
+        lightUp(srcIso);   // arc leaves origin -> light it up
 
-        // chegada ao destino
         setTimeout(() => {
-            lightDown(srcIso);                       // linha deixa origem
-            if (dstIso !== HUB) lightUp(dstIso);     // linha entra destino
-            pingRing(dst);                           // pulso de radar na chegada
+            lightDown(srcIso);                       // arc has left the origin
+            if (dstIso !== HUB) lightUp(dstIso);     // arc reaches destination
+            pingRing(dst);                           // radar pulse on arrival
 
-            // remove o arco e apaga o destino
+            // remove the arc and unlight the destination
             setTimeout(() => {
                 arcsData = arcsData.filter(a => a !== arc);
                 world.arcsData(arcsData);
@@ -275,16 +396,16 @@ document.addEventListener('DOMContentLoaded', () => {
             setInterval(spawnArc, 1000);
         });
 
-    // Câmera, rotação e interatividade
+    // Camera, rotation and interaction
     world.pointOfView({ lat: 2, lng: -45, altitude: 1 }, 0);
 
     world.controls().autoRotate = true;
     world.controls().autoRotateSpeed = 0.25;
-    world.controls().enableZoom = true;
+    world.controls().enableZoom = false;
     world.controls().enableDamping = true;
     world.controls().dampingFactor = 0.05;
 
-    // Inércia após arrastar mouse
+    // Preserve the drag direction as rotation inertia after the user lets go.
     let lastAzimuthalAngle = 0;
 
     world.controls().addEventListener('start', () => {
@@ -303,10 +424,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Responsividade
+    // Prevent the rotation "catch-up" when the tab returns from the background.
+    // rAF is frozen while hidden, so the controls' delta time accumulates and the
+    // first visible frame would apply it all at once. Pause auto-rotate while
+    // hidden and skip that stale frame before resuming, so the spin stays smooth.
+    document.addEventListener('visibilitychange', () => {
+        const controls = world.controls();
+        if (document.hidden) {
+            controls.autoRotate = false;
+        } else {
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                controls.autoRotate = true;
+            }));
+        }
+    });
+
+    // Keep the globe sized to its container
     window.addEventListener('resize', () => {
         world.width(globeContainer.clientWidth);
         world.height(globeContainer.clientHeight);
     });
 });
-

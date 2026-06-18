@@ -1,7 +1,7 @@
 
 export const DICTIONARY = {
     "pt-BR" : {
-        main_page_title: "FGV IIBEx | Sala de Situación",
+        main_page_title: "FGV IIBEx | Sala de Situação",
         app_logo: "assets/logodint_pt.svg",
 
         // General
@@ -174,6 +174,26 @@ export const DICTIONARY = {
         col_link: "Link",
         click_to_expand: "Clique para expandir",
         table_link_view: "Veja",
+
+        // Landing page (index.html)
+        landing_page_title: "Dado Concreto · Monitor Global",
+        landing_cta: "ACESSAR SALA DE SITUAÇÃO",
+        landing_monitoring: "Monitoramento ativo",
+        landing_hint: "Clique ou aguarde",
+        stat_total_news: "Notícias processadas no acervo",
+        stat_total_analyses: "Análises geradas por I.A.",
+        stat_total_sources: "Fontes globais monitoradas",
+        stat_total_languages: "Idiomas acompanhados",
+        stat_total_categories: "Categorias temáticas cobertas",
+        stat_coverage_days: "Dias de cobertura contínua",
+        mini_grade_label: "Nota média · Brasil",
+        mini_grade_sub: "Imagem neutra",
+        mini_lang_label: "Idioma predominante",
+        mini_lang_sub: "Espanhol",
+        mini_date_label: "Atualizado até",
+        mini_date_sub: "Cobertura contínua",
+        landing_footer_org: "FGV Diretoria Internacional",
+        landing_footer_coverage: "COBERTURA: AGO 2024 — JAN 2026 • SISTEMA ONLINE",
     },
     "en-US": {
         main_page_title: "FGV IIBEx | Situation Room",
@@ -354,6 +374,26 @@ export const DICTIONARY = {
         col_link: "Link",
         click_to_expand: "Click to expand",
         table_link_view: "View",
+
+        // Landing page (index.html)
+        landing_page_title: "Dado Concreto · Global Monitor",
+        landing_cta: "ENTER SITUATION ROOM",
+        landing_monitoring: "Active monitoring",
+        landing_hint: "Click or wait",
+        stat_total_news: "News items processed in the archive",
+        stat_total_analyses: "AI-generated analyses",
+        stat_total_sources: "Global sources monitored",
+        stat_total_languages: "Languages tracked",
+        stat_total_categories: "Thematic categories covered",
+        stat_coverage_days: "Days of continuous coverage",
+        mini_grade_label: "Average grade · Brazil",
+        mini_grade_sub: "Neutral image",
+        mini_lang_label: "Predominant language",
+        mini_lang_sub: "Spanish",
+        mini_date_label: "Updated through",
+        mini_date_sub: "Continuous coverage",
+        landing_footer_org: "FGV International Affairs Division",
+        landing_footer_coverage: "COVERAGE: AUG 2024 — JAN 2026 • SYSTEM ONLINE",
     },
     "es-ES": {
         app_logo: "assets/logodint_es.svg",
@@ -528,6 +568,26 @@ export const DICTIONARY = {
         col_link: "Enlace",
         click_to_expand: "Haga clic para expandir",
         table_link_view: "Ver",
+
+        // Landing page (index.html)
+        landing_page_title: "Dado Concreto · Monitor Global",
+        landing_cta: "ACCEDER A LA SALA DE SITUACIÓN",
+        landing_monitoring: "Monitoreo activo",
+        landing_hint: "Haga clic o espere",
+        stat_total_news: "Noticias procesadas en el acervo",
+        stat_total_analyses: "Análisis generados por IA",
+        stat_total_sources: "Fuentes globales monitoreadas",
+        stat_total_languages: "Idiomas seguidos",
+        stat_total_categories: "Categorías temáticas cubiertas",
+        stat_coverage_days: "Días de cobertura continua",
+        mini_grade_label: "Nota media · Brasil",
+        mini_grade_sub: "Imagen neutra",
+        mini_lang_label: "Idioma predominante",
+        mini_lang_sub: "Español",
+        mini_date_label: "Actualizado hasta",
+        mini_date_sub: "Cobertura continua",
+        landing_footer_org: "Dirección Internacional de FGV",
+        landing_footer_coverage: "COBERTURA: AGO 2024 — ENE 2026 • SISTEMA EN LÍNEA",
     }
 };
 ;
