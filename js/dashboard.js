@@ -1,4 +1,4 @@
-import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships, fetchDetailsData } from "./api_adapter.js";
+import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships, fetchDetailsData, fetchStats } from "./api_adapter.js";
 import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, clearLineChartSelection } from "./charts.js";
 import { DICTIONARY } from "./i18n.js";
 
@@ -7,9 +7,9 @@ let CURRENT_LANG = "pt-BR";
 
 const DEFAULT_CONFIG = {
     isDynamic: false,
-    period: "year_2025",
+    periodValue: "year_2025",
     customStartDate: "2025-01-01",
-    customEndDate: "2025-06-30",
+    customEndDate: "2025-12-31",
     evaluatorEntity: ["argentina"],
     evaluatedEntity: ["brasil"],
     category: ["include_all"],
@@ -48,6 +48,8 @@ let RELATIONSHIPS = {};
 let choicesPeriod, choicesCategory, choicesEvaluatorEntity, choicesEvaluatedEntity, choicesLanguage;
 let currentClickedDate = null;
 let pollingInterval = null;
+let lastDataDate = null;          // latest ingested data timestamp, for the "last update" footer
+let lastUpdateInterval = null;    // keeps the "X min ago" label fresh while the page is open
 
 function t(key) {
     return DICTIONARY[CURRENT_LANG][key] || key;
@@ -60,6 +62,25 @@ function tPeriod(val) {
 }
 function tCategory(val) {
     return DICTIONARY[CURRENT_LANG].category_options[val] || val;
+}
+// Table 6 classification/meaning for a 1-7 grade, in the current language.
+function tGradeScale(grade) {
+    const g = Math.round(Number(grade));
+    if (isNaN(g) || g < 1 || g > 7) return "";
+    const scale = DICTIONARY[CURRENT_LANG].grade_scale || DICTIONARY["pt-BR"].grade_scale;
+    return (scale && scale[g]) || "";
+}
+// "Nota N/7 — <classification>" in bold, followed by the (unbolded) meaning.
+// Appended after an AI analysis. The classification is the text up to the first period.
+function gradeScaleHTML(grade) {
+    const desc = tGradeScale(grade);
+    if (!desc) return "";
+    const g = Math.round(Number(grade));
+    const split = desc.indexOf(". ");
+    const title = split === -1 ? desc.replace(/\.$/, "") : desc.slice(0, split);
+    const meaning = split === -1 ? "" : desc.slice(split + 2);
+    const head = `${t("newsstand_grade_label")} ${g}/7 — ${escapeHtml(title)}`;
+    return `<p class="news-grade-scale"><strong>${head}.</strong>${meaning ? ` ${escapeHtml(meaning)}` : ""}</p>`;
 }
 
 function translateUI() {
@@ -102,35 +123,29 @@ function translateUI() {
     // tooltips
     document.querySelectorAll("[data-i18n-tooltip]").forEach(el => {
         const key = el.getAttribute("data-i18n-tooltip");
+        // The gauge tooltip depends on the applied mode, not just the language.
+        const content = el.id === "gauge-info-icon" ? texts[gaugeTooltipKey()] : texts[key];
         if (el._tippy) {
-            el._tippy.setContent(texts[key]);
+            el._tippy.setContent(content);
         }
-        el.setAttribute("data-tippy-content", texts[key]);
+        el.setAttribute("data-tippy-content", content);
     });
 
     // filters
-    updateChoicesLabels(choicesEvaluatorEntity, tEntity);
-    updateChoicesLabels(choicesEvaluatedEntity, tEntity);
-    updateChoicesLabels(choicesCategory, tCategory);
+    [choicesEvaluatorEntity, choicesEvaluatedEntity, choicesCategory]
+        .forEach(c => { if (c && c.relabel) c.relabel(); });
     updatePeriodDropdown(pendingState.isDynamic);
 
     const totalNewsEl = document.getElementById("total-news");
     if (totalNewsEl) {
         updateEvolutionHeader(parseInt(totalNewsEl.textContent.replace(/\D/g,'')) || 0);
     }
-}
 
-function updateChoicesLabels(choiceInstance, translatorFunc) {
-    if (!choiceInstance) return;
-    const currentChoices = choiceInstance._store.choices;
-    const newChoices = currentChoices.map(item => ({
-        value: item.value,
-        label: translatorFunc(item.value),
-        selected: item.selected,
-        disabled: item.disabled
-    }));
-    choiceInstance.clearStore();
-    choiceInstance.setChoices(newChoices, "value", "label", true);
+    // Re-render any open newspapers so their dynamic text follows the language
+    if (currentClickedDate) ["pos", "neu", "neg"].forEach(b => renderSheet(b, false));
+
+    // Keep the gauge "last update" footer in the current language
+    renderLastUpdate();
 }
 
 async function fetchOptionsFromDB(targetType, filterValue) {
@@ -225,20 +240,153 @@ function initLanguageSelector() {
     }
 }
 
-async function initializeFilters() {
-    const multiOpts = {
-        removeItemButton: true, 
-        searchEnabled: true, 
-        placeholderValue: "Selecione...", 
-        searchPlaceholderValue: t("placeholder_search") || "Procurar...",
-        itemSelectText: "", 
-        shouldSort: true, 
-        editItems: false, 
-        maxItemCount: 5,
-        maxItemText: "",
-        position: "bottom"
+// Searchable multi-select rendered as a checkbox list with a compact summary when
+// closed. Used for every multi-value filter (categories, evaluators, evaluated) so
+// they share one look. The hidden <select> stays the value source and fires "change"
+// so the existing filter listeners and cross-filter constraints keep working.
+// Exposes a Choices-compatible surface: getValue, setChoiceByValue, removeActiveItems,
+// clearStore, setChoices, relabel.
+function buildCheckboxFilter(selectEl, opts) {
+    const translate = opts.translate;                 // value -> display label
+    const max = opts.max || Infinity;                 // maximum number of selections
+    const summary = opts.summary;                     // selected values -> closed-state text
+    const searchKey = opts.searchKey;                 // i18n key for the search placeholder
+    const hoverCapable = window.matchMedia("(hover: hover)").matches;
+
+    let options = (opts.values || []).map(o => ({ value: o.value, disabled: !!o.disabled }));
+    const selected = new Set();
+    let open = false;
+    let order = [];                                   // display order, frozen while the panel is open
+    let closeTimer;
+
+    selectEl.style.display = "none";
+
+    const root = document.createElement("div");
+    root.className = "cbx-filter";
+    root.innerHTML = `
+        <button type="button" class="cbx-field">
+            <span class="cbx-summary"></span>
+            <svg class="cbx-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="cbx-panel" hidden>
+            <input type="text" class="cbx-search" />
+            <div class="cbx-list" role="listbox" aria-multiselectable="true"></div>
+        </div>`;
+    selectEl.after(root);
+
+    const field = root.querySelector(".cbx-field");
+    const summaryEl = root.querySelector(".cbx-summary");
+    const panel = root.querySelector(".cbx-panel");
+    const search = root.querySelector(".cbx-search");
+    const listEl = root.querySelector(".cbx-list");
+
+    // Reflect the current selection back onto the hidden <select> so it stays the value source.
+    const syncSelect = () => {
+        selectEl.innerHTML = options.map(o =>
+            `<option value="${o.value}"${selected.has(o.value) ? " selected" : ""}></option>`).join("");
     };
-    const singleOpts = { 
+
+    const renderSummary = () => { summaryEl.textContent = summary(Array.from(selected)); };
+
+    // Order: selected first, then unselected, disabled last; alphabetical within each group.
+    const computeOrder = () => {
+        const rank = o => (o.disabled ? 2 : selected.has(o.value) ? 0 : 1);
+        order = options.slice()
+            .sort((a, b) => rank(a) - rank(b) || translate(a.value).localeCompare(translate(b.value)))
+            .map(o => o.value);
+    };
+
+    const renderList = () => {
+        const q = search.value.trim().toLowerCase();
+        const byValue = Object.fromEntries(options.map(o => [o.value, o]));
+        listEl.innerHTML = order
+            .filter(v => byValue[v] && translate(v).toLowerCase().includes(q))
+            .map(v => {
+                const o = byValue[v];
+                const cls = ["cbx-option"];
+                if (selected.has(v)) cls.push("is-checked");
+                if (o.disabled) cls.push("is-disabled");
+                return `<div class="${cls.join(" ")}" role="option" aria-selected="${selected.has(v)}" data-value="${v}">
+                    <input type="checkbox" tabindex="-1" ${selected.has(v) ? "checked" : ""} ${o.disabled ? "disabled" : ""}>
+                    <span>${escapeHtml(translate(v))}</span>
+                </div>`;
+            }).join("");
+    };
+
+    // Flip one option, honouring the selection cap; the frozen order keeps it in place.
+    const toggle = value => {
+        const o = options.find(x => x.value === value);
+        if (!o || o.disabled) return;
+        if (selected.has(value)) {
+            selected.delete(value);
+        } else if (selected.size < max) {
+            selected.add(value);
+        } else {
+            return;
+        }
+        syncSelect();
+        renderSummary();
+        renderList();
+        selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+
+    const openPanel = () => {
+        if (open) return;
+        open = true;
+        computeOrder();                               // re-sort only on (re)open, never mid-selection
+        panel.hidden = false;
+        field.classList.add("is-open");
+        search.value = "";
+        renderList();
+        search.focus();
+    };
+    const closePanel = () => {
+        open = false;
+        panel.hidden = true;
+        field.classList.remove("is-open");
+    };
+
+    field.addEventListener("click", () => open ? closePanel() : openPanel());
+    listEl.addEventListener("click", e => {
+        const row = e.target.closest(".cbx-option");
+        if (!row) return;
+        // Keep the panel open on selection; re-rendering detaches the clicked node,
+        // which would otherwise make the document handler treat this as a click-outside.
+        e.stopPropagation();
+        toggle(row.dataset.value);
+    });
+    search.addEventListener("input", renderList);
+    document.addEventListener("click", e => { if (open && !root.contains(e.target)) closePanel(); });
+
+    // Pointer devices open the panel on hover and close it shortly after the cursor leaves.
+    if (hoverCapable) {
+        root.addEventListener("mouseenter", () => { clearTimeout(closeTimer); openPanel(); });
+        root.addEventListener("mouseleave", () => { closeTimer = setTimeout(closePanel, 300); });
+    }
+
+    syncSelect();
+    renderSummary();
+
+    return {
+        getValue() { return Array.from(selected); },
+        setChoiceByValue(v) {
+            (Array.isArray(v) ? v : [v]).forEach(x => { if (options.some(o => o.value === x)) selected.add(x); });
+            syncSelect(); renderSummary(); if (open) renderList();
+        },
+        removeActiveItems() { selected.clear(); syncSelect(); renderSummary(); if (open) renderList(); },
+        clearStore() { options = []; },
+        setChoices(list) {
+            // Replace mode: the caller re-applies any still-valid selection afterwards.
+            options = list.map(o => ({ value: o.value, disabled: !!o.disabled }));
+            selected.clear();
+            syncSelect(); renderSummary(); if (open) { computeOrder(); renderList(); }
+        },
+        relabel() { search.placeholder = t(searchKey); renderSummary(); if (open) { computeOrder(); renderList(); } },
+    };
+}
+
+async function initializeFilters() {
+    const singleOpts = {
         searchEnabled: false, 
         placeholderValue: "Selecione...", 
         itemSelectText: "", 
@@ -254,22 +402,27 @@ async function initializeFilters() {
     }
 
     if (typeof Choices !== "undefined") {
+        // Closed-state summary for entity filters: the selected names, or a fallback when empty.
+        const entitySummary = sel => sel.length ? sel.map(tEntity).join(", ") : t("entity_none");
+
         const evalEl = document.getElementById("evaluatorEntity");
         if (evalEl) {
-            choicesEvaluatorEntity = new Choices(evalEl, multiOpts);
-            const initialEvaluatorEntities = await fetchOptionsFromDB("evaluator", []); 
-            choicesEvaluatorEntity.setChoices(initialEvaluatorEntities, "value", "label", true);
+            choicesEvaluatorEntity = buildCheckboxFilter(evalEl, {
+                translate: tEntity, max: 5, searchKey: "placeholder_search", summary: entitySummary
+            });
+            const initialEvaluatorEntities = await fetchOptionsFromDB("evaluator", []);
+            choicesEvaluatorEntity.setChoices(initialEvaluatorEntities);
             choicesEvaluatorEntity.setChoiceByValue(appState.evaluatorEntity);
-            enableHoverToChoices(choicesEvaluatorEntity, evalEl.closest(".filter-group"));
         }
-        
+
         const evaluatedEl = document.getElementById("evaluatedEntity");
         if (evaluatedEl) {
-            choicesEvaluatedEntity = new Choices(evaluatedEl, multiOpts);
+            choicesEvaluatedEntity = buildCheckboxFilter(evaluatedEl, {
+                translate: tEntity, max: 5, searchKey: "placeholder_search", summary: entitySummary
+            });
             const initialEvaluated = await fetchOptionsFromDB("evaluated", appState.evaluatorEntity);
-            choicesEvaluatedEntity.setChoices(initialEvaluated, "value", "label", true);
+            choicesEvaluatedEntity.setChoices(initialEvaluated);
             choicesEvaluatedEntity.setChoiceByValue(appState.evaluatedEntity);
-            enableHoverToChoices(choicesEvaluatedEntity, evaluatedEl.closest(".filter-group"));
         }
 
         const periodEl = document.getElementById("period");
@@ -286,14 +439,20 @@ async function initializeFilters() {
 
         const catEl = document.getElementById("category");
         if (catEl) {
-            choicesCategory = new Choices(catEl, multiOpts);
-            choicesCategory.setChoices(CATEGORIESLIST.map(c => ({ value: c, label: c, selected: c === "include_all" })), "value", "label", true);
-            enableHoverToChoices(choicesCategory, catEl.closest(".filter-group"));
+            choicesCategory = buildCheckboxFilter(catEl, {
+                translate: tCategory, max: 5, searchKey: "category_search",
+                values: CATEGORIESLIST.map(s => ({ value: s })),
+                summary: sel => sel.length === 0
+                    ? t("category_none")
+                    : `${sel.length} ${sel.length === 1 ? t("category_selected_singular") : t("category_selected_plural")}`
+            });
+            choicesCategory.setChoiceByValue(appState.category);
+            choicesCategory.relabel();
         }
 
         setupFilterListeners();
     }
-    
+
     translateUI();
     updateToggleVisual(pendingState.isDynamic);
     checkApplyButtonState();
@@ -554,10 +713,42 @@ function updateToggleVisual(isDynamic) {
         label.textContent = isDynamic ? texts.mode_dynamic : texts.mode_static;
         label.style.color = isDynamic ? "#008BC9" : "white";
     }
-    const gaugeFooter = document.querySelector(".gauge-footer");
-    if (gaugeFooter) gaugeFooter.style.display = isDynamic ? "flex" : "none";
     const dynamicToggle = document.getElementById("dynamic-mode");
     if (dynamicToggle) dynamicToggle.checked = isDynamic;
+
+    updateGaugeTooltip();
+}
+
+// Mode-aware gauge tooltip: dynamic = avg of last 30 min, static = avg of selected period.
+function gaugeTooltipKey() {
+    const isDynamic = pendingState ? pendingState.isDynamic : appState.isDynamic;
+    return isDynamic ? "tooltip_gauge_dynamic" : "tooltip_gauge_static";
+}
+
+function updateGaugeTooltip() {
+    const el = document.getElementById("gauge-info-icon");
+    if (!el) return;
+    const content = t(gaugeTooltipKey());
+    if (el._tippy) el._tippy.setContent(content);
+    el.setAttribute("data-tippy-content", content);
+}
+
+// Builds the "Última atualização: há X min" description from the latest ingested data date.
+function renderLastUpdate() {
+    const el = document.getElementById("gauge-last-update");
+    if (!el) return;
+    if (!lastDataDate) { el.textContent = ""; return; }
+
+    const diffMin = Math.max(0, Math.floor((Date.now() - lastDataDate.getTime()) / 60000));
+    let rel;
+    if (diffMin < 60) {
+        rel = t("update_min_ago").replace("{n}", diffMin);
+    } else if (diffMin < 1440) {
+        rel = t("update_over_hour");
+    } else {
+        rel = t("update_over_day");
+    }
+    el.textContent = `${t("last_update")}${rel}`;
 }
 
 function processAndUpdateHistogramChart(apiData) {
@@ -704,7 +895,11 @@ function updateEvolutionHeader(totalNews) {
     const revStr = revArr.map(r => tEntity(r)).join(", ");
     const entStr = entArr.map(e => tEntity(e)).join(", ");
     
-    evolutionTitleEl.innerHTML = `${t("app_title")}<br><span style="font-size: 0.8em; font-weight: 500; opacity: 0.85;">${t("evo_title_prefix")}${revStr}${t("evo_title_separator")}${entStr}</span>`;
+    evolutionTitleEl.textContent = t("app_title");
+    const evolutionEntitiesEl = document.getElementById("evolution-entities");
+    if (evolutionEntitiesEl) {
+        evolutionEntitiesEl.textContent = `${t("evo_title_prefix")}${revStr}${t("evo_title_separator")}${entStr}`;
+    }
     
     let dateStr = "";
     if (appState.isDynamic) {
@@ -798,13 +993,15 @@ function processAndUpdateLineChart(apiData) {
         if (translatedLabel === labelName) {
             translatedLabel = tCategory(labelName);
         }
-        return { label: translatedLabel, data: alignedData };
+        // key = stable slug for colour mapping; label = translated display text
+        return { label: translatedLabel, key: labelName, data: alignedData };
     });
 
     const confirmPopup = document.getElementById("chart-popup");
     const popupDateSpan = document.getElementById("popup-date");
 
-    const handlePointClick = (index) => {
+    // Load a point's news into the newsstand WITHOUT moving the viewport.
+    const selectPoint = (index) => {
         const startDateObj = new Date(sortedDates[index]);
         const aggHours = parseFloat(appState.aggregation) || 24;
         currentClickedDate = {
@@ -815,6 +1012,12 @@ function processAndUpdateLineChart(apiData) {
         updateNewsstand(tooltipDates ? tooltipDates[index] : "");
     };
 
+    // User clicked a point: load it AND bring the news below the chart into view.
+    const handlePointClick = (index) => {
+        selectPoint(index);
+        document.getElementById("newsstand")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
     drawLineChart(lineChartCanvas, axisLabels, datasets, handlePointClick, {
         yAxisTitle: t("chart_line_y_axis_title"),
         tooltipGrade: t("chart_line_tooltip_avg"),
@@ -822,8 +1025,8 @@ function processAndUpdateLineChart(apiData) {
         originalDates: tooltipDates
     });
 
-    // Newsstand defaults to the first data point; clicking a point changes it.
-    if (sortedDates.length) handlePointClick(0);
+    // Newsstand defaults to the first data point (no scroll); clicking a point changes it.
+    if (sortedDates.length) selectPoint(0);
 }
 
 // ===== News drawer: quick read of the clicked point =====
@@ -861,7 +1064,7 @@ function newsCardHTML(n) {
     const gradeLabel = isNaN(g) ? "–" : (g % 1 === 0 ? g : g.toFixed(1));
     const analysis = n.analysis || "";
     const long = analysis.length > 180;
-    const meta = [n.source, formatDrawerDate(n.date), n.category].filter(Boolean).map(escapeHtml).join(" · ");
+    const meta = [n.source, formatDrawerDate(n.date), n.category ? tCategory(n.category) : ""].filter(Boolean).map(escapeHtml).join(" · ");
     return `
         <article class="news-card">
             <div class="news-card-head">
@@ -871,7 +1074,7 @@ function newsCardHTML(n) {
                     <p class="news-meta">${meta}</p>
                 </div>
             </div>
-            ${analysis ? `<p class="news-analysis${long ? " clamp" : ""}">${escapeHtml(analysis)}</p>` : ""}
+            ${analysis ? `<p class="news-analysis${long ? " clamp" : ""}">${escapeHtml(analysis)}</p>${gradeScaleHTML(n.grade)}` : ""}
             <div class="news-card-actions">
                 ${long ? `<button type="button" class="read-more">${t("read_more")}</button>` : "<span></span>"}
                 ${n.url ? `<a class="news-original" href="${encodeURI(n.url)}" target="_blank" rel="noopener">${t("read_original")} <i data-lucide="arrow-up-right"></i></a>` : ""}
@@ -936,7 +1139,11 @@ async function updateNewsstand(dateLabel) {
     const dateEl = document.getElementById("newsstand-date");
     if (!currentClickedDate || !dateEl) return;
     dateEl.textContent = dateLabel || formatDrawerDate(currentClickedDate.startDate);
-    ["neg", "neu", "pos"].forEach(b => {
+    // Reveal the stand on first selection and drop the "click a point" hint
+    document.getElementById("newsstand-hint")?.setAttribute("hidden", "");
+    document.getElementById("newsstand-grid")?.removeAttribute("hidden");
+    document.getElementById("newsstand-foot")?.removeAttribute("hidden");
+    ["pos", "neu", "neg"].forEach(b => {
         const w = document.getElementById(`sheet-${b}`);
         if (w) w.innerHTML = `<p class="news-sheet-state">${t("loading_data")}</p>`;
     });
@@ -951,73 +1158,87 @@ async function updateNewsstand(dateLabel) {
     newsstand.neu = list.filter(n => bucketOf(n.grade) === "neu");
     newsstand.pos = list.filter(n => bucketOf(n.grade) === "pos");
     sortNewsstand();
-    ["neg", "neu", "pos"].forEach(b => { newsstandIdx[b] = 0; renderSheet(b, false); });
+    ["pos", "neu", "neg"].forEach(b => { newsstandIdx[b] = 0; renderSheet(b, false); });
 }
 
 function sortNewsstand() {
     const dir = newsstandSortDesc ? -1 : 1;
-    ["neg", "neu", "pos"].forEach(b => newsstand[b].sort((a, c) => dir * (new Date(a.date) - new Date(c.date))));
+    ["pos", "neu", "neg"].forEach(b => newsstand[b].sort((a, c) => dir * (new Date(a.date) - new Date(c.date))));
 }
 
-function renderSheet(bucket, animate = true) {
+// dir: +1 = turning to the next sheet, -1 = back to the previous, 0 = no animation
+function renderSheet(bucket, animate = true, dir = 0) {
     const wrap = document.getElementById(`sheet-${bucket}`);
-    const counter = document.getElementById(`count-${bucket}`);
     if (!wrap) return;
-    const list = newsstand[bucket];
-    if (counter) counter.textContent = list.length ? `${newsstandIdx[bucket] + 1}/${list.length}` : "0/0";
     const postit = document.getElementById(`postit-${bucket}`);
+    const list = newsstand[bucket];
     if (!list.length) {
         wrap.innerHTML = `<p class="news-sheet-state">${t("newsstand_empty")}</p>`;
         if (postit) postit.innerHTML = "";
         return;
     }
     const n = list[newsstandIdx[bucket]];
-    const g = Number(n.grade);
     const face = bucket === "neg" ? "frown" : bucket === "pos" ? "smile" : "meh";   // sad / indifferent / happy
-    const gradeStr = isNaN(g) ? "–" : (g % 1 === 0 ? g : g.toFixed(1));
-    const meta = [formatDrawerDate(n.date), n.category, `Nota ${gradeStr}/7`].filter(Boolean).map(escapeHtml).join(" · ");
+    // Stacked meta: date (prominent) then category, one per line. The grade now
+    // lives in the AI post-it (see gradeScaleHTML).
+    const dateStr = escapeHtml(formatDrawerDate(n.date) || "");
+    const catStr = escapeHtml(n.category ? tCategory(n.category) : "");
     const body = n.article_text || n.summary || "";   // the actual news text (not the AI justification)
+    // Page indicator lives inside the paper: current sheet number + total in the pile
+    const pageInfo = `${t("newsstand_page")} ${newsstandIdx[bucket] + 1}/${list.length} · ${list.length} ${t("newsstand_news_plural")}`;
+    const single = list.length < 2 ? "disabled" : "";   // no page-turn when there is one sheet
     const sheetHtml = `
         <article class="news-sheet">
+            <button type="button" class="news-turn prev" data-nav="prev" aria-label="${t("newsstand_prev")}" ${single}></button>
+            <button type="button" class="news-turn next" data-nav="next" aria-label="${t("newsstand_next")}" ${single}></button>
             <div class="news-sheet-top">
                 <span class="news-sheet-face bucket-${bucket}"><i data-lucide="${face}"></i></span>
                 <div class="news-sheet-mast">
                     <div class="news-sheet-source">${escapeHtml(n.source || "—")}</div>
-                    <p class="news-sheet-dateline">${meta}</p>
+                    <p class="news-sheet-date">${dateStr}</p>
+                    ${catStr ? `<p class="news-sheet-cat">${catStr}</p>` : ""}
                 </div>
             </div>
             <h4 class="news-sheet-headline">${escapeHtml(n.headline || "—")}</h4>
             ${n.summary ? `<p class="news-sheet-subtitle">${escapeHtml(n.summary)}</p>` : ""}
             ${body ? `<p class="news-sheet-body">${escapeHtml(body)}</p>` : ""}
             <div class="news-sheet-foot">
-                <span class="news-sheet-nav">
-                    <button type="button" class="news-page-btn" data-nav="prev">‹ ${t("newsstand_prev")}</button>
-                    <button type="button" class="news-page-btn" data-nav="next">${t("newsstand_next")} ›</button>
-                </span>
-                <span class="news-sheet-links">
-                    ${n.url ? `<a class="news-sheet-detail" href="${encodeURI(n.url)}" target="_blank" rel="noopener">${t("newsstand_detail")} ↗</a>` : ""}
-                    <button type="button" class="news-sheet-detail" data-details>${t("newsstand_table")} ⊞</button>
-                </span>
+                <span class="news-sheet-pageno">${pageInfo}</span>
+                ${n.url ? `<a class="news-sheet-detail" href="${encodeURI(n.url)}" target="_blank" rel="noopener">${t("newsstand_detail")} ↗</a>` : ""}
             </div>
         </article>`;
     const postitHtml = n.analysis
-        ? `<div class="news-postit-title">${t("postit_title")}</div><p class="news-postit-body">${escapeHtml(n.analysis)}</p>`
+        ? `<div class="news-postit-title">${t("postit_title")}</div><p class="news-postit-body">${escapeHtml(n.analysis)}</p>${gradeScaleHTML(n.grade)}`
         : "";
     const paint = () => {
+        wrap.dataset.dir = dir > 0 ? "next" : dir < 0 ? "prev" : "";
         wrap.innerHTML = sheetHtml;
-        if (postit) postit.innerHTML = postitHtml;
+        if (postit) {
+            postit.classList.remove("postit-peel");
+            postit.innerHTML = postitHtml;
+            if (animate && postitHtml) {
+                postit.classList.remove("postit-paste");
+                void postit.offsetWidth;             // restart the paste-in animation
+                postit.classList.add("postit-paste");
+            }
+        }
         if (typeof lucide !== "undefined") lucide.createIcons();
     };
     const old = animate ? wrap.querySelector(".news-sheet") : null;
-    if (old) { old.classList.add("swap-out"); setTimeout(paint, 180); }
-    else { paint(); }
+    if (old) {
+        old.classList.add(dir < 0 ? "tear-prev" : "tear-next");   // peel the current sheet away
+        if (postit) postit.classList.add("postit-peel");
+        setTimeout(paint, 200);
+    } else {
+        paint();
+    }
 }
 
 function stepSheet(bucket, delta) {
     const list = newsstand[bucket];
     if (list.length < 2) return;
     newsstandIdx[bucket] = (newsstandIdx[bucket] + delta + list.length) % list.length;
-    renderSheet(bucket, true);
+    renderSheet(bucket, true, delta);
 }
 
 function initNewsstand() {
@@ -1025,12 +1246,13 @@ function initNewsstand() {
     if (grid) grid.addEventListener("click", (e) => {
         const col = e.target.closest(".newsstand-col");
         if (!col) return;
-        const bucket = col.dataset.bucket;
         const nav = e.target.closest("[data-nav]");
-        if (nav) { stepSheet(bucket, nav.dataset.nav === "prev" ? -1 : 1); return; }
-        if (e.target.closest("[data-details]") && currentClickedDate) {
-            window.open(`details.html?${detailsUrlParams()}`, "_blank");
-        }
+        if (nav) stepSheet(col.dataset.bucket, nav.dataset.nav === "prev" ? -1 : 1);
+    });
+    // Single, centred "open in table" action for the whole section
+    const tableBtn = document.getElementById("newsstand-table-btn");
+    if (tableBtn) tableBtn.addEventListener("click", () => {
+        if (currentClickedDate) window.open(`details.html?${detailsUrlParams()}`, "_blank");
     });
     const sortBtn = document.getElementById("newsstand-sort");
     if (sortBtn) sortBtn.addEventListener("click", () => {
@@ -1038,7 +1260,7 @@ function initNewsstand() {
         const span = sortBtn.querySelector("span");
         if (span) span.textContent = newsstandSortDesc ? t("newsstand_sort_recent") : t("newsstand_sort_old");
         sortNewsstand();
-        ["neg", "neu", "pos"].forEach(b => { newsstandIdx[b] = 0; renderSheet(b, false); });
+        ["pos", "neu", "neg"].forEach(b => { newsstandIdx[b] = 0; renderSheet(b, false); });
     });
 }
 
@@ -1075,7 +1297,7 @@ async function updateDashboard() {
     const btnApply = document.getElementById("btn-apply");
     if (btnApply) {
         btnApply.innerHTML = `
-            <i data-lucide="loader-circle" class="icon-sm" style="animation: spin 1s linear infinite;"></i>
+            <span class="css-spinner css-spinner--inline"></span>
             <span data-i18n="btn_apply">${t("btn_apply")}</span>
         `;
         if (typeof lucide !== "undefined") {
@@ -1144,9 +1366,11 @@ async function updateDashboard() {
             if (typeof lucide !== "undefined") {
                 lucide.createIcons();
             }
-            btnApply.disabled = false;
-            btnApply.style.opacity = "1";
-            btnApply.style.cursor = "pointer";
+            // Clear the loading overrides and let pending-vs-applied state drive the look:
+            // the active (light blue) style only shows while a filter change is pending.
+            btnApply.style.opacity = "";
+            btnApply.style.cursor = "";
+            checkApplyButtonState();
         }
     }
 }
@@ -1282,4 +1506,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
     initializeFilters();
     setTimeout(updateDashboard, 100);
+
+    // Gauge "last update" footer: read the latest ingested data date, then keep the
+    // relative label fresh (the value only changes by the minute, so a 60s tick is plenty).
+    updateGaugeTooltip();
+    loadLastUpdate();
+    if (lastUpdateInterval) clearInterval(lastUpdateInterval);
+    lastUpdateInterval = setInterval(renderLastUpdate, 60000);
 });
+
+async function loadLastUpdate() {
+    try {
+        const stats = await fetchStats();
+        // computed_at = when the pipeline last refreshed the data (true "last upload",
+        // with minute precision). Fall back to last_date (date-only) if it's absent.
+        const raw = stats && (stats.computed_at || stats.last_date);
+        if (raw) {
+            const d = new Date(raw);
+            if (!isNaN(d.getTime())) lastDataDate = d;
+        }
+    } catch (e) {
+        console.error("Error loading last-update stats:", e);
+    }
+    renderLastUpdate();
+}

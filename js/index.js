@@ -396,8 +396,10 @@ document.addEventListener('DOMContentLoaded', () => {
             setInterval(spawnArc, 1000);
         });
 
-    // Camera, rotation and interaction
-    world.pointOfView({ lat: 2, lng: -45, altitude: 1 }, 0);
+    // Camera, rotation and interaction. Pull the camera back on small screens so
+    // the globe renders smaller and doesn't overwhelm the phone layout.
+    const povAltitude = () => (window.innerWidth <= 768 ? 2.4 : 1);
+    world.pointOfView({ lat: 2, lng: -45, altitude: povAltitude() }, 0);
 
     world.controls().autoRotate = true;
     world.controls().autoRotateSpeed = 0.25;
@@ -439,9 +441,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Keep the globe sized to its container
+    // Keep the globe sized to its container and re-fit the camera per breakpoint
     window.addEventListener('resize', () => {
         world.width(globeContainer.clientWidth);
         world.height(globeContainer.clientHeight);
+        world.pointOfView({ altitude: povAltitude() }, 400);
     });
 });

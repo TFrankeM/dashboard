@@ -1,0 +1,70 @@
+/* Shared button system for the dashboard and details pages.
+   Primary (.btn-apply) = solid FGV blue; secondary (.btn-outline) = bordered.
+   Linked after the page stylesheet so it is the single source of truth for button looks. */
+
+/* Primary action button. Width is left to the page so each layout keeps its sizing. */
+.btn-apply {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    min-height: 38px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 4px;
+    font-family: "Gotham", Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    background-color: var(--fgv-blue-light);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.btn-apply:hover:not(:disabled):not(.disabled) {
+    background-color: var(--fgv-blue-med);
+    transform: translateY(-1px);
+}
+.btn-apply:active:not(:disabled):not(.disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+/* Inactive look (no pending change / loading); muted on both light and dark backgrounds. */
+.btn-apply:disabled,
+.btn-apply.disabled {
+    background-color: var(--fgv-gray-pale);
+    color: var(--fgv-gray-med);
+    box-shadow: none;
+    cursor: default;
+    pointer-events: none;
+}
+/* Optional content wrapper used by some primary buttons. */
+.btn-apply .btn-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Secondary button: white field with a blue accent on hover. */
+.btn-outline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    box-sizing: border-box;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--fgv-gray-pale);
+    border-radius: 4px;
+    background: #fff;
+    color: var(--fgv-blue-dark);
+    font-family: "Gotham", Arial, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+.btn-outline:hover:not(:disabled):not(.disabled) {
+    border-color: var(--fgv-blue-dark);
+}

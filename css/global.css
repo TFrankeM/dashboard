@@ -188,11 +188,18 @@ body {
 .mobile-filter-btn .chevron { transition: transform 0.3s ease; }
 .mobile-filter-btn.expanded .chevron { transform: rotate(180deg); }
 
+/* Thin rotating ring used for every loading state across pages. */
 .css-spinner {
+    box-sizing: border-box;
     width: 32px; height: 32px; border-radius: 50%;
-    border: 3px solid rgba(0, 139, 201, 0.2); 
+    border: 2px solid rgba(0, 139, 201, 0.25);
     border-top-color: var(--fgv-blue-med);
-    animation: spin 1s linear infinite; margin-bottom: 12px;
+    animation: spin 0.7s linear infinite; margin-bottom: 12px;
+}
+/* Inline variant sized for buttons; inherits the button's current text color. */
+.css-spinner--inline {
+    width: 16px; height: 16px; margin: 0;
+    border-color: currentColor; border-top-color: transparent;
 }
 
 @keyframes spin { 

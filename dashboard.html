@@ -22,7 +22,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <link rel="stylesheet" href="./css/dashboard.css">
-    <!-- <link rel="stylesheet" href="./css/global.css"> -->
+    <link rel="stylesheet" href="./css/buttons.css">
 
     <script type="module" src="./js/dashboard.js" defer></script>
 </head>
@@ -202,11 +202,14 @@
                 <div class="card-header">
                     <div class="card-header-title-group">
                         <h3 data-i18n="chart_gauge_title">FGV IIBEx</h3>
-                        <span class="info-icon" data-i18n-tooltip="tooltip_gauge">?</span>
+                        <span class="info-icon" id="gauge-info-icon" data-i18n-tooltip="tooltip_gauge">?</span>
                     </div>
                     <i data-lucide="gauge" class="card-icon"></i>
                 </div>
-                <div class="card-body centered">
+                <div class="card-desc">
+                    <span id="gauge-last-update"></span>
+                </div>
+                <div class="card-body">
                     <div class="gauge-wrapper skeleton">
                         <div class="skeleton-overlay">
                             <div class="css-spinner"></div>
@@ -217,9 +220,6 @@
                         <div id="gaugeValueText" class="gauge-value-text">0.0</div>
                         <div id="gaugeDescription" class="gauge-description"> </div>
                     </div>
-                    <p class="gauge-footer">
-                        <i data-lucide="clock" class="icon-xs"></i> <span data-i18n="last_update">Atualizado a cada 30min</span>
-                    </p>
                 </div>
             </div>
         </main>
@@ -233,6 +233,7 @@
                             <h3 id="evolution-title">FGV IIBEx</h3>
                             <span class="info-icon" data-i18n-tooltip="tooltip_evolution">?</span>
                         </div>
+                        <p class="evolution-entities" id="evolution-entities"></p>
                         <p class="card-desc" id="evolution-subtitle">
                             ...
                         </p>
@@ -243,7 +244,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="line-chart-container skeleton">    
+                <div class="line-chart-container skeleton">
                     <div class="skeleton-overlay">
                         <div class="css-spinner"></div>
                         <span data-i18n="loading_data">Carregando...</span>
@@ -271,37 +272,41 @@
                         </button>
                     </div>
                 </div>
-                <div class="newsstand-grid" id="newsstand-grid">
-                    <div class="newsstand-col" data-bucket="neg">
-                        <div class="newsstand-col-head neg">
-                            <span data-i18n="bucket_neg">Negativas</span>
-                            <span class="newsstand-counter" id="count-neg">0/0</span>
-                        </div>
-                        <div class="news-sheet-row">
-                            <div class="news-sheet-wrap" id="sheet-neg"></div>
-                            <aside class="news-postit" id="postit-neg"></aside>
-                        </div>
-                    </div>
-                    <div class="newsstand-col" data-bucket="neu">
-                        <div class="newsstand-col-head neu">
-                            <span data-i18n="bucket_neu">Neutras</span>
-                            <span class="newsstand-counter" id="count-neu">0/0</span>
-                        </div>
-                        <div class="news-sheet-row">
-                            <div class="news-sheet-wrap" id="sheet-neu"></div>
-                            <aside class="news-postit" id="postit-neu"></aside>
-                        </div>
-                    </div>
+                <p class="newsstand-hint" id="newsstand-hint" data-i18n="newsstand_hint">Selecione um ponto no gráfico acima para carregar as notícias</p>
+                <div class="newsstand-grid" id="newsstand-grid" hidden>
                     <div class="newsstand-col" data-bucket="pos">
                         <div class="newsstand-col-head pos">
                             <span data-i18n="bucket_pos">Positivas</span>
-                            <span class="newsstand-counter" id="count-pos">0/0</span>
                         </div>
                         <div class="news-sheet-row">
                             <div class="news-sheet-wrap" id="sheet-pos"></div>
                             <aside class="news-postit" id="postit-pos"></aside>
                         </div>
                     </div>
+                    <div class="newsstand-col" data-bucket="neu">
+                        <div class="newsstand-col-head neu">
+                            <span data-i18n="bucket_neu">Neutras</span>
+                        </div>
+                        <div class="news-sheet-row">
+                            <div class="news-sheet-wrap" id="sheet-neu"></div>
+                            <aside class="news-postit" id="postit-neu"></aside>
+                        </div>
+                    </div>
+                    <div class="newsstand-col" data-bucket="neg">
+                        <div class="newsstand-col-head neg">
+                            <span data-i18n="bucket_neg">Negativas</span>
+                        </div>
+                        <div class="news-sheet-row">
+                            <div class="news-sheet-wrap" id="sheet-neg"></div>
+                            <aside class="news-postit" id="postit-neg"></aside>
+                        </div>
+                    </div>
+                </div>
+                <div class="newsstand-foot" hidden id="newsstand-foot">
+                    <button id="newsstand-table-btn" class="newsstand-table-btn" type="button">
+                        <i data-lucide="table-2" class="icon-xs"></i>
+                        <span data-i18n="newsstand_table">Ver na tabela</span>
+                    </button>
                 </div>
             </div>
         </section>

@@ -31,6 +31,7 @@ env/
 .env/
 .vercel
 .env*.local
+.env*.local.bak
 
 # Dados brutos e código de tratamento/ingestão (NÃO publicar — só o site)
 *.xlsx

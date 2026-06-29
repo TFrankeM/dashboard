@@ -123,3 +123,7 @@ export async function fetchRelationships() {
     return await fetchFromApi({}, "relationships") || {};
 }
 
+export async function fetchStats() {
+    return await fetchFromApi({}, "stats") || {};
+}
+

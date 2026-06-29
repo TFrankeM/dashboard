@@ -8,6 +8,28 @@ let volumeInstance = null;
 let lineInstance = null;
 let lineChartFixedIndex = null;
 
+// Choose which x-axis tick indices to label: always the first and last, with a
+// width-dependent number of evenly spaced ticks in between. Cached per chart width.
+let lineTickCache = { w: -1, n: -1, set: null };
+function lineTickIndices(chart, n) {
+    const w = chart.width || 0;
+    if (lineTickCache.w === w && lineTickCache.n === n) return lineTickCache.set;
+    const target = w < 360 ? 3 : w < 560 ? 4 : w < 900 ? 6 : w < 1300 ? 9 : 12;
+    const count = Math.min(target, n);
+    const set = new Set();
+    if (n > 0) {
+        if (count <= 1) {
+            set.add(0);
+        } else {
+            for (let i = 0; i < count; i++) set.add(Math.round(i * (n - 1) / (count - 1)));
+        }
+        set.add(0);
+        set.add(n - 1);
+    }
+    lineTickCache = { w, n, set };
+    return set;
+}
+
 const COLORS = {
     bluePrimary: "#003A79",
     blueLight: "#008BC9",
@@ -431,24 +453,50 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
         "Independentes": "#d97706"
         };
 
-    const LINE_COLORS = [
-        "#1e40af",
-        "#dc2626",
-        "#16a34a",
-        "#d97706",
-        "#9333ea",
-        "#0891b2",
-        "#db2777"
+    // Fixed colour per category (keyed by the stable slug, not the translated
+    // label or array position). This way a series keeps its colour when other
+    // categories are added/removed, so comparisons stay readable across changes.
+    const CATEGORY_COLORS = {
+        include_all:                        "#003A79",
+        politica:                           "#1f77b4",
+        economia_negocios_financas:         "#2ca02c",
+        conflito_guerra_paz:                "#d62728",
+        saude:                              "#e7298a",
+        educacao:                           "#17becf",
+        ciencia_tecnologia:                 "#9467bd",
+        esporte:                            "#bcbd22",
+        crime_lei_justica:                  "#8c564b",
+        meio_ambiente:                      "#31a354",
+        desastres_acidentes_emergencias:    "#ff7f0e",
+        interesse_humano:                   "#ffbb78",
+        sociedade:                          "#756bb1",
+        trabalho:                           "#00a0b0",
+        meteorologia:                       "#7fc7ff",
+        religiao_crencas:                   "#bd9e39",
+        estilo_vida_lazer:                  "#fb9a99",
+        artes_cultura_entretenimento_midia: "#c71585",
+        nao_informado:                      "#7f7f7f"
+    };
+
+    // Fallback palette for non-category series (entities, alignments without a
+    // fixed colour). Picked by a hash of the series key so it is also stable.
+    const FALLBACK_COLORS = [
+        "#1e40af", "#16a34a", "#9333ea", "#0891b2", "#db2777", "#d97706", "#dc2626"
     ];
+    const stableColor = key => {
+        let h = 0;
+        const s = String(key || "");
+        for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+        return FALLBACK_COLORS[h % FALLBACK_COLORS.length];
+    };
 
     const dataArray = Array.isArray(datasets) ? datasets : [datasets];
 
     const styledDatasets = dataArray.map((ds, index) => {
-        let color = POLITICAL_COLORS[ds.label] || LINE_COLORS[index % LINE_COLORS.length]
-        
-        if (!POLITICAL_COLORS[ds.label] && dataArray.length > 1) {
-            color = LINE_COLORS[index % LINE_COLORS.length];
-        }
+        // ds.key is the stable slug (category/entity); ds.label is translated.
+        const color = CATEGORY_COLORS[ds.key]
+            || POLITICAL_COLORS[ds.label]
+            || stableColor(ds.key || ds.label);
 
         return {
             label: ds.label,
@@ -488,13 +536,19 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                     max: 7,
                     title: { display: true, text: texts.yAxisTitle || "FGV IIBEx" }
                 },
-                x: { 
+                x: {
                     grid: { display: false } ,
                     ticks: {
                         maxRotation: 0,
-                        autoSkip: true,
-                        maxTicksLimit: smallScreen ? 3 : 12,
-                        align: "inner"
+                        autoSkip: false,
+                        align: "inner",
+                        // Show first/last plus a width-based number of intermediate dates.
+                        callback: function (value, index) {
+                            const labels = this.chart.data.labels;
+                            return lineTickIndices(this.chart, labels.length).has(index)
+                                ? this.getLabelForValue(index)
+                                : "";
+                        }
                     }
                 }
             },
@@ -524,13 +578,18 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                 }
             },
             plugins: {
-                legend: { 
-                    display: true, 
-                    position: "top", 
+                legend: {
+                    display: true,
+                    position: "top",
                     onClick: (e) => { e.stopPropagation(); },
                     labels: {
-                        font: { size: smallScreen ? 10 : 12 },
-                        boxWidth: smallScreen ? 10 : 40
+                        usePointStyle: true,
+                        pointStyle: "rectRounded",   // filled, rounded colour chip
+                        boxWidth: smallScreen ? 13 : 15,
+                        boxHeight: smallScreen ? 13 : 15,
+                        padding: smallScreen ? 10 : 16,
+                        color: "#475569",
+                        font: { size: smallScreen ? 10 : 12, weight: "600" }
                     }
                 },
                 tooltip: {

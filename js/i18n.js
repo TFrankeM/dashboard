@@ -36,6 +36,24 @@ export const DICTIONARY = {
         newsstand_empty: "Sem notícias",
         newsstand_sort_recent: "Mais recentes",
         newsstand_sort_old: "Mais antigas",
+        newsstand_page: "Folha",
+        newsstand_news_plural: "notícias",
+        newsstand_grade_label: "Nota",
+        grade_scale: {
+            "1": "Extremamente negativo. Máximo impacto desfavorável possível, deteriora severamente a imagem.",
+            "2": "Moderadamente negativo. Impacto significativamente desfavorável na imagem, mas não máximo.",
+            "3": "Ligeiramente negativo. Impacto desfavorável, porém, limitado ou pontual.",
+            "4": "Neutro ou irrelevante. Nenhum impacto sobre a imagem.",
+            "5": "Ligeiramente positivo. Impacto favorável, porém, limitado ou pontual.",
+            "6": "Moderadamente positivo. Impacto significativamente favorável na imagem, mas não máximo.",
+            "7": "Extremamente positivo. Máximo impacto favorável possível, melhora fortemente a imagem."
+        },
+        category_search: "Buscar categoria...",
+        category_none: "Nenhuma categoria selecionada",
+        category_selected_singular: "categoria selecionada",
+        category_selected_plural: "categorias selecionadas",
+        entity_none: "Nenhum selecionado",
+        newsstand_hint: "Selecione um ponto no gráfico acima para carregar as notícias",
         error_loading: "Erro",
         unit_singular: "notícia",
         unit_plural: "notícias",
@@ -65,6 +83,8 @@ export const DICTIONARY = {
         tooltip_histogram: "Frequência de notícias agrupadas pela nota de 1 a 7 do IIBEx.",
         tooltip_volume: "Total de publicações capturadas e processadas pelo motor de análise.",
         tooltip_gauge: "FGV IIBEx <br>Escala de 1 a 7.",
+        tooltip_gauge_dynamic: "FGV IIBEx: média dos últimos 30 minutos. <br>Escala de 1 a 7.",
+        tooltip_gauge_static: "FGV IIBEx: média do período selecionado. <br>Escala de 1 a 7.",
         tooltip_evolution: "Evolução do FGV IIBEx.",
         
         // Image labels
@@ -92,6 +112,9 @@ export const DICTIONARY = {
         // Gauge chart
         chart_gauge_title: "FGV IIBEx",
         last_update: "Última atualização: ",
+        update_min_ago: "há {n} min",
+        update_over_hour: "há mais de 1 hora",
+        update_over_day: "há mais de 1 dia",
 
         // Evolution chart
         evo_title_prefix: "Avaliador: ",
@@ -172,6 +195,8 @@ export const DICTIONARY = {
         btn_choose_columns: "Escolha as colunas visíveis",
         label_show: "Exibir:",
         label_news_count: "notícias",
+        placeholder_start_date: "Data inicial...",
+        placeholder_end_date: "Data final...",
         placeholder_search: "Procurar...",
         col_date: "Data",
         col_headline: "Manchete",
@@ -244,6 +269,24 @@ export const DICTIONARY = {
         newsstand_empty: "No news",
         newsstand_sort_recent: "Most recent",
         newsstand_sort_old: "Oldest first",
+        newsstand_page: "Sheet",
+        newsstand_news_plural: "news",
+        newsstand_grade_label: "Score",
+        grade_scale: {
+            "1": "Extremely negative. Maximum possible unfavorable impact; severely deteriorates the image.",
+            "2": "Moderately negative. Significantly unfavorable impact on the image, but not maximum.",
+            "3": "Slightly negative. Unfavorable impact, but limited or isolated.",
+            "4": "Neutral or irrelevant. No impact on the image.",
+            "5": "Slightly positive. Favorable impact, but limited or isolated.",
+            "6": "Moderately positive. Significantly favorable impact on the image, but not maximum.",
+            "7": "Extremely positive. Maximum possible favorable impact; strongly improves the image."
+        },
+        category_search: "Search category...",
+        category_none: "No categories selected",
+        category_selected_singular: "category selected",
+        category_selected_plural: "categories selected",
+        entity_none: "None selected",
+        newsstand_hint: "Select a point on the chart above to load the news",
         error_loading: "Error",
         unit_singular: "news item",
         unit_plural: "news items",
@@ -273,6 +316,8 @@ export const DICTIONARY = {
         tooltip_histogram: "Frequency of news grouped by IIBEx scores from 1 to 7.",
         tooltip_volume: "Total number of publications captured and processed by the analysis engine.",
         tooltip_gauge: "FGV IIBEx <br>Scale from 1 to 7.",
+        tooltip_gauge_dynamic: "FGV IIBEx: average of the last 30 minutes. <br>Scale from 1 to 7.",
+        tooltip_gauge_static: "FGV IIBEx: average of the selected period. <br>Scale from 1 to 7.",
         tooltip_evolution: "Evolution of the FGV IIBEx.",
 
         // Image labels
@@ -300,6 +345,9 @@ export const DICTIONARY = {
         // Gauge chart
         chart_gauge_title: "FGV IIBEx",
         last_update: "Last update: ",
+        update_min_ago: "{n} min ago",
+        update_over_hour: "more than 1 hour ago",
+        update_over_day: "more than 1 day ago",
 
         // Evolution chart
         evo_title_prefix: "Evaluator: ",
@@ -454,6 +502,24 @@ export const DICTIONARY = {
         newsstand_empty: "Sin noticias",
         newsstand_sort_recent: "Más recientes",
         newsstand_sort_old: "Más antiguas",
+        newsstand_page: "Hoja",
+        newsstand_news_plural: "noticias",
+        newsstand_grade_label: "Nota",
+        grade_scale: {
+            "1": "Extremadamente negativo. Máximo impacto desfavorable posible; deteriora severamente la imagen.",
+            "2": "Moderadamente negativo. Impacto significativamente desfavorable en la imagen, pero no máximo.",
+            "3": "Ligeramente negativo. Impacto desfavorable, pero limitado o puntual.",
+            "4": "Neutro o irrelevante. Ningún impacto sobre la imagen.",
+            "5": "Ligeramente positivo. Impacto favorable, pero limitado o puntual.",
+            "6": "Moderadamente positivo. Impacto significativamente favorable en la imagen, pero no máximo.",
+            "7": "Extremadamente positivo. Máximo impacto favorable posible; mejora fuertemente la imagen."
+        },
+        category_search: "Buscar categoría...",
+        category_none: "Ninguna categoría seleccionada",
+        category_selected_singular: "categoría seleccionada",
+        category_selected_plural: "categorías seleccionadas",
+        entity_none: "Ninguno seleccionado",
+        newsstand_hint: "Selecciona un punto en el gráfico de arriba para cargar las noticias",
         error_loading: "Error",
         unit_singular: "noticia",
         unit_plural: "noticias",
@@ -483,6 +549,8 @@ export const DICTIONARY = {
         tooltip_histogram: "Frecuencia de noticias agrupadas por la puntuación del <br>IIBEx de 1 a 7.",
         tooltip_volume: "Total de publicaciones capturadas y procesadas por el motor de análisis.",
         tooltip_gauge: "FGV IIBEx <br>Escala de 1 a 7.",
+        tooltip_gauge_dynamic: "FGV IIBEx: promedio de los últimos 30 minutos. <br>Escala de 1 a 7.",
+        tooltip_gauge_static: "FGV IIBEx: promedio del período seleccionado. <br>Escala de 1 a 7.",
         tooltip_evolution: "Evolución del FGV IIBEx.",
 
         // Image labels
@@ -510,6 +578,9 @@ export const DICTIONARY = {
         // Gauge chart
         chart_gauge_title: "FGV IIBEx",
         last_update: "Última actualización: ",
+        update_min_ago: "hace {n} min",
+        update_over_hour: "hace más de 1 hora",
+        update_over_day: "hace más de 1 día",
 
         // Evolution chart
         evo_title_prefix: "Evaluador: ",
@@ -590,6 +661,8 @@ export const DICTIONARY = {
         btn_choose_columns: "Elija las columnas visibles",
         label_show: "Mostrar:",
         label_news_count: "noticias",
+        placeholder_start_date: "Fecha inicial...",
+        placeholder_end_date: "Fecha final...",
         placeholder_search: "Buscar...",
         col_date: "Fecha",
         col_headline: "Titular",
