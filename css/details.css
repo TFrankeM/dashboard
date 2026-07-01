@@ -38,6 +38,8 @@ body {
 .icon-12 { width: 12px !important; height: 12px !important; }
 .icon-14 { width: 14px !important; height: 14px !important; }
 .icon-16 { width: 16px !important; height: 16px !important; }
+/* Filter icon; sized like icon-16, colour inherited from the button so all filter icons match. */
+.cbx-icon { width: 16px; height: 16px; flex: none; }
 
 .btn-inner {
     display: flex;

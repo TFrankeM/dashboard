@@ -63,9 +63,9 @@ export const DICTIONARY = {
 
         // Filter labels
         label_period: "Período",
-        label_evaluatorEntity: "Quem avalia",
+        label_evaluatorEntity: "Ente avaliador",
         label_political: "Perfil",
-        label_evaluatedEntity: "Quem será avaliado",
+        label_evaluatedEntity: "Ente em avaliação",
         label_category: "Categorias",
         label_aggregation: "Agregação (h)",
         btn_apply: "Aplicar filtros",

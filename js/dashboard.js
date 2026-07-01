@@ -5,6 +5,22 @@ import { DICTIONARY } from "./i18n.js";
 // Global state variables
 let CURRENT_LANG = "pt-BR";
 
+// Shared tooltip config, reused for static and dynamically-built info icons.
+const INFO_TIPPY_OPTS = {
+    placement: "auto-end",
+    animation: "shift-away",
+    theme: "dark",
+    delay: [100, 100],
+    arrow: false,
+    arrowType: "round",
+    size: "small",
+    trigger: "mouseenter focus click",
+    maxWidth: 250,
+    interactive: true,
+    allowHTML: true,
+    appendTo: () => document.body,
+};
+
 const DEFAULT_CONFIG = {
     isDynamic: false,
     periodValue: "year_2025",
@@ -13,7 +29,7 @@ const DEFAULT_CONFIG = {
     evaluatorEntity: ["argentina"],
     evaluatedEntity: ["brasil"],
     category: ["include_all"],
-    aggregation: 1
+    aggregation: 3
 };
 let appState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let pendingState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -132,7 +148,7 @@ function translateUI() {
     });
 
     // filters
-    [choicesEvaluatorEntity, choicesEvaluatedEntity, choicesCategory]
+    [choicesEvaluatorEntity, choicesEvaluatedEntity, choicesCategory, choicesPeriod]
         .forEach(c => { if (c && c.relabel) c.relabel(); });
     updatePeriodDropdown(pendingState.isDynamic);
 
@@ -248,8 +264,11 @@ function initLanguageSelector() {
 // clearStore, setChoices, relabel.
 function buildCheckboxFilter(selectEl, opts) {
     const translate = opts.translate;                 // value -> display label
-    const max = opts.max || Infinity;                 // maximum number of selections
-    const summary = opts.summary;                     // selected values -> closed-state text
+    const single = !!opts.single;                     // single-select mode (period)
+    const max = single ? 1 : (opts.max || Infinity);  // maximum number of selections
+    const nameKey = opts.nameKey;                     // i18n key for the field name (closed-state label)
+    const infoKey = opts.infoKey;                     // i18n key for the panel help tooltip
+    const icon = opts.icon;                           // lucide icon name shown in the field
     const searchKey = opts.searchKey;                 // i18n key for the search placeholder
     const hoverCapable = window.matchMedia("(hover: hover)").matches;
 
@@ -265,17 +284,23 @@ function buildCheckboxFilter(selectEl, opts) {
     root.className = "cbx-filter";
     root.innerHTML = `
         <button type="button" class="cbx-field">
+            ${icon ? `<i data-lucide="${icon}" class="cbx-icon"></i>` : ""}
             <span class="cbx-summary"></span>
             <svg class="cbx-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
         <div class="cbx-panel" hidden>
-            <input type="text" class="cbx-search" />
-            <div class="cbx-list" role="listbox" aria-multiselectable="true"></div>
+            <div class="cbx-panel-head">
+                <span class="cbx-panel-title"></span>
+                ${infoKey ? `<span class="info-icon" data-i18n-tooltip="${infoKey}">?</span>` : ""}
+            </div>
+            <input type="text" class="cbx-search"${single ? " hidden" : ""} />
+            <div class="cbx-list" role="listbox" aria-multiselectable="${single ? "false" : "true"}"></div>
         </div>`;
     selectEl.after(root);
 
     const field = root.querySelector(".cbx-field");
     const summaryEl = root.querySelector(".cbx-summary");
+    const panelTitleEl = root.querySelector(".cbx-panel-title");
     const panel = root.querySelector(".cbx-panel");
     const search = root.querySelector(".cbx-search");
     const listEl = root.querySelector(".cbx-list");
@@ -286,7 +311,12 @@ function buildCheckboxFilter(selectEl, opts) {
             `<option value="${o.value}"${selected.has(o.value) ? " selected" : ""}></option>`).join("");
     };
 
-    const renderSummary = () => { summaryEl.textContent = summary(Array.from(selected)); };
+    // Closed-state and panel header always show the field name, not the selection.
+    const renderSummary = () => {
+        const name = nameKey ? t(nameKey) : "";
+        summaryEl.textContent = name;
+        if (panelTitleEl) panelTitleEl.textContent = name;
+    };
 
     // Order: selected first, then unselected, disabled last; alphabetical within each group.
     const computeOrder = () => {
@@ -317,7 +347,11 @@ function buildCheckboxFilter(selectEl, opts) {
     const toggle = value => {
         const o = options.find(x => x.value === value);
         if (!o || o.disabled) return;
-        if (selected.has(value)) {
+        if (single) {
+            if (selected.has(value)) return;             // already the active choice
+            selected.clear();
+            selected.add(value);
+        } else if (selected.has(value)) {
             selected.delete(value);
         } else if (selected.size < max) {
             selected.add(value);
@@ -328,6 +362,7 @@ function buildCheckboxFilter(selectEl, opts) {
         renderSummary();
         renderList();
         selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+        if (single) closePanel();                        // single-select commits and closes
     };
 
     const openPanel = () => {
@@ -367,6 +402,12 @@ function buildCheckboxFilter(selectEl, opts) {
     syncSelect();
     renderSummary();
 
+    // The component is built after the global lucide/tippy init, so render its icon
+    // and wire the panel help tooltip here.
+    if (typeof lucide !== "undefined") lucide.createIcons();
+    const infoEl = root.querySelector(".info-icon");
+    if (infoEl && typeof tippy !== "undefined") tippy(infoEl, INFO_TIPPY_OPTS);
+
     return {
         getValue() { return Array.from(selected); },
         setChoiceByValue(v) {
@@ -386,14 +427,6 @@ function buildCheckboxFilter(selectEl, opts) {
 }
 
 async function initializeFilters() {
-    const singleOpts = {
-        searchEnabled: false, 
-        placeholderValue: "Selecione...", 
-        itemSelectText: "", 
-        shouldSort: false, 
-        position: "bottom" 
-    };
-
     // Fetch dynamic relationships from DB
     try {
         RELATIONSHIPS = await fetchRelationships();
@@ -402,13 +435,11 @@ async function initializeFilters() {
     }
 
     if (typeof Choices !== "undefined") {
-        // Closed-state summary for entity filters: the selected names, or a fallback when empty.
-        const entitySummary = sel => sel.length ? sel.map(tEntity).join(", ") : t("entity_none");
-
         const evalEl = document.getElementById("evaluatorEntity");
         if (evalEl) {
             choicesEvaluatorEntity = buildCheckboxFilter(evalEl, {
-                translate: tEntity, max: 5, searchKey: "placeholder_search", summary: entitySummary
+                translate: tEntity, max: 5, searchKey: "placeholder_search",
+                icon: "eye", nameKey: "label_evaluatorEntity", infoKey: "tooltip_evaluatorEntity"
             });
             const initialEvaluatorEntities = await fetchOptionsFromDB("evaluator", []);
             choicesEvaluatorEntity.setChoices(initialEvaluatorEntities);
@@ -418,7 +449,8 @@ async function initializeFilters() {
         const evaluatedEl = document.getElementById("evaluatedEntity");
         if (evaluatedEl) {
             choicesEvaluatedEntity = buildCheckboxFilter(evaluatedEl, {
-                translate: tEntity, max: 5, searchKey: "placeholder_search", summary: entitySummary
+                translate: tEntity, max: 5, searchKey: "placeholder_search",
+                icon: "target", nameKey: "label_evaluatedEntity", infoKey: "tooltip_evaluatedEntity"
             });
             const initialEvaluated = await fetchOptionsFromDB("evaluated", appState.evaluatorEntity);
             choicesEvaluatedEntity.setChoices(initialEvaluated);
@@ -427,9 +459,11 @@ async function initializeFilters() {
 
         const periodEl = document.getElementById("period");
         if (periodEl) {
-            choicesPeriod = new Choices(periodEl, singleOpts);
+            choicesPeriod = buildCheckboxFilter(periodEl, {
+                translate: tPeriod, single: true, searchKey: "placeholder_search",
+                icon: "calendar-days", nameKey: "label_period", infoKey: "tooltip_period"
+            });
             updatePeriodDropdown(appState.isDynamic);
-            enableHoverToChoices(choicesPeriod, periodEl.closest(".filter-group"));
         }
 
         const aggregationInput = document.getElementById("aggregation");
@@ -442,9 +476,7 @@ async function initializeFilters() {
             choicesCategory = buildCheckboxFilter(catEl, {
                 translate: tCategory, max: 5, searchKey: "category_search",
                 values: CATEGORIESLIST.map(s => ({ value: s })),
-                summary: sel => sel.length === 0
-                    ? t("category_none")
-                    : `${sel.length} ${sel.length === 1 ? t("category_selected_singular") : t("category_selected_plural")}`
+                icon: "tags", nameKey: "label_category", infoKey: "tooltip_category"
             });
             choicesCategory.setChoiceByValue(appState.category);
             choicesCategory.relabel();
@@ -682,26 +714,19 @@ function updatePeriodDropdown(isDynamic) {
     if (!choicesPeriod) return;
 
     const rawOptions = isDynamic ? PERIODS_CONFIG.dynamic : PERIODS_CONFIG.static;
-    const options = rawOptions.map(opt => ({
-        ...opt,
-        label: tPeriod(opt.value)
-    }));
+    choicesPeriod.setChoices(rawOptions.map(o => ({ value: o.value })));
 
-    choicesPeriod.clearStore();
-    choicesPeriod.setChoices(options, "value", "label", true);
-    
     const currentVal = pendingState.periodValue;
-    const exists = options.find(o => o.value === currentVal);
-    if (exists) {
+    const match = rawOptions.find(o => o.value === currentVal);
+    if (match) {
         choicesPeriod.setChoiceByValue(currentVal);
     } else {
-        const def = options[0].value;
-        choicesPeriod.setChoiceByValue(def);
-        pendingState.periodValue = def;
+        const def = rawOptions[0];
+        choicesPeriod.setChoiceByValue(def.value);
+        pendingState.periodValue = def.value;
         if (!isDynamic) {
-            const config = options[0];
-            pendingState.customStartDate = config.start;
-            pendingState.customEndDate = config.end;
+            pendingState.customStartDate = def.start;
+            pendingState.customEndDate = def.end;
         }
     }
 }
@@ -1390,20 +1415,7 @@ document.addEventListener("DOMContentLoaded", function () {
         lucide.createIcons();
     }
     if (typeof tippy !== "undefined") {
-        tippy(".info-icon", {
-            placement: "auto-end",
-            animation: "shift-away",
-            theme: "dark",
-            delay: [100, 100],
-            arrow: false,
-            arrowType: "round",
-            size: "small",
-            trigger: "mouseenter focus click",
-            maxWidth: 250,
-            interactive: true,
-            allowHTML: true,
-            appendTo: () => document.body,
-        });
+        tippy(".info-icon", INFO_TIPPY_OPTS);
     }
 
     const mobileFilterBtn = document.getElementById("mobile-filter-toggle");
