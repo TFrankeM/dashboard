@@ -297,6 +297,8 @@ function buildCheckboxFilter(selectEl, opts) {
             <div class="cbx-list" role="listbox" aria-multiselectable="${single ? "false" : "true"}"></div>
         </div>`;
     selectEl.after(root);
+    // Drop the static placeholder shown before this field mounted.
+    selectEl.parentElement?.querySelector(".cbx-skeleton")?.remove();
 
     const field = root.querySelector(".cbx-field");
     const summaryEl = root.querySelector(".cbx-summary");

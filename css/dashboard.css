@@ -738,6 +738,11 @@ input:checked + .slider:before {
     height: 16px;
     color: var(--fgv-blue-med);
 }
+/* Static placeholder rendered before JS mounts the real field; removed on mount. */
+.cbx-skeleton {
+    cursor: default;
+    pointer-events: none;
+}
 .cbx-summary {
     flex: 1;
     min-width: 0;
