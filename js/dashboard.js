@@ -23,9 +23,9 @@ const INFO_TIPPY_OPTS = {
 
 const DEFAULT_CONFIG = {
     isDynamic: false,
-    periodValue: "year_2025",
+    periodValue: "sem1_2025",
     customStartDate: "2025-01-01",
-    customEndDate: "2025-12-31",
+    customEndDate: "2025-06-30",
     evaluatorEntity: ["argentina"],
     evaluatedEntity: ["brasil"],
     category: ["include_all"],
@@ -66,6 +66,10 @@ let currentClickedDate = null;
 let pollingInterval = null;
 let lastDataDate = null;          // latest ingested data timestamp, for the "last update" footer
 let lastUpdateInterval = null;    // keeps the "X min ago" label fresh while the page is open
+// Remembers the period selection per mode so toggling static<->dynamic and back
+// restores the previous choice (otherwise it falls to each mode's first default and
+// the apply button never returns to idle after a round-trip).
+let periodByMode = { static: null, dynamic: null };
 
 function t(key) {
     return DICTIONARY[CURRENT_LANG][key] || key;
@@ -286,13 +290,10 @@ function buildCheckboxFilter(selectEl, opts) {
         <button type="button" class="cbx-field">
             ${icon ? `<i data-lucide="${icon}" class="cbx-icon"></i>` : ""}
             <span class="cbx-summary"></span>
+            ${infoKey ? `<span class="info-icon" data-i18n-tooltip="${infoKey}">?</span>` : ""}
             <svg class="cbx-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
         <div class="cbx-panel" hidden>
-            <div class="cbx-panel-head">
-                <span class="cbx-panel-title"></span>
-                ${infoKey ? `<span class="info-icon" data-i18n-tooltip="${infoKey}">?</span>` : ""}
-            </div>
             <input type="text" class="cbx-search"${single ? " hidden" : ""} />
             <div class="cbx-list" role="listbox" aria-multiselectable="${single ? "false" : "true"}"></div>
         </div>`;
@@ -302,7 +303,6 @@ function buildCheckboxFilter(selectEl, opts) {
 
     const field = root.querySelector(".cbx-field");
     const summaryEl = root.querySelector(".cbx-summary");
-    const panelTitleEl = root.querySelector(".cbx-panel-title");
     const panel = root.querySelector(".cbx-panel");
     const search = root.querySelector(".cbx-search");
     const listEl = root.querySelector(".cbx-list");
@@ -313,11 +313,9 @@ function buildCheckboxFilter(selectEl, opts) {
             `<option value="${o.value}"${selected.has(o.value) ? " selected" : ""}></option>`).join("");
     };
 
-    // Closed-state and panel header always show the field name, not the selection.
+    // The field always shows its name, not the current selection.
     const renderSummary = () => {
-        const name = nameKey ? t(nameKey) : "";
-        summaryEl.textContent = name;
-        if (panelTitleEl) panelTitleEl.textContent = name;
+        summaryEl.textContent = nameKey ? t(nameKey) : "";
     };
 
     // Order: selected first, then unselected, disabled last; alphabetical within each group.
@@ -408,7 +406,11 @@ function buildCheckboxFilter(selectEl, opts) {
     // and wire the panel help tooltip here.
     if (typeof lucide !== "undefined") lucide.createIcons();
     const infoEl = root.querySelector(".info-icon");
-    if (infoEl && typeof tippy !== "undefined") tippy(infoEl, INFO_TIPPY_OPTS);
+    if (infoEl) {
+        if (typeof tippy !== "undefined") tippy(infoEl, INFO_TIPPY_OPTS);
+        // The help icon lives inside the field button; don't let clicking it toggle the panel.
+        infoEl.addEventListener("click", e => e.stopPropagation());
+    }
 
     return {
         getValue() { return Array.from(selected); },
@@ -623,9 +625,23 @@ function setupFilterListeners() {
     const dynamicToggle = document.getElementById("dynamic-mode");
     if (dynamicToggle) {
         dynamicToggle.addEventListener("change", (e) => {
+            // Stash the current period under the mode being left, then restore the
+            // period previously used for the mode being entered, so a round-trip
+            // toggle lands back on the same selection.
+            periodByMode[pendingState.isDynamic ? "dynamic" : "static"] = {
+                periodValue: pendingState.periodValue,
+                customStartDate: pendingState.customStartDate,
+                customEndDate: pendingState.customEndDate,
+            };
             pendingState.isDynamic = e.target.checked;
+            const mem = periodByMode[pendingState.isDynamic ? "dynamic" : "static"];
+            if (mem) {
+                pendingState.periodValue = mem.periodValue;
+                pendingState.customStartDate = mem.customStartDate;
+                pendingState.customEndDate = mem.customEndDate;
+            }
             updateToggleVisual(pendingState.isDynamic);
-            updatePeriodDropdown(pendingState.isDynamic); 
+            updatePeriodDropdown(pendingState.isDynamic);
             checkApplyButtonState();
         });
     }

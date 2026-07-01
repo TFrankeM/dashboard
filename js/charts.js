@@ -35,6 +35,13 @@ function tickTarget(width) {
     return width < 360 ? 3 : width < 560 ? 4 : width < 900 ? 6 : width < 1300 ? 9 : 12;
 }
 
+// Day 1/15 markers are date-only (~35px each), so far more fit per row than the
+// mixed date/hour ticks. Scale the budget to the width instead of capping at 12,
+// so a wide chart can show every 1st and 15th of the period.
+function markerTarget(width) {
+    return Math.max(2, Math.floor((width || 0) / 55));
+}
+
 function computeLineTicks(scale) {
     const chart = scale.chart;
     const n = chart.data.labels.length;
@@ -57,12 +64,15 @@ function computeLineTicks(scale) {
     let withHour = false;
     if (markers.length >= 2) {
         // Enough day 1/15 markers: label those, thinning to the width budget.
+        const mTarget = markerTarget(chart.width || 0);
         let chosen = markers;
-        if (markers.length > target) {
+        if (markers.length > mTarget) {
+            // Fixed stride keeps the day 1/15 alternation in phase, so thinning never
+            // lands two adjacent markers side by side (which would overlap); e.g. a
+            // stride of 2 keeps every 1st and drops every 15th.
+            const stride = Math.ceil(markers.length / mTarget);
             chosen = [];
-            for (let k = 0; k < target; k++) {
-                chosen.push(markers[Math.round(k * (markers.length - 1) / (target - 1))]);
-            }
+            for (let k = 0; k < markers.length; k += stride) chosen.push(markers[k]);
         }
         for (const i of chosen) map.set(i, fmtAxisLabel(dates[i], false, meta.locale));
     } else {
@@ -93,7 +103,40 @@ function ensureLineTicks(scale) {
     const chart = scale.chart;
     const key = `${chart.width}|${scale.min}|${scale.max}|${chart.data.labels.length}`;
     if (lineTickState.key === key) return;
-    lineTickState = { key, map: computeLineTicks(scale) };
+    const map = computeLineTicks(scale);
+    const keys = [...map.keys()].sort((a, b) => a - b);
+    lineTickState = {
+        key, map,
+        lo: keys[0],
+        hi: keys[keys.length - 1],
+        second: keys[1],
+        penult: keys[keys.length - 2],
+    };
+}
+
+const TICK_COLOR = "#666";
+// Rough label width in px for the tick font (~5.8px/char at 12px).
+function estTickWidth(s) { return s ? s.length * 5.8 : 0; }
+
+// The forced first/last anchors are raw edge dates; the second/penultimate ticks
+// are the clean day 1/15 markers. When zoom pushes an anchor toward its marker
+// neighbour, fade the anchor out (and drop it once the boxes would collide) so the
+// marker takes its place instead of the two overlapping.
+function lineTickColor(scale, v) {
+    const st = lineTickState;
+    let anchor, neighbor;
+    if (v === st.lo && st.second !== undefined && st.second !== st.lo) {
+        anchor = st.lo; neighbor = st.second;
+    } else if (v === st.hi && st.penult !== undefined && st.penult !== st.hi) {
+        anchor = st.hi; neighbor = st.penult;
+    } else {
+        return TICK_COLOR;
+    }
+    const gap = Math.abs(scale.getPixelForValue(neighbor) - scale.getPixelForValue(anchor));
+    // anchor is edge-aligned (occupies its full width inward); neighbour is centred.
+    const clearance = gap - estTickWidth(st.map.get(anchor)) - estTickWidth(st.map.get(neighbor)) / 2;
+    const alpha = Math.max(0, Math.min(1, clearance / 20));
+    return `rgba(102, 102, 102, ${alpha})`;
 }
 
 const COLORS = {
@@ -623,6 +666,13 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                         callback: function (value) {
                             ensureLineTicks(this);
                             return lineTickState.map.get(value) || "";
+                        },
+                        // Fade the first/last anchors out as they crowd their marker neighbour.
+                        color: function (ctx) {
+                            const scale = ctx.scale || (ctx.chart && ctx.chart.scales && ctx.chart.scales.x);
+                            if (!scale || !ctx.tick) return TICK_COLOR;
+                            ensureLineTicks(scale);
+                            return lineTickColor(scale, ctx.tick.value);
                         }
                     }
                 }

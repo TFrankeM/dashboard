@@ -587,6 +587,7 @@ input:checked + .slider:before {
     align-items: center;
     gap: 6px;
     width: 100%;
+    min-width: 0;
     height: 38px;
     box-sizing: border-box;
     padding: 0 10px;
@@ -595,8 +596,11 @@ input:checked + .slider:before {
     border-radius: 4px;
     transition: border-color 0.2s ease;
 }
+/* Pin the info icon to the right edge and let the label give way when the pill is
+   squeezed, so the icon never spills outside the box on narrow viewports. */
 .agg-control .info-icon {
     margin-left: auto;
+    flex: none;
 }
 .agg-control:focus-within {
     border-color: var(--fgv-blue-dark);
@@ -607,9 +611,13 @@ input:checked + .slider:before {
     font-weight: 700;
     color: var(--fgv-blue-dark);
     white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .input-aggregation {
     width: 48px;
+    flex: none;
     text-align: center;
     box-sizing: border-box;
     border: none;
@@ -754,24 +762,13 @@ input:checked + .slider:before {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-/* Panel header: field name + help icon, above the search/list. */
-.cbx-panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 6px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--fgv-gray-pale);
+/* Help icon lives in the field next to the name; only shown while the panel is open
+   (the closed field already names the filter, so showing it collapsed is redundant). */
+.cbx-field .info-icon {
+    display: none;
 }
-.cbx-panel-title {
-    font-family: "Gotham", Arial, sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--fgv-blue-dark);
-}
-.cbx-panel-head .info-icon {
-    margin: 0;
+.cbx-field.is-open .info-icon {
+    display: inline-grid;
 }
 .cbx-caret {
     flex: none;
@@ -853,6 +850,11 @@ input:checked + .slider:before {
     margin: 0;
     accent-color: var(--fgv-blue-dark);
     pointer-events: none;
+}
+/* Match the reserved field height to the collapsed 32px so the apply button (also
+   32px) isn't dropped to the bottom of a taller row by the grid's flex-end align. */
+.sticky-filters.compact .filter-group {
+    min-height: 32px;
 }
 .sticky-filters.compact .cbx-field {
     height: 32px;
