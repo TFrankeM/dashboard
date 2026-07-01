@@ -8,26 +8,92 @@ let volumeInstance = null;
 let lineInstance = null;
 let lineChartFixedIndex = null;
 
-// Choose which x-axis tick indices to label: always the first and last, with a
-// width-dependent number of evenly spaced ticks in between. Cached per chart width.
-let lineTickCache = { w: -1, n: -1, set: null };
-function lineTickIndices(chart, n) {
-    const w = chart.width || 0;
-    if (lineTickCache.w === w && lineTickCache.n === n) return lineTickCache.set;
-    const target = w < 360 ? 3 : w < 560 ? 4 : w < 900 ? 6 : w < 1300 ? 9 : 12;
-    const count = Math.min(target, n);
-    const set = new Set();
-    if (n > 0) {
-        if (count <= 1) {
-            set.add(0);
-        } else {
-            for (let i = 0; i < count; i++) set.add(Math.round(i * (n - 1) / (count - 1)));
-        }
-        set.add(0);
-        set.add(n - 1);
+// X-axis tick labels for the evolution chart, recomputed whenever the visible
+// range (zoom/pan) or the width changes: first + last visible dates, plus every
+// day 1 and 15 in view. When zoomed below that granularity it falls back to
+// evenly spaced dates and shows the time; day 1/15 markers never show the time.
+let lineChartMeta = null;                       // { dates: number[] (ms), aggHours, locale }
+let lineTickState = { key: "", map: new Map() };
+
+const DAY_MS = 86400000;
+
+function fmtAxisLabel(ms, withHour, locale) {
+    const opts = { day: "2-digit", month: "2-digit", timeZone: "UTC" };
+    if (withHour) { opts.hour = "2-digit"; opts.minute = "2-digit"; }
+    return new Date(ms).toLocaleString(locale, opts);
+}
+
+// True when index i is the first bucket of a UTC day that lands on the 1st or 15th.
+function isMonthMarker(dates, i) {
+    const day = new Date(dates[i]).getUTCDate();
+    if (day !== 1 && day !== 15) return false;
+    if (i === 0) return true;
+    return Math.floor(dates[i] / DAY_MS) !== Math.floor(dates[i - 1] / DAY_MS);
+}
+
+function tickTarget(width) {
+    return width < 360 ? 3 : width < 560 ? 4 : width < 900 ? 6 : width < 1300 ? 9 : 12;
+}
+
+function computeLineTicks(scale) {
+    const chart = scale.chart;
+    const n = chart.data.labels.length;
+    const map = new Map();
+    const meta = lineChartMeta;
+    if (!meta || !meta.dates.length || !n) return map;
+
+    const dates = meta.dates;
+    let lo = 0, hi = n - 1;
+    if (isFinite(scale.min) && isFinite(scale.max)) {
+        lo = Math.max(0, Math.ceil(scale.min));
+        hi = Math.min(n - 1, Math.floor(scale.max));
     }
-    lineTickCache = { w, n, set };
-    return set;
+    if (hi < lo) hi = lo;
+
+    const target = tickTarget(chart.width || 0);
+    const markers = [];
+    for (let i = lo; i <= hi; i++) if (isMonthMarker(dates, i)) markers.push(i);
+
+    let withHour = false;
+    if (markers.length >= 2) {
+        // Enough day 1/15 markers: label those, thinning to the width budget.
+        let chosen = markers;
+        if (markers.length > target) {
+            chosen = [];
+            for (let k = 0; k < target; k++) {
+                chosen.push(markers[Math.round(k * (markers.length - 1) / (target - 1))]);
+            }
+        }
+        for (const i of chosen) map.set(i, fmtAxisLabel(dates[i], false, meta.locale));
+    } else {
+        // Zoomed in past the month markers: evenly spaced visible dates. Show the
+        // time once ticks land less than a day apart (or aggregation is sub-hourly),
+        // which also keeps the labels distinct.
+        const span = dates[hi] - dates[lo];
+        const count = Math.min(target, hi - lo + 1);
+        const step = count > 1 ? span / (count - 1) : span;
+        withHour = step < DAY_MS || (meta.aggHours && meta.aggHours < 1);
+        if (count <= 1) {
+            map.set(lo, fmtAxisLabel(dates[lo], withHour, meta.locale));
+        } else {
+            for (let k = 0; k < count; k++) {
+                const i = lo + Math.round(k * (hi - lo) / (count - 1));
+                map.set(i, fmtAxisLabel(dates[i], withHour, meta.locale));
+            }
+        }
+    }
+    // Always anchor the first and last visible dates.
+    map.set(lo, fmtAxisLabel(dates[lo], withHour, meta.locale));
+    map.set(hi, fmtAxisLabel(dates[hi], withHour, meta.locale));
+    return map;
+}
+
+// Recompute only when the width or the visible range actually changed.
+function ensureLineTicks(scale) {
+    const chart = scale.chart;
+    const key = `${chart.width}|${scale.min}|${scale.max}|${chart.data.labels.length}`;
+    if (lineTickState.key === key) return;
+    lineTickState = { key, map: computeLineTicks(scale) };
 }
 
 const COLORS = {
@@ -444,6 +510,15 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
     if (lineInstance) lineInstance.destroy();
 
     lineChartFixedIndex = null;
+
+    // Feed the tick engine the raw bucket timestamps so it can label day 1/15,
+    // recompute on zoom/pan, and decide when to show the time.
+    lineChartMeta = {
+        dates: Array.isArray(texts.axisDates) ? texts.axisDates : [],
+        aggHours: texts.aggHours,
+        locale: texts.locale || "pt-BR"
+    };
+    lineTickState = { key: "", map: new Map() };
     
     const smallScreen = isSmallScreen();
 
@@ -542,12 +617,12 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                         maxRotation: 0,
                         autoSkip: false,
                         align: "inner",
-                        // Show first/last plus a width-based number of intermediate dates.
-                        callback: function (value, index) {
-                            const labels = this.chart.data.labels;
-                            return lineTickIndices(this.chart, labels.length).has(index)
-                                ? this.getLabelForValue(index)
-                                : "";
+                        // Labels come from the zoom-aware tick engine (day 1/15 + first/last).
+                        // `value` is the data index; when zoomed it differs from the
+                        // tick's position in the visible array, so key the map by it.
+                        callback: function (value) {
+                            ensureLineTicks(this);
+                            return lineTickState.map.get(value) || "";
                         }
                     }
                 }

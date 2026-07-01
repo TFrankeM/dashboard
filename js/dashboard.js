@@ -971,14 +971,10 @@ function processAndUpdateLineChart(apiData) {
     const agg = parseFloat(appState.aggregation);
     const showHours = !isNaN(agg) && agg < 24;
 
-    const axisLabels = sortedDates.map(dateStr => {
-        const date = new Date(dateStr);
-        if (!showHours) {
-            return date.toLocaleDateString(CURRENT_LANG, { day: "2-digit", month: "2-digit" });
-        }
-        return date.toLocaleString(CURRENT_LANG, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-    });
-    
+    // Category identity is the raw bucket date (unique); the x-axis tick engine in
+    // charts.js decides what actually shows (day 1/15, first/last, zoom-aware time).
+    const axisLabels = sortedDates;
+
     const tooltipDates = sortedDates.map(dateStr => {
         const date = new Date(dateStr);
         const options = { day: "2-digit", month: "2-digit", year: "numeric" };
@@ -1049,7 +1045,10 @@ function processAndUpdateLineChart(apiData) {
         yAxisTitle: t("chart_line_y_axis_title"),
         tooltipGrade: t("chart_line_tooltip_avg"),
         tooltipNews: t("chart_line_tooltip_count"),
-        originalDates: tooltipDates
+        originalDates: tooltipDates,
+        axisDates: sortedDates.map(d => new Date(d).getTime()),
+        aggHours: agg,
+        locale: CURRENT_LANG
     });
 
     // Newsstand defaults to the first data point (no scroll); clicking a point changes it.
