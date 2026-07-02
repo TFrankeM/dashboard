@@ -119,7 +119,7 @@ function ensureLineTicks(scale) {
     };
 }
 
-const TICK_COLOR = "#666";
+// Tick color comes from chartUI() so the fade matches the active theme.
 // Rough label width in px for the tick font (~5.8px/char at 12px).
 function estTickWidth(s) { return s ? s.length * 5.8 : 0; }
 
@@ -135,13 +135,13 @@ function lineTickColor(scale, v) {
     } else if (v === st.hi && st.penult !== undefined && st.penult !== st.hi) {
         anchor = st.hi; neighbor = st.penult;
     } else {
-        return TICK_COLOR;
+        return chartUI().tick;
     }
     const gap = Math.abs(scale.getPixelForValue(neighbor) - scale.getPixelForValue(anchor));
     // anchor is edge-aligned (occupies its full width inward); neighbour is centred.
     const clearance = gap - estTickWidth(st.map.get(anchor)) - estTickWidth(st.map.get(neighbor)) / 2;
     const alpha = Math.max(0, Math.min(1, clearance / 20));
-    return `rgba(102, 102, 102, ${alpha})`;
+    return `rgba(${chartUI().tickFadeRGB}, ${alpha})`;
 }
 
 const COLORS = {
@@ -149,11 +149,57 @@ const COLORS = {
     blueLight: "#008BC9",
 };
 
-const TOOLTIP_THEME = {
-    backgroundColor: "rgba(255, 255, 255, 0.95)", 
-    titleColor: "#003A79",
-    bodyColor: "#5C5B5F",
-    borderColor: "#D7D9DD",
+function isDarkTheme() {
+    return document.documentElement.dataset.theme === "dark";
+}
+
+// Theme-aware chart chrome. Charts are fully redrawn on theme toggle, so each
+// draw call just reads the current values (celeste on dark per the FGV manual).
+function chartUI() {
+    return isDarkTheme() ? {
+        tick: "#9FB3C8",
+        tickFadeRGB: "159, 179, 200",
+        axisBorder: "rgba(115, 191, 232, 0.25)",
+        legend: "#B9C9D9",
+        line: "#73BFE8",
+        volumeFillTop: "rgba(115, 191, 232, 0.5)",
+        volumeFillBottom: "rgba(115, 191, 232, 0.04)",
+        surfaceBorder: "#102338",
+        needle: "#E8F0F7",
+        tooltip: {
+            backgroundColor: "rgba(16, 35, 56, 0.97)",
+            titleColor: "#E8F0F7",
+            bodyColor: "#B9C9D9",
+            borderColor: "rgba(115, 191, 232, 0.45)",
+        },
+    } : {
+        tick: "#666",
+        tickFadeRGB: "102, 102, 102",
+        axisBorder: "rgba(0, 0, 0, 0.1)",
+        legend: "#475569",
+        line: COLORS.bluePrimary,
+        volumeFillTop: "rgba(0, 58, 121, 0.7)",
+        volumeFillBottom: "rgba(0, 58, 121, 0.1)",
+        surfaceBorder: "#ffffff",
+        needle: "#444",
+        tooltip: {
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            titleColor: "#003A79",
+            bodyColor: "#5C5B5F",
+            borderColor: "#D7D9DD",
+        },
+    };
+}
+
+// Default text/axis colors for the charts created right after this call.
+function applyChartDefaults() {
+    if (typeof Chart === "undefined") return;
+    const ui = chartUI();
+    Chart.defaults.color = ui.tick;
+    Chart.defaults.borderColor = ui.axisBorder;
+}
+
+const TOOLTIP_BASE = {
     borderWidth: 1,
     titleFont: { size: 13, weight: "bold", family: "'Gotham', 'Arial', sans-serif" },
     bodyFont: { size: 12, family: "'Gotham', 'Arial', sans-serif" },
@@ -161,6 +207,10 @@ const TOOLTIP_THEME = {
     bodyPadding: 4,
     displayColors: true,
 };
+
+function tooltipTheme() {
+    return { ...TOOLTIP_BASE, ...chartUI().tooltip };
+}
 
 // Global plugins
 if (typeof Chart !== "undefined" && typeof ChartZoom !== "undefined") {
@@ -197,7 +247,7 @@ const gaugeNeedlePlugin = {
         ctx.moveTo(0, -5); // needle base width
         ctx.lineTo((chart.chartArea.height / 2) + 10, 0);
         ctx.lineTo(0, 5);
-        ctx.fillStyle = "#444";
+        ctx.fillStyle = chartUI().needle;
         ctx.fill();
         ctx.rotate(-angle);
         ctx.translate(-cx, -cy);
@@ -205,7 +255,7 @@ const gaugeNeedlePlugin = {
         // central pin
         ctx.beginPath();
         ctx.arc(cx, cy, 10, 0, 2 * Math.PI);
-        ctx.fillStyle = "#444";
+        ctx.fillStyle = chartUI().needle;
         ctx.fill();
         ctx.restore();
     }
@@ -279,7 +329,7 @@ export function drawGaugeChart(canvasElement, value, texts = {}) {
                 backgroundColor: backgroundColor,
                 hoverBackgroundColor: hoverBackgroundColor,
                 borderWidth: 2,
-                borderColor: "#ffffff",
+                borderColor: chartUI().surfaceBorder,
                 hoverOffset: 4
             }]
         },
@@ -293,7 +343,7 @@ export function drawGaugeChart(canvasElement, value, texts = {}) {
             plugins: {
                 legend: { display: false },
                 tooltip: { 
-                    ...TOOLTIP_THEME,
+                    ...tooltipTheme(),
                     callbacks: {
                         title: () => null,
                         label: function(context) { 
@@ -316,6 +366,7 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
     
     const ctx = canvasElement.getContext("2d");
     if (histogramInstance) histogramInstance.destroy();
+    applyChartDefaults();
 
     const sentimentColors = [
         "#b91c1c", // 1 Extremely negative
@@ -359,7 +410,7 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
             plugins: { 
                 legend: { display: false },
                 tooltip: {
-                    ...TOOLTIP_THEME,
+                    ...tooltipTheme(),
                     callbacks: {
                         // ctx := tooltip context
                         title: (ctx) => {
@@ -389,9 +440,11 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
     const ctx = canvasElement.getContext("2d");
     if (volumeInstance) volumeInstance.destroy();
 
+    const ui = chartUI();
+    applyChartDefaults();
     const gradient = ctx.createLinearGradient(0, 0, 0, canvasElement.height);
-    gradient.addColorStop(0, "rgba(0, 58, 121, 0.7)");
-    gradient.addColorStop(1, "rgba(0, 58, 121, 0.1)");
+    gradient.addColorStop(0, ui.volumeFillTop);
+    gradient.addColorStop(1, ui.volumeFillBottom);
 
     volumeInstance = new Chart(ctx, {
         type: "line",
@@ -402,7 +455,7 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
                 {
                     label: texts.labelNews || "Notícias",
                     data: data,
-                    borderColor: COLORS.bluePrimary,
+                    borderColor: ui.line,
                     backgroundColor: gradient,
                     borderWidth: 1,
                     pointRadius: 0,
@@ -422,7 +475,7 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
                     pointRadius: 0,
                     hitRadius: 5,
                     pointHoverRadius: 3,
-                    pointBackgroundColor: COLORS.bluePrimary,
+                    pointBackgroundColor: ui.line,
                     fill: false,
                     tension: 0.4,
                     clip: 5
@@ -465,7 +518,7 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
             plugins: { 
                 legend: { display: false }, 
                 tooltip: { 
-                    ...TOOLTIP_THEME,
+                    ...tooltipTheme(),
                     titleAlign: "left",
                     labelAlign: "left",
                     filter: (item) => item.datasetIndex === 0,
@@ -612,9 +665,14 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
 
     const dataArray = Array.isArray(datasets) ? datasets : [datasets];
 
+    const ui = chartUI();
+    applyChartDefaults();
+
     const styledDatasets = dataArray.map((ds, index) => {
         // ds.key is the stable slug (category/entity); ds.label is translated.
-        const color = CATEGORY_COLORS[ds.key]
+        // The all-in-one series uses the theme line color (dark blue is unreadable on navy).
+        const color = (ds.key === "include_all" ? ui.line : null)
+            || CATEGORY_COLORS[ds.key]
             || POLITICAL_COLORS[ds.label]
             || stableColor(ds.key || ds.label);
 
@@ -670,7 +728,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                         // Fade the first/last anchors out as they crowd their marker neighbour.
                         color: function (ctx) {
                             const scale = ctx.scale || (ctx.chart && ctx.chart.scales && ctx.chart.scales.x);
-                            if (!scale || !ctx.tick) return TICK_COLOR;
+                            if (!scale || !ctx.tick) return chartUI().tick;
                             ensureLineTicks(scale);
                             return lineTickColor(scale, ctx.tick.value);
                         }
@@ -711,21 +769,15 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                         boxWidth: smallScreen ? 13 : 15,
                         boxHeight: smallScreen ? 13 : 15,
                         padding: smallScreen ? 10 : 16,
-                        color: "#475569",
+                        color: ui.legend,
                         font: { size: smallScreen ? 10 : 12, weight: "600" }
                     }
                 },
                 tooltip: {
-                    backgroundColor: "rgba(255, 255, 255, 0.95)", 
-                    titleColor: "#003A79",
-                    bodyColor: "#5C5B5F",
-                    borderColor: "#D7D9DD",
-                    borderWidth: 1,
+                    ...tooltipTheme(),
                     titleFont: { size: 13, weight: "bold" },
                     bodyFont: { size: 12 },
-                    padding: 10,
                     bodySpacing: 4,
-                    displayColors: true,
                     callbacks: {
                         title: (tooltipItems) => {
                             const index = tooltipItems[0].dataIndex;

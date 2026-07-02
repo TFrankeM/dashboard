@@ -124,9 +124,7 @@ body {
     transform: translateY(6px);
 }
 
-/* ============================================================
-   CARTÕES COM ESTÉTICA "CIRCUITO / TECNOLÓGICA"
-   ============================================================ */
+/* Cards with the "circuit / tech" look */
 .info-stack {
     width: 540px;
     max-width: 46vw;
@@ -361,9 +359,7 @@ body {
     color: rgba(148,163,184,0.7);
 }
 
-/* ============================================================
-   RESPONSIVE TIERS (mirrors the dashboard: 1024 / 768 / 480)
-   ============================================================ */
+/* Responsive tiers (mirrors the dashboard: 1024 / 768 / 480) */
 
 /* Tier 1 — tablet / large phone: bring the stack in from the right edge */
 @media (max-width: 1024px) {

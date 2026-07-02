@@ -11,7 +11,17 @@
     <!-- FavIcon -->
     <link rel="icon" href="assets/favicon.png" type="image/png">
 
+    <!-- Apply the saved theme before first paint (avoids a light flash). -->
+    <script>
+        try {
+            if (localStorage.getItem("iibex_theme") === "dark") {
+                document.documentElement.dataset.theme = "dark";
+            }
+        } catch (e) { /* storage may be blocked; default to light */ }
+    </script>
+
     <!-- CSS -->
+    <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/details.css">
     <link rel="stylesheet" href="css/buttons.css">
 
@@ -41,11 +51,15 @@
             </div>
 
             <div class="header-actions">
+                <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Ativar modo escuro">
+                    <i data-lucide="sun" class="icon-sun"></i>
+                    <i data-lucide="moon" class="icon-moon"></i>
+                </button>
                 <div class="lang-dropdown-wrapper">
                     <i data-lucide="languages" class="lang-icon"></i>
                     <select id="language-select" class="lang-select"></select>
                 </div>
-                
+
                 <button id="btn-close" class="btn-close">
                     <i data-lucide="x" class="icon-16"></i> <span data-i18n="btn_close">Fechar</span>
                 </button>

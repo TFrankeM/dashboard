@@ -16,22 +16,9 @@
 }
 
 
-:root {
-    --fgv-blue-navy: #002D4D;
-    --fgv-blue-dark: #003A79;
-    --fgv-blue-med: #0C63AA;
-    --fgv-blue-light: #008BC9;
-    --fgv-gray-dark: #5C5B5F;
-    --fgv-gray-med: #88868B;
-    --fgv-gray-pale: #D7D9DD;
-
-    /* Layering scale (small intra-component z-indexes stay local) */
-    --z-sticky: 50;
-    --z-nav: 100;
-    --z-dropdown: 200;
-    --z-drawer: 1200;
-}
-body { 
+/* Brand palette, layering scale and dark-theme tokens live in css/theme.css
+   (shared with dashboard.html and loaded before this file). */
+body {
     font-family: "Gotham", "Arial", sans-serif; 
     background-color: #f8fafc; 
     color: #1e293b; 
@@ -1356,3 +1343,100 @@ tr:hover {
         opacity: 1 !important;
     }
 }
+
+
+/* Dark skin for this page; shared chrome (header, language, buttons) lives in theme.css. */
+
+html[data-theme="dark"] .details-subheader {
+    background: var(--dk-chrome);
+    border-bottom-color: var(--dk-border-strong);
+}
+html[data-theme="dark"] #page-title { color: var(--dk-heading); }
+html[data-theme="dark"] #filter-summary { color: var(--dk-text-muted); }
+html[data-theme="dark"] .filter-divider { background-color: var(--dk-border); }
+
+/* Table */
+html[data-theme="dark"] table {
+    background: var(--dk-surface);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+html[data-theme="dark"] th { background: var(--fgv-blue-navy); }
+html[data-theme="dark"] td {
+    border-bottom-color: var(--dk-border);
+    color: var(--dk-text-body);
+}
+html[data-theme="dark"] tr:hover { background-color: var(--dk-surface-2); }
+html[data-theme="dark"] .table-link { color: var(--fgv-blue-sky); }
+html[data-theme="dark"] .state-message,
+html[data-theme="dark"] .loading-text { color: var(--dk-text-muted); }
+
+/* Dropdown panels, search and column selector */
+html[data-theme="dark"] .dropdown-content {
+    background: var(--dk-surface);
+    border-color: var(--dk-border-strong);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+html[data-theme="dark"] .dropdown-search {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text-strong);
+}
+html[data-theme="dark"] .dropdown-search:focus { border-color: var(--fgv-vib-cyan-dark); }
+html[data-theme="dark"] .dropdown-search-wrapper {
+    background: var(--dk-surface);
+    border-bottom-color: var(--dk-border);
+}
+html[data-theme="dark"] .col-option { color: var(--dk-text-body); }
+html[data-theme="dark"] .col-option:hover { background: var(--dk-surface-2); }
+html[data-theme="dark"] .col-option input[type="checkbox"] { accent-color: var(--fgv-blue-sky); }
+html[data-theme="dark"] .cbx-icon { color: var(--fgv-blue-sky); }
+
+/* Pagination */
+html[data-theme="dark"] .btn-icon {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text-strong);
+}
+html[data-theme="dark"] .btn-icon:not(:disabled):hover {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border-strong);
+}
+html[data-theme="dark"] .btn-icon:disabled {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text-muted);
+}
+html[data-theme="dark"] .btn-icon:focus-visible { outline-color: var(--fgv-vib-cyan-dark); }
+html[data-theme="dark"] .limit-control,
+html[data-theme="dark"] .range-control,
+html[data-theme="dark"] .total-count-label { color: var(--dk-text-body); }
+
+/* Date inputs and the flatpickr calendar */
+html[data-theme="dark"] input.date-input { color: var(--dk-text-strong); }
+html[data-theme="dark"] input.date-input::placeholder { color: var(--dk-text-muted); }
+html[data-theme="dark"] .flatpickr-calendar {
+    background: var(--dk-surface);
+    border: 1px solid var(--dk-border-strong);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+html[data-theme="dark"] .flatpickr-months .flatpickr-month,
+html[data-theme="dark"] .flatpickr-weekdays,
+html[data-theme="dark"] span.flatpickr-weekday { background: transparent; color: var(--dk-text-strong); }
+html[data-theme="dark"] .flatpickr-day { color: var(--dk-text-body); }
+html[data-theme="dark"] .flatpickr-day:hover { background: var(--dk-surface-2); border-color: var(--dk-surface-2); }
+html[data-theme="dark"] .flatpickr-day.selected {
+    background: var(--fgv-blue-med);
+    border-color: var(--fgv-blue-med);
+    color: #fff;
+}
+html[data-theme="dark"] .flatpickr-day.flatpickr-disabled,
+html[data-theme="dark"] .flatpickr-day.prevMonthDay,
+html[data-theme="dark"] .flatpickr-day.nextMonthDay { color: var(--dk-text-muted); }
+html[data-theme="dark"] .flatpickr-monthDropdown-months {
+    background-color: var(--dk-surface-2) !important;
+    border-color: var(--dk-border) !important;
+    color: var(--dk-text-strong) !important;
+}
+html[data-theme="dark"] .flatpickr-current-month input.cur-year { color: var(--dk-text-strong); }
+html[data-theme="dark"] .flatpickr-months .flatpickr-prev-month svg,
+html[data-theme="dark"] .flatpickr-months .flatpickr-next-month svg { fill: var(--dk-text-strong); }

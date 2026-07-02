@@ -10,7 +10,17 @@
 
     <!-- FavIcon -->
     <link rel="icon" href="assets/favicon.png" type="image/png">
-    
+
+    <!-- Apply the saved theme before first paint (avoids a light flash);
+         the transition class comes later, so this first paint never animates. -->
+    <script>
+        try {
+            if (localStorage.getItem("iibex_theme") === "dark") {
+                document.documentElement.dataset.theme = "dark";
+            }
+        } catch (e) { /* storage may be blocked; default to light */ }
+    </script>
+
     <!-- External libs (versions pinned to avoid silent breaking upgrades) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@11.2.3/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js@11.2.3/public/assets/scripts/choices.min.js" defer></script>
@@ -24,6 +34,7 @@
     <!-- Lucide icons -->
     <script src="https://unpkg.com/lucide@1.23.0" defer></script>
 
+    <link rel="stylesheet" href="./css/theme.css">
     <link rel="stylesheet" href="./css/dashboard.css">
     <link rel="stylesheet" href="./css/buttons.css">
 
@@ -57,8 +68,12 @@
                     </div>
                 </div>
 
-                <!-- Language dropdown -->
+                <!-- Language dropdown + theme switch -->
                 <div class="header-actions">
+                    <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Ativar modo escuro">
+                        <i data-lucide="sun" class="icon-sun"></i>
+                        <i data-lucide="moon" class="icon-moon"></i>
+                    </button>
                     <div class="lang-dropdown-wrapper">
                         <i data-lucide="languages" class="lang-icon"></i>
                         <select id="language-select" class="lang-select"></select>

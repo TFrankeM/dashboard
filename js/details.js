@@ -92,6 +92,30 @@ function tEntity(val) {
 }
 
 const LANG_STORAGE_KEY = "iibex_lang";
+const THEME_STORAGE_KEY = "iibex_theme";
+
+function updateThemeToggleAria() {
+    const btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+    const isDark = document.documentElement.dataset.theme === "dark";
+    btn.setAttribute("aria-pressed", String(isDark));
+    btn.setAttribute("aria-label", t(isDark ? "theme_to_light" : "theme_to_dark"));
+}
+
+function initThemeToggle() {
+    const btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+    updateThemeToggleAria();
+    // Surface color transitions start only after the first paint.
+    requestAnimationFrame(() => document.documentElement.classList.add("theme-anim"));
+    btn.addEventListener("click", () => {
+        const toDark = document.documentElement.dataset.theme !== "dark";
+        if (toDark) document.documentElement.dataset.theme = "dark";
+        else delete document.documentElement.dataset.theme;
+        localStorage.setItem(THEME_STORAGE_KEY, toDark ? "dark" : "light");
+        updateThemeToggleAria();
+    });
+}
 
 function initLanguageSelector() {
     /* Initializes the language selector dropdown and sets up event listeners to handle language changes. */
@@ -136,6 +160,7 @@ function initLanguageSelector() {
             
             updateFilterSummary(new URLSearchParams(window.location.search));
             translateUI();
+            updateThemeToggleAria();
             renderColumnSelector();
             
             const currentData = window.cachedData || [];
@@ -868,6 +893,7 @@ async function fetchData(urlParams) {
 
 document.addEventListener("DOMContentLoaded", async () => {
     initLanguageSelector();
+    initThemeToggle();
     
     const urlParams = new URLSearchParams(window.location.search);
     

@@ -1,0 +1,178 @@
+/* Shared theme layer for dashboard.html and details.html.
+   Loads BEFORE the page stylesheet: brand primitives, layering scale, the
+   light/dark semantic tokens and the dark skin of the chrome shared by both
+   pages. Page-specific components keep their dark overrides in their own file.
+   Brand rules come from assets/FGV Manual da marca mar19.pdf (p.32-41). */
+
+:root {
+    /* FGV primary blues (tonal range) */
+    --fgv-blue-navy: #002D4D;
+    --fgv-blue-dark: #003A79;
+    --fgv-blue-med:  #0C63AA;
+    --fgv-blue-light:#008BC9;
+    --fgv-blue-sky:  #73BFE8;
+
+    /* FGV grays */
+    --fgv-gray-dark:  #5C5B5F;
+    --fgv-gray-med:   #88868B;
+    --fgv-gray-light: #AFAEB4;
+    --fgv-gray-pale:  #D7D9DD;
+    --fgv-white:      #FFFFFF;
+
+    /* FGV auxiliaries */
+    --fgv-aux-yellow:  #F0BF78;
+    --fgv-aux-blue:    #008BC9;
+    --fgv-aux-red:     #7F1343;
+    --fgv-aux-gold:    #BDA132;
+
+    /* FGV vibrants — digital/tech accents only (manual p.34) */
+    --fgv-vib-cyan:       #01FFFF;
+    --fgv-vib-cyan-dark:  #01BFBF;
+    --fgv-vib-green:      #00E1AC;
+    --fgv-vib-purple:     #A02BAD;
+
+    /* Utilities kept for the light theme */
+    --bg-light:      #D7D9DD;
+    --bg-page:       #f3f4f6;
+    --text-primary:    var(--fgv-gray-dark);
+    --text-secondary:  var(--fgv-gray-med);
+    --border-card:     var(--fgv-gray-pale);
+    --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+    /* Layering scale (small intra-component z-indexes stay local) */
+    --z-sticky: 50;
+    --z-nav: 100;
+    --z-dropdown: 200;
+    --z-drawer: 1200;
+
+    /* Dark-theme tokens (referenced only inside html[data-theme="dark"] blocks;
+       declared here so page files can use them without redefining values). */
+    --dk-bg-0: #0A1626;          /* page background (cinza+marinho gradient base) */
+    --dk-bg-1: #0F1E33;          /* page background (gradient end) */
+    --dk-surface: #102338;       /* cards / raised boxes */
+    --dk-surface-2: #16304C;     /* fields, subtle fills, hover rows */
+    --dk-chrome: #08131F;        /* filter bar / sub-header */
+    --dk-border: rgba(115, 191, 232, 0.16);
+    --dk-border-strong: rgba(115, 191, 232, 0.45);
+    --dk-text-strong: #E8F0F7;
+    --dk-text-body: #B9C9D9;
+    --dk-text-muted: #8CA3B8;
+    --dk-heading: var(--fgv-blue-sky);
+}
+
+/* Dark theme: html[data-theme="dark"] outranks page-level :root re-declarations. */
+
+html[data-theme="dark"] body {
+    color: var(--dk-text-body);
+    /* Official FGV dark composition: cinza + azul marinho gradient, with a
+       near-invisible diagonal hatch — the brand's line/diagonal element. */
+    background:
+        repeating-linear-gradient(135deg, rgba(115, 191, 232, 0.025) 0 1px, transparent 1px 14px),
+        linear-gradient(160deg, var(--dk-bg-0) 0%, var(--dk-bg-1) 60%, #12213A 100%);
+    background-attachment: fixed;
+}
+
+/* Shared header chrome */
+html[data-theme="dark"] .brand-header {
+    background-color: var(--dk-chrome);
+    border-bottom-color: var(--dk-border-strong);
+}
+html[data-theme="dark"] .brand-title h1 { color: var(--dk-text-strong); }
+html[data-theme="dark"] .subtitle { color: var(--dk-heading); }
+/* White-on-transparent logo treatment: the DINT logo is dark blue; lift it on dark. */
+html[data-theme="dark"] .logo-dint { filter: brightness(0) invert(1) opacity(0.92); }
+
+/* Language selector (Choices) */
+html[data-theme="dark"] .lang-dropdown-wrapper {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+}
+html[data-theme="dark"] .lang-dropdown-wrapper:hover { border-color: var(--dk-border-strong); }
+html[data-theme="dark"] .choices__inner {
+    background-color: var(--dk-surface) !important;
+    border-color: var(--dk-border) !important;
+    color: var(--dk-text-strong) !important;
+}
+html[data-theme="dark"] .lang-icon { color: var(--dk-heading); }
+html[data-theme="dark"] .choices[data-type*="select-one"]::after { border-color: var(--dk-heading) !important; }
+html[data-theme="dark"] .choices__list--dropdown {
+    background: var(--dk-surface) !important;
+    border-color: var(--dk-border-strong) !important;
+}
+html[data-theme="dark"] .choices__list--dropdown .choices__item { color: var(--dk-text-body) !important; }
+html[data-theme="dark"] .choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background-color: var(--fgv-blue-med) !important;
+    color: #fff !important;
+}
+
+/* Shared buttons (buttons.css) */
+html[data-theme="dark"] .btn-outline {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--dk-text-strong);
+}
+html[data-theme="dark"] .btn-outline:hover:not(:disabled):not(.disabled) { border-color: var(--dk-border-strong); }
+html[data-theme="dark"] .btn-apply:disabled,
+html[data-theme="dark"] .btn-apply.disabled {
+    background-color: var(--dk-surface-2);
+    color: var(--dk-text-muted);
+}
+html[data-theme="dark"] .btn-apply:focus-visible,
+html[data-theme="dark"] .btn-outline:focus-visible {
+    outline-color: var(--fgv-vib-cyan-dark);
+}
+
+/* Scrollbars (WebKit) */
+html[data-theme="dark"] ::-webkit-scrollbar-track { background: var(--dk-bg-0); }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--dk-surface-2); }
+
+.theme-toggle {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid var(--fgv-gray-pale);
+    border-radius: 4px;
+    color: var(--fgv-blue-dark);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+}
+.theme-toggle:hover { border-color: var(--fgv-blue-dark); }
+.theme-toggle:focus-visible { outline: 2px solid var(--fgv-blue-light); outline-offset: 2px; }
+.theme-toggle svg {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    transition: opacity 0.25s ease, transform 0.35s ease;
+}
+/* Sun/moon morph: the inactive icon rotates away and fades out. */
+.theme-toggle .icon-sun { opacity: 0; transform: rotate(90deg) scale(0.6); }
+.theme-toggle .icon-moon { opacity: 1; transform: rotate(0) scale(1); }
+html[data-theme="dark"] .theme-toggle {
+    background: var(--dk-surface);
+    border-color: var(--dk-border);
+    color: var(--fgv-aux-yellow);
+}
+html[data-theme="dark"] .theme-toggle:hover { border-color: var(--dk-border-strong); }
+html[data-theme="dark"] .theme-toggle:focus-visible { outline-color: var(--fgv-vib-cyan-dark); }
+html[data-theme="dark"] .theme-toggle .icon-sun { opacity: 1; transform: rotate(0) scale(1); }
+html[data-theme="dark"] .theme-toggle .icon-moon { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+
+/* Smooth surface transitions, enabled by JS after first paint so the initial
+   render never animates (class on <html>). */
+html.theme-anim body,
+html.theme-anim .brand-header,
+html.theme-anim .card,
+html.theme-anim .sticky-filters,
+html.theme-anim .details-subheader,
+html.theme-anim .btn-outline,
+html.theme-anim .cbx-field,
+html.theme-anim .agg-control {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}

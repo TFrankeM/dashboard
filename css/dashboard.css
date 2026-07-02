@@ -17,46 +17,8 @@
 
 
 
-/* OFFICIAL FGV COLOR PALETTE */
-
-:root {
-    /* Primary - blues */
-    --fgv-blue-navy: #002D4D;
-    --fgv-blue-dark: #003A79;
-    --fgv-blue-med:  #0C63AA;
-    --fgv-blue-light:#008BC9;
-    --fgv-blue-sky:  #73BFE8;
-
-    /* Secondary - grays */
-    --fgv-gray-dark:  #5C5B5F;
-    --fgv-gray-med:   #88868B;
-    --fgv-gray-light: #AFAEB4;
-    --fgv-gray-pale:  #D7D9DD;
-    --fgv-white:      #FFFFFF;
-
-    /* Auxiliary - functional support */
-    --fgv-aux-yellow:  #F0BF78;
-    --fgv-aux-blue:    #008BC9;
-    --fgv-aux-red:     #7F1343;
-    --fgv-aux-gold:    #BDA132;
-
-    /* Utilities */
-    --bg-light:      #D7D9DD;
-    --bg-page:       #f3f4f6;
-    --text-primary:    var(--fgv-gray-dark);
-    --text-secondary:  var(--fgv-gray-med);
-    --border-card:     var(--fgv-gray-pale);
-    --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.08);
-
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-
-    /* Layering scale (small intra-component z-indexes stay local) */
-    --z-sticky: 50;
-    --z-nav: 100;
-    --z-dropdown: 200;
-    --z-drawer: 1200;
-}
+/* Brand palette, layering scale and dark-theme tokens live in css/theme.css
+   (shared with details.html and loaded before this file). */
 
 
 
@@ -365,8 +327,14 @@ data-type* means any type that contains select-one, like select-one-groups */
 
 
     /* Language button */
-.lang-dropdown-wrapper {
+/* Right side of the header: theme switch + language selector. */
+.header-actions {
     justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.lang-dropdown-wrapper {
     position: relative;
     width: 80px;
     min-width: 80px;
@@ -2362,4 +2330,125 @@ body.drawer-resizing {
     .news-sheet-foot {
         padding: 10px 44px 2px;
     }
+}
+
+
+/* Dark skin for this page; shared chrome (header, language, buttons) lives in
+   theme.css. The newsstand sheets purposely stay light: they read as paper. */
+
+html[data-theme="dark"] .card {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+html[data-theme="dark"] .card h3,
+html[data-theme="dark"] .card-header-row h3 { color: var(--dk-heading); }
+html[data-theme="dark"] .card-desc,
+html[data-theme="dark"] .evolution-entities,
+html[data-theme="dark"] .chart-hint,
+html[data-theme="dark"] .newsstand-hint { color: var(--dk-text-muted); }
+html[data-theme="dark"] .card-icon { color: var(--dk-text-muted); }
+html[data-theme="dark"] .gauge-value-text { color: var(--dk-text-strong); }
+html[data-theme="dark"] .gauge-description { color: var(--dk-text-body); }
+
+/* Filter bar */
+html[data-theme="dark"] .sticky-filters {
+    background-color: var(--dk-chrome);
+    border-bottom-color: var(--dk-border-strong);
+}
+html[data-theme="dark"] .cbx-field,
+html[data-theme="dark"] .agg-control,
+html[data-theme="dark"] .cbx-skeleton {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+html[data-theme="dark"] .cbx-field:hover,
+html[data-theme="dark"] .cbx-field.is-open,
+html[data-theme="dark"] .agg-control:focus-within { border-color: var(--dk-border-strong); }
+html[data-theme="dark"] .cbx-summary,
+html[data-theme="dark"] .agg-label,
+html[data-theme="dark"] .input-aggregation { color: var(--dk-text-strong); }
+html[data-theme="dark"] .cbx-icon,
+html[data-theme="dark"] .cbx-caret { color: var(--fgv-blue-sky); }
+html[data-theme="dark"] .cbx-panel {
+    background: var(--dk-surface);
+    border-color: var(--dk-border-strong);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+html[data-theme="dark"] .cbx-search {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text-strong);
+}
+html[data-theme="dark"] .cbx-search:focus { border-color: var(--fgv-vib-cyan-dark); }
+html[data-theme="dark"] .cbx-option { color: var(--dk-text-body); }
+html[data-theme="dark"] .cbx-option:hover { background: var(--dk-surface-2); }
+html[data-theme="dark"] .cbx-option input[type="checkbox"] { accent-color: var(--fgv-blue-sky); }
+html[data-theme="dark"] .info-icon {
+    background-color: var(--dk-surface-2);
+    border-color: var(--dk-border-strong);
+    color: var(--dk-text-body);
+}
+html[data-theme="dark"] .info-icon:hover {
+    background-color: var(--dk-surface);
+    color: var(--dk-text-strong);
+    border-color: var(--fgv-vib-cyan-dark);
+}
+html[data-theme="dark"] .cbx-field:focus-visible,
+html[data-theme="dark"] .reset-btn:focus-visible,
+html[data-theme="dark"] .info-icon:focus-visible { outline-color: var(--fgv-vib-cyan-dark); }
+
+/* Chart controls and popup */
+html[data-theme="dark"] .reset-btn,
+html[data-theme="dark"] .newsstand-table-btn {
+    background-color: transparent;
+    border-color: var(--dk-border);
+    color: var(--dk-text-strong);
+}
+html[data-theme="dark"] .reset-btn:hover,
+html[data-theme="dark"] .newsstand-table-btn:hover {
+    background-color: var(--dk-surface-2);
+    border-color: var(--dk-border-strong);
+}
+html[data-theme="dark"] .chart-popup {
+    background-color: var(--dk-surface);
+    border-color: var(--dk-border-strong);
+    color: var(--dk-text-body);
+}
+html[data-theme="dark"] .popup-arrow { background-color: var(--dk-surface); }
+html[data-theme="dark"] .btn-cancel {
+    background-color: var(--dk-surface-2);
+    color: var(--dk-text-strong);
+}
+
+/* Skeleton loading */
+html[data-theme="dark"] .skeleton { background-color: var(--dk-surface-2); }
+html[data-theme="dark"] .skeleton-overlay { background: transparent; color: var(--dk-text-muted); }
+
+/* News drawer */
+html[data-theme="dark"] .drawer-panel {
+    background: var(--dk-surface);
+    color: var(--dk-text-body);
+}
+html[data-theme="dark"] .news-card {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+}
+html[data-theme="dark"] .news-headline { color: var(--dk-text-strong); }
+html[data-theme="dark"] .news-meta,
+html[data-theme="dark"] .drawer-state { color: var(--dk-text-muted); }
+html[data-theme="dark"] .drawer-sort select {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border);
+    color: var(--dk-text-strong);
+}
+html[data-theme="dark"] .drawer-close:hover { background: var(--dk-surface-2); }
+
+/* Newsstand: darken the shelf, keep the paper sheets light */
+html[data-theme="dark"] .news-sheet-wrap { background: var(--dk-bg-0); }
+
+/* Footer */
+html[data-theme="dark"] .dashboard-footer {
+    color: var(--dk-text-muted);
+    border-top-color: var(--dk-border);
 }

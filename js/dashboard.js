@@ -230,6 +230,31 @@ async function fetchOptionsFromDB(targetType, filterValue) {
 }
 
 const LANG_STORAGE_KEY = "iibex_lang";
+const THEME_STORAGE_KEY = "iibex_theme";
+
+function updateThemeToggleAria() {
+    const btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+    const isDark = document.documentElement.dataset.theme === "dark";
+    btn.setAttribute("aria-pressed", String(isDark));
+    btn.setAttribute("aria-label", t(isDark ? "theme_to_light" : "theme_to_dark"));
+}
+
+function initThemeToggle() {
+    const btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+    updateThemeToggleAria();
+    // Surface color transitions start only after the first paint.
+    requestAnimationFrame(() => document.documentElement.classList.add("theme-anim"));
+    btn.addEventListener("click", () => {
+        const toDark = document.documentElement.dataset.theme !== "dark";
+        if (toDark) document.documentElement.dataset.theme = "dark";
+        else delete document.documentElement.dataset.theme;
+        localStorage.setItem(THEME_STORAGE_KEY, toDark ? "dark" : "light");
+        updateThemeToggleAria();
+        redrawCharts();   // charts re-read chartUI() on draw
+    });
+}
 
 function initLanguageSelector() {
     // Restore the language chosen on any page of the site.
@@ -275,6 +300,7 @@ function initLanguageSelector() {
                 
                 translateUI();
                 renderAppliedChips();
+                updateThemeToggleAria();
                 redrawCharts();
                 updateToggleVisual(pendingState.isDynamic);
             });
@@ -1190,7 +1216,7 @@ function processAndUpdateLineChart(apiData) {
     if (sortedDates.length) selectPoint(0);
 }
 
-// ===== News drawer: quick read of the clicked point =====
+// News drawer: quick read of the clicked point.
 const GRADE_COLORS = ["#b91c1c", "#ef4444", "#fdae61", "#cbd5e1", "#84cc16", "#22c55e", "#15803d"];
 
 function gradeColor(g) {
@@ -1302,7 +1328,7 @@ function closeNewsDrawer() {
     document.body.classList.remove("drawer-open");
 }
 
-// ===== Newsstand: 3-column newspaper view of the clicked point's news =====
+// Newsstand: 3-column newspaper view of the clicked point's news.
 const newsstand = { neg: [], neu: [], pos: [] };
 const newsstandIdx = { neg: 0, neu: 0, pos: 0 };
 let newsstandSortDesc = true;
@@ -1577,6 +1603,7 @@ function redrawCharts() {
 document.addEventListener("DOMContentLoaded", function () {
     applyUrlState();
     initLanguageSelector();
+    initThemeToggle();
 
     if (typeof lucide !== "undefined") {
         lucide.createIcons();
