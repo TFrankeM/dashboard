@@ -110,7 +110,7 @@ body {
     transform: scale(1.3);
 }
 
-/* Tooltip do Menu Lateral */
+/* Side-nav tooltip */
 .nav-dot::before {
     content: attr(data-label);
     position: absolute;
@@ -180,7 +180,7 @@ body {
     transition: height 0.25s ease;
 }
 
-/* Logo clicável -> volta para a tela inicial (index.html) */
+/* Clickable logo -> back to the landing page (index.html) */
 .home-link {
     display: inline-flex;
     align-items: center;
@@ -1081,7 +1081,7 @@ input:checked + .slider:before {
     line-height: 1;
 }
 
-/* descrição da nota */
+/* grade description */
 .gauge-description {
     position: absolute;
     bottom: 0;
@@ -1103,39 +1103,7 @@ input:checked + .slider:before {
     stroke-width: 2px;
 }
 
-/* News volume | quantity */
-.total-news-container {
-    display: flex;
-    align-items: baseline; 
-    gap: 4px;
-    margin-bottom: 0.75rem;
-    padding-left: 2px;
-}
-
-
-
-/* Card placeholder */
-.placeholder-card { 
-    background-color: #f9fafb; 
-    border: 1px dashed #d1d5db; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-}
-
-.placeholder-content { 
-    text-align: center; 
-    color: #9ca3af; 
-}
-
-.placeholder-icon { 
-    width: 60px; 
-    height: 60px; 
-    margin-bottom: 10px; 
-    opacity: 0.5; 
-}
-
-/* Gráfico de linhas: tendência histórica */
+/* Evolution line chart */
 .evolution-section {
     padding: 0 40px;
 }
@@ -1185,41 +1153,19 @@ input:checked + .slider:before {
     gap: 10px;
 }
 
-.average-buttons, .reset-btn {
+.reset-btn {
     display: flex;
+    align-items: center;
     gap: 5px;
-    background-color: #e9ecef;
-    border-radius: 6px;
-    padding: 4px;
-}
-
-.avg-btn, .reset-btn {
     background-color: transparent;
-    border: none;
+    border: 1px solid var(--fgv-gray-pale);
+    border-radius: 6px;
     padding: 6px 12px;
-    border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
     font-weight: 700;
     color: var(--fgv-blue-dark);
     transition: background-color 0.2s, color 0.2s;
-}
-
-.avg-btn.active {
-    background-color: var(--fgv-blue-dark);
-    color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.avg-btn:not(.active):hover {
-    background-color: #d8dde2;
-}
-
-.reset-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    border: 1px solid var(--fgv-gray-pale);
 }
 
 
@@ -1632,14 +1578,11 @@ input:checked + .slider:before {
     .brand-header {
         padding: 15px 20px;
     }
-    .logo-fgv {
-        height: 40px;
-    }
     .brand-title h1 {
         font-size: 16px;
     }
 
-    /* Oculta o texto "Fechar" para poupar espaço, preservando o ícone */
+    /* Hide the "Close" text to save space, keeping the icon */
     .btn-close span {
         display: none;
     }

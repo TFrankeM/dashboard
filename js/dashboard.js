@@ -8,6 +8,10 @@ let CURRENT_LANG = "pt-BR";
 // Data is stored in UTC; every user-facing datetime renders in Brasília time.
 const DISPLAY_TZ = "America/Sao_Paulo";
 
+const POLL_INTERVAL_MS = 600000;      // dynamic-mode data refresh (10 min)
+const LAST_UPDATE_TICK_MS = 60000;    // "last update" relative label refresh
+const HOVER_CLOSE_DELAY_MS = 300;     // hover-opened panels linger before closing
+
 // Shared tooltip config, reused for static and dynamically-built info icons.
 const INFO_TIPPY_OPTS = {
     placement: "auto-end",
@@ -399,7 +403,7 @@ function buildCheckboxFilter(selectEl, opts) {
     // Pointer devices open the panel on hover and close it shortly after the cursor leaves.
     if (hoverCapable) {
         root.addEventListener("mouseenter", () => { clearTimeout(closeTimer); openPanel(); });
-        root.addEventListener("mouseleave", () => { closeTimer = setTimeout(closePanel, 300); });
+        root.addEventListener("mouseleave", () => { closeTimer = setTimeout(closePanel, HOVER_CLOSE_DELAY_MS); });
     }
 
     syncSelect();
@@ -522,7 +526,7 @@ function enableHoverToChoices(choicesInstance, wrapperElement) {
     const close = () => {
         timeout = setTimeout(() => {
             choicesInstance.hideDropdown();
-        }, 300);
+        }, HOVER_CLOSE_DELAY_MS);
     };
 
     wrapperElement.addEventListener("mouseenter", open);
@@ -728,7 +732,7 @@ function applyFilters() {
 
     if (appState.isDynamic) {
         if (pollingInterval) clearInterval(pollingInterval);
-        pollingInterval = setInterval(updateDashboard, 600000);
+        pollingInterval = setInterval(updateDashboard, POLL_INTERVAL_MS);
     } else {
         if (pollingInterval) clearInterval(pollingInterval);
     }
@@ -1575,7 +1579,7 @@ document.addEventListener("DOMContentLoaded", function () {
     updateGaugeTooltip();
     loadLastUpdate();
     if (lastUpdateInterval) clearInterval(lastUpdateInterval);
-    lastUpdateInterval = setInterval(renderLastUpdate, 60000);
+    lastUpdateInterval = setInterval(renderLastUpdate, LAST_UPDATE_TICK_MS);
 });
 
 async function loadLastUpdate() {

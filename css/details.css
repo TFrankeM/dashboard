@@ -119,7 +119,7 @@ body {
     width: auto;
 }
 
-/* Logo clicável -> volta para a tela inicial (index.html) */
+/* Clickable logo -> back to the landing page (index.html) */
 .home-link {
     display: inline-flex;
     align-items: center;
@@ -1111,7 +1111,7 @@ tr:hover {
 
 /* max 768px | mobile */
 @media (max-width: 768px) {
-    /* Reestruturação do cabeçalho em grelha */
+    /* Header restructured as a grid */
     .header-content {
         grid-template-columns: repeat(2, 1fr);
         grid-template-areas: 
@@ -1214,7 +1214,7 @@ tr:hover {
     to { opacity: 1; transform: translateY(0); }
 }
 
-    /* Alinhamento da paginação */
+    /* Pagination alignment */
     .pagination-container {
         justify-content: flex-start;
         width: 100%;
@@ -1261,7 +1261,7 @@ tr:hover {
     .brand-title h1 { font-size: 14px; }
     .subtitle { font-size: 9px; margin-top: 1px; }
     
-    /* Oculta o texto "Fechar" para poupar espaço, preservando o ícone */
+    /* Hide the "Close" text to save space, keeping the icon */
     .btn-close span { display: none; } 
     .btn-close { padding: 0; width: 32px; justify-content: center; height: 32px; }
 

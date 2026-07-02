@@ -1,5 +1,5 @@
 /**
-    Viwer layer
+    Viewer layer
 */
 
 let histogramInstance = null;
@@ -432,12 +432,9 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: { 
-                mode: "index", 
+            interaction: {
+                mode: "index",
                 intersect: false
-                // mode: "nearest",
-                // intersect: false,
-                // axis: "xy"
             },
             layout : { 
                 padding: { top: 5, bottom: 0, left: -4, right: 5}
@@ -635,8 +632,6 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
             clip: 5
         };
     });
-    //console.log("Styled Datasets:", styledDatasets);
-    //console.log("Labels:", labels);
     lineInstance = new Chart(ctx, {
         type: "line",
         data: {
@@ -697,8 +692,6 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                     const pointX = lineInstance.scales.x.getPixelForValue(index);
                     // Y position of the upper limit of the drawable area
                     const chartAreaTop = lineInstance.chartArea.top;
-                    console.log("rect.left", rect.left)
-                    console.log("chartAreaTop", chartAreaTop)
                     const popupCoords = {
                         x: rect.left + pointX,
                         y: rect.top + chartAreaTop

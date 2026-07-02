@@ -6,7 +6,6 @@ let CURRENT_LANG = "pt-BR";
 let choicesLanguage = null;
 let currentLimit = 50;
 let currentOffset = 0;
-let choicesLimit = null;
 
 let currentSortColumn = "date";
 let currentSortDirection = "asc";
@@ -294,13 +293,13 @@ async function initializeFilters(urlParams) {
     }
 
     // Categories
-    appState.category = urlParams.getAll("category").sort() || [];
+    appState.category = urlParams.getAll("category").sort();
     if (appState.category.length === 0) appState.category = ["include_all"];
     
     appState.startDate = urlParams.get("startDate") || "";
     appState.endDate = urlParams.get("endDate") || "";
-    appState.evaluatorEntity = urlParams.getAll("evaluatorEntity").sort() || [];
-    appState.evaluatedEntity = urlParams.getAll("evaluatedEntity").sort() || [];
+    appState.evaluatorEntity = urlParams.getAll("evaluatorEntity").sort();
+    appState.evaluatedEntity = urlParams.getAll("evaluatedEntity").sort();
     
     pendingState = JSON.parse(JSON.stringify(appState));
 
@@ -347,7 +346,7 @@ async function initializeFilters(urlParams) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        // Estrutura interna com campo de busca fixo e lista rolável
+        // Inner structure: fixed search field and scrollable list
         const pText = t("placeholder_search");
         const fPlaceholder = (pText === "placeholder_search") ? "Procurar..." : pText;
 
@@ -368,7 +367,7 @@ async function initializeFilters(urlParams) {
             updateEntityOptions(type, searchInput.value, optionsList);
         });
 
-        // Renderização inicial
+        // Initial render
         updateEntityOptions(type, "", optionsList);
     }
 
@@ -588,7 +587,7 @@ function updateEntityOptions(type, searchTerm, optionsList) {
         }
     }
 
-    // Aplicação de filtro
+    // Apply filter
     if (searchTerm) {
         const term = searchTerm.toLowerCase();
         allOptions = allOptions.filter(opt => tEntity(opt).toLowerCase().includes(term));
@@ -767,7 +766,6 @@ function updateFilterSummary(urlParams) {
         }
     }
     
-    //console.log("Formatted Date:", dateFormatted);
     if (dateSpan) {
         dateSpan.textContent = dateFormatted;
     }
@@ -835,7 +833,6 @@ async function fetchData(urlParams) {
         category: urlParams.getAll("category"),
         politicalAlignment: urlParams.getAll("politicalAlignment"),
     };
-    console.log("Fetching data with filters:", filters);
     try {
         const responseData = await fetchDetailsData(filters);
         if (!responseData || typeof responseData.total_count === "undefined") {
@@ -972,11 +969,9 @@ function handleSort(col) {
     if (currentSortColumn === col.key) {
         if (currentSortDirection === "asc") {
             currentSortDirection = "desc";
-            //console.log(`Column "${col.label}" is currently sorted in ascending order. Toggling to descending.`);
         } else {
             currentSortColumn = "date";
             currentSortDirection = "asc";
-            //console.log(`Column "${col.label}" is currently sorted in descending order. Resetting to default sorting by date in ascending order.`);
         }
     } else {
         currentSortColumn = col.key;
@@ -1010,7 +1005,6 @@ function renderTableHeaders() {
                 if (currentSortColumn === col.key) {
                     iconName = currentSortDirection === "asc" ? "arrow-up-narrow-wide" : "arrow-down-wide-narrow";
                     iconClass = "th-icon-active"; 
-                    //console.log(`Column "${col.label}" is currently sorted in ${currentSortDirection} order.`);
                 }
 
                 th.innerHTML = `
@@ -1022,9 +1016,7 @@ function renderTableHeaders() {
                     </div>
                 `;
                 th.addEventListener("click", () => handleSort(col));
-                //console.log(`Column "${col.label}" is sortable. Click to sort.`);
             } else {
-                //console.log(`Column "${col.label}" does not support sorting.`);
                 // For columns that do not support sorting (e.g., full text blocks or URLs)
                 th.innerHTML = `<span>${col.label}</span>`;
             }

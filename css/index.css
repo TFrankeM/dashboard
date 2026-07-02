@@ -8,7 +8,7 @@ body {
     font-family: 'Inter', sans-serif; 
 }
 
-/* Animações suaves para a transição dos dados numéricos */
+/* Smooth transitions for the numeric data */
 .fade-enter { 
     opacity: 0; 
     transform: translateY(10px); 
@@ -200,7 +200,7 @@ body {
     100% { transform: translateY(260px); opacity: 0; }
 }
 
-/* Cabeçalho do card */
+/* Card header */
 .tech-head {
     display: flex;
     align-items: center;
