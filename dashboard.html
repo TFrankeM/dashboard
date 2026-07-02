@@ -72,8 +72,11 @@
                 <h2>
                     <i data-lucide="sliders-horizontal" class="icon-sm"></i>
                     <span data-i18n="filter_section_title">Filtros</span>
-                </h2> 
-                
+                </h2>
+
+                <!-- Applied-filter chips (filled by JS after each apply) -->
+                <div id="applied-chips" class="applied-chips" aria-live="polite"></div>
+
                 <!-- Toggle Dinâmico -->
                 <div class="toggle-container">
                     <span id="mode-label" class="toggle-label" data-i18n="mode_static">Modo estático</span>
@@ -209,7 +212,7 @@
             <div class="card metric-card">
                 <div class="card-header">
                     <div class="card-header-title-group">
-                        <h3 data-i18n="chart_gauge_title">FGV IIBEx</h3>
+                        <h3 data-i18n="chart_gauge_title">Índice atual</h3>
                         <span class="info-icon" id="gauge-info-icon" data-i18n-tooltip="tooltip_gauge">?</span>
                     </div>
                     <i data-lucide="gauge" class="card-icon"></i>
@@ -238,12 +241,16 @@
                 <div class="card-header-row">
                     <div>
                         <div class="card-header-title-group">
-                            <h3 id="evolution-title">FGV IIBEx</h3>
+                            <h3 id="evolution-title">Evolução temporal</h3>
                             <span class="info-icon" data-i18n-tooltip="tooltip_evolution">?</span>
                         </div>
                         <p class="evolution-entities" id="evolution-entities"></p>
                         <p class="card-desc" id="evolution-subtitle">
                             ...
+                        </p>
+                        <p class="chart-hint">
+                            <i data-lucide="mouse-pointer-click" class="icon-xs"></i>
+                            <span data-i18n="evolution_hint">Arraste para dar zoom · Clique em um ponto para ver as notícias</span>
                         </p>
                     </div>
                     <div class="chart-controls">

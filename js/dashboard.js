@@ -229,7 +229,16 @@ async function fetchOptionsFromDB(targetType, filterValue) {
     });
 }
 
+const LANG_STORAGE_KEY = "iibex_lang";
+
 function initLanguageSelector() {
+    // Restore the language chosen on any page of the site.
+    const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
+    if (savedLang && DICTIONARY[savedLang]) {
+        CURRENT_LANG = savedLang;
+        document.documentElement.lang = savedLang;
+    }
+
     if (typeof Choices !== "undefined") {
         choicesLanguage = new Choices("#language-select", {
             searchEnabled: false,
@@ -237,9 +246,9 @@ function initLanguageSelector() {
             shouldSort: false,
             position: "bottom",
             choices: [
-                { value: "pt-BR", label: "PT", selected: true },
-                { value: "en-US", label: "EN" },
-                { value: "es-ES", label: "ES" }
+                { value: "pt-BR", label: "PT", selected: CURRENT_LANG === "pt-BR" },
+                { value: "en-US", label: "EN", selected: CURRENT_LANG === "en-US" },
+                { value: "es-ES", label: "ES", selected: CURRENT_LANG === "es-ES" }
             ]
         });
 
@@ -253,6 +262,7 @@ function initLanguageSelector() {
             langSelect.addEventListener("change", (e) => {
                 CURRENT_LANG = e.target.value;
                 document.documentElement.lang = CURRENT_LANG;
+                localStorage.setItem(LANG_STORAGE_KEY, CURRENT_LANG);
 
                 const rawDate = new URLSearchParams(window.location.search).get("date");
                 if (rawDate) {
@@ -264,6 +274,7 @@ function initLanguageSelector() {
                 }
                 
                 translateUI();
+                renderAppliedChips();
                 redrawCharts();
                 updateToggleVisual(pendingState.isDynamic);
             });
@@ -508,7 +519,8 @@ async function initializeFilters() {
     translateUI();
     updateToggleVisual(pendingState.isDynamic);
     checkApplyButtonState();
-    
+    renderAppliedChips();
+
     const langWrapper = document.querySelector(".lang-dropdown-wrapper");
     if (langWrapper && choicesLanguage) {
         langWrapper.addEventListener("click", (e) => {
@@ -724,9 +736,99 @@ function checkApplyButtonState() {
     }
 }
 
+// Reflect the applied filters in the URL so the current view is shareable and
+// survives a refresh (replaceState: no history entry per apply).
+function syncUrlWithState() {
+    const p = new URLSearchParams();
+    if (appState.isDynamic) p.set("mode", "dynamic");
+    p.set("period", appState.periodValue);
+    (appState.evaluatorEntity || []).forEach(v => p.append("evaluator", v));
+    (appState.evaluatedEntity || []).forEach(v => p.append("evaluated", v));
+    (appState.category || []).forEach(v => p.append("category", v));
+    p.set("agg", appState.aggregation);
+    history.replaceState(null, "", `${location.pathname}?${p.toString()}`);
+}
+
+// Restore filters from a shared/refreshed URL before the widgets initialize.
+function applyUrlState() {
+    const p = new URLSearchParams(window.location.search);
+    if (!p.has("period") && !p.has("evaluator") && !p.has("mode")) return;
+    const st = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    if (p.get("mode") === "dynamic") st.isDynamic = true;
+    const period = p.get("period");
+    if (period) {
+        const pool = st.isDynamic ? PERIODS_CONFIG.dynamic : PERIODS_CONFIG.static;
+        const cfg = pool.find(x => x.value === period);
+        if (cfg) {
+            st.periodValue = period;
+            if (!st.isDynamic) { st.customStartDate = cfg.start; st.customEndDate = cfg.end; }
+        }
+    }
+    if (p.getAll("evaluator").length) st.evaluatorEntity = p.getAll("evaluator");
+    if (p.getAll("evaluated").length) st.evaluatedEntity = p.getAll("evaluated");
+    if (p.getAll("category").length) st.category = p.getAll("category");
+    const agg = parseFloat(p.get("agg"));
+    if (!isNaN(agg) && agg >= 0.25) st.aggregation = agg;
+    appState = JSON.parse(JSON.stringify(st));
+    pendingState = JSON.parse(JSON.stringify(st));
+}
+
+// Chips summarizing the APPLIED filters (pending changes only affect the button).
+function renderAppliedChips() {
+    const wrap = document.getElementById("applied-chips");
+    if (!wrap) return;
+    const entities = a => (Array.isArray(a) ? a : [a]).map(v => escapeHtml(tEntity(v))).join(", ");
+    const cats = appState.category || [];
+    const catLabel = !cats.length || cats.includes("include_all")
+        ? tCategory("include_all")
+        : cats.map(tCategory).join(", ");
+    const chips = [
+        { icon: "eye", label: entities(appState.evaluatorEntity) },
+        { icon: "target", label: entities(appState.evaluatedEntity) },
+        { icon: "tags", label: escapeHtml(catLabel) },
+        { icon: "calendar-days", label: escapeHtml(tPeriod(appState.periodValue)) },
+        { icon: "clock", label: `${escapeHtml(appState.aggregation)}h` },
+    ];
+    wrap.innerHTML = chips.map(c => `<span class="chip"><i data-lucide="${c.icon}"></i>${c.label}</span>`).join("")
+        + `<button type="button" id="btn-clear-filters" class="chip chip-clear"><i data-lucide="x"></i>${t("btn_clear_filters")}</button>`;
+    if (typeof lucide !== "undefined") lucide.createIcons();
+    document.getElementById("btn-clear-filters").addEventListener("click", resetFilters);
+}
+
+// Back to the default view: reset the pending selection, rebuild the entity
+// options unconstrained and apply.
+async function resetFilters() {
+    pendingState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    periodByMode = { static: null, dynamic: null };
+
+    if (choicesEvaluatorEntity) {
+        const evaluatorOpts = await fetchOptionsFromDB("evaluator", []);
+        choicesEvaluatorEntity.clearStore();
+        choicesEvaluatorEntity.setChoices(evaluatorOpts);
+        choicesEvaluatorEntity.setChoiceByValue(pendingState.evaluatorEntity);
+    }
+    if (choicesEvaluatedEntity) {
+        const evaluatedOpts = await fetchOptionsFromDB("evaluated", pendingState.evaluatorEntity);
+        choicesEvaluatedEntity.clearStore();
+        choicesEvaluatedEntity.setChoices(evaluatedOpts);
+        choicesEvaluatedEntity.setChoiceByValue(pendingState.evaluatedEntity);
+    }
+    if (choicesCategory) {
+        choicesCategory.removeActiveItems();
+        choicesCategory.setChoiceByValue(pendingState.category);
+    }
+    const aggregationInput = document.getElementById("aggregation");
+    if (aggregationInput) aggregationInput.value = pendingState.aggregation;
+    updateToggleVisual(pendingState.isDynamic);
+    updatePeriodDropdown(pendingState.isDynamic);
+    applyFilters();
+}
+
 function applyFilters() {
     appState = JSON.parse(JSON.stringify(pendingState));
     checkApplyButtonState();
+    syncUrlWithState();
+    renderAppliedChips();
     updateDashboard();
 
     const filtersWrapper = document.getElementById("filters-wrapper");
@@ -955,7 +1057,7 @@ function updateEvolutionHeader(totalNews) {
     const revStr = revArr.map(r => tEntity(r)).join(", ");
     const entStr = entArr.map(e => tEntity(e)).join(", ");
     
-    evolutionTitleEl.textContent = t("app_title");
+    evolutionTitleEl.textContent = t("chart_evolution_title");
     const evolutionEntitiesEl = document.getElementById("evolution-entities");
     if (evolutionEntitiesEl) {
         evolutionEntitiesEl.textContent = `${t("evo_title_prefix")}${revStr}${t("evo_title_separator")}${entStr}`;
@@ -1473,6 +1575,7 @@ function redrawCharts() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    applyUrlState();
     initLanguageSelector();
 
     if (typeof lucide !== "undefined") {

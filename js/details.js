@@ -91,8 +91,17 @@ function tEntity(val) {
     return DICTIONARY[CURRENT_LANG].entity_options?.[val] || val;
 }
 
+const LANG_STORAGE_KEY = "iibex_lang";
+
 function initLanguageSelector() {
     /* Initializes the language selector dropdown and sets up event listeners to handle language changes. */
+    // Restore the language chosen on any page of the site.
+    const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
+    if (savedLang && DICTIONARY[savedLang]) {
+        CURRENT_LANG = savedLang;
+        document.documentElement.lang = savedLang;
+    }
+
     if (typeof Choices !== "undefined") {
         choicesLanguage = new Choices("#language-select", {
             searchEnabled: false,
@@ -100,9 +109,9 @@ function initLanguageSelector() {
             shouldSort: false,
             position: "bottom",
             choices: [
-                { value: "pt-BR", label: "PT", selected: true },
-                { value: "en-US", label: "EN" },
-                { value: "es-ES", label: "ES" }
+                { value: "pt-BR", label: "PT", selected: CURRENT_LANG === "pt-BR" },
+                { value: "en-US", label: "EN", selected: CURRENT_LANG === "en-US" },
+                { value: "es-ES", label: "ES", selected: CURRENT_LANG === "es-ES" }
             ]
         });
 
@@ -114,6 +123,7 @@ function initLanguageSelector() {
         document.getElementById("language-select").addEventListener("change", (e) => {
             CURRENT_LANG = e.target.value;
             document.documentElement.lang = CURRENT_LANG;
+            localStorage.setItem(LANG_STORAGE_KEY, CURRENT_LANG);
 
             // Locale-based date reformatting
             const rawDate = new URLSearchParams(window.location.search).get("date");

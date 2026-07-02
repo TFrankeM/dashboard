@@ -216,6 +216,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lastStats) renderMiniCards(lastStats);
     }
 
+    // Restore the language chosen on any page of the site.
+    const savedLang = localStorage.getItem('iibex_lang');
+    if (savedLang && savedLang !== currentLang && DICTIONARY[savedLang]) {
+        currentLang = savedLang;
+        if (langSwitch) {
+            langSwitch.querySelectorAll('.lang-opt')
+                .forEach(b => b.classList.toggle('is-active', b.dataset.lang === currentLang));
+        }
+        translatePage();
+    }
+
     if (langSwitch) {
         langSwitch.addEventListener('click', e => {
             const btn = e.target.closest('.lang-opt');
@@ -224,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (lang === currentLang || !DICTIONARY[lang]) return;
 
             currentLang = lang;
+            localStorage.setItem('iibex_lang', currentLang);
             langSwitch.querySelectorAll('.lang-opt')
                 .forEach(b => b.classList.toggle('is-active', b === btn));
 

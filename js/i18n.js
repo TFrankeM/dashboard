@@ -111,13 +111,16 @@ export const DICTIONARY = {
         chart_volume_tooltip_unit_plural: "notícias analisadas",
         
         // Gauge chart
-        chart_gauge_title: "FGV IIBEx",
+        chart_gauge_title: "Índice atual",
         last_update: "Última atualização: ",
         update_min_ago: "há {n} min",
         update_over_hour: "há mais de 1 hora",
         update_over_day: "há mais de 1 dia",
 
         // Evolution chart
+        chart_evolution_title: "Evolução temporal",
+        evolution_hint: "Arraste para dar zoom · Clique em um ponto para ver as notícias",
+        btn_clear_filters: "Limpar filtros",
         evo_title_prefix: "Avaliador: ",
         evo_title_separator: " | Avaliado: ",
         evo_subtitle_prefix: "Evolução do Indicador de Imagem no Exterior ",
@@ -348,13 +351,16 @@ export const DICTIONARY = {
         chart_volume_tooltip_unit_plural: "news items analyzed",
         
         // Gauge chart
-        chart_gauge_title: "FGV IIBEx",
+        chart_gauge_title: "Current index",
         last_update: "Last update: ",
         update_min_ago: "{n} min ago",
         update_over_hour: "more than 1 hour ago",
         update_over_day: "more than 1 day ago",
 
         // Evolution chart
+        chart_evolution_title: "Evolution over time",
+        evolution_hint: "Drag to zoom · Click a point to see the news",
+        btn_clear_filters: "Clear filters",
         evo_title_prefix: "Evaluator: ",
         evo_title_separator: " | Evaluated: ",
         evo_subtitle_prefix: "Evolution of Indicator of Brazil's Image Abroad ",
@@ -584,13 +590,16 @@ export const DICTIONARY = {
         chart_volume_tooltip_unit_plural: "noticias analizadas",
         
         // Gauge chart
-        chart_gauge_title: "FGV IIBEx",
+        chart_gauge_title: "Índice actual",
         last_update: "Última actualización: ",
         update_min_ago: "hace {n} min",
         update_over_hour: "hace más de 1 hora",
         update_over_day: "hace más de 1 día",
 
         // Evolution chart
+        chart_evolution_title: "Evolución temporal",
+        evolution_hint: "Arrastra para hacer zoom · Haz clic en un punto para ver las noticias",
+        btn_clear_filters: "Limpiar filtros",
         evo_title_prefix: "Evaluador: ",
         evo_title_separator: " | Evaluado: ",
         evo_subtitle_prefix: "Evolución del Indicador de Imagen en el Exterior ",

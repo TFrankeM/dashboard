@@ -438,7 +438,71 @@ data-type* means any type that contains select-one, like select-one-groups */
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
     margin-bottom: 14px;
+}
+
+/* Applied-filter chips: read-only summary of the state the charts reflect. */
+.applied-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 260px;
+    padding: 3px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-family: "Gotham", Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.chip svg {
+    width: 12px;
+    height: 12px;
+    flex: none;
+    color: var(--fgv-blue-sky);
+}
+.chip-clear {
+    cursor: pointer;
+    background: transparent;
+    border-style: dashed;
+    color: var(--fgv-blue-sky);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.chip-clear:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+.chip-clear svg {
+    color: currentColor;
+}
+
+/* Interaction hint under the evolution chart header. */
+.chart-hint {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 2px 0 0;
+    font-size: 11px;
+    color: var(--fgv-gray-med);
+}
+.chart-hint svg {
+    width: 13px;
+    height: 13px;
+    flex: none;
 }
 
 .filters-header h2 {
@@ -1004,7 +1068,6 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--fgv-gray-pale);
     padding-bottom: 5px;
 }
 
