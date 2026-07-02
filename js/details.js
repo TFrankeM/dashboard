@@ -113,7 +113,8 @@ function initLanguageSelector() {
 
         document.getElementById("language-select").addEventListener("change", (e) => {
             CURRENT_LANG = e.target.value;
-            
+            document.documentElement.lang = CURRENT_LANG;
+
             // Locale-based date reformatting
             const rawDate = new URLSearchParams(window.location.search).get("date");
             if (rawDate) {
@@ -219,6 +220,12 @@ function translateUI() {
         input.placeholder = t("placeholder_search");
     });
 
+    // Icon-only pagination buttons need accessible names.
+    const prevBtn = document.getElementById("prev-page");
+    if (prevBtn) prevBtn.setAttribute("aria-label", t("aria_prev_page"));
+    const nextBtn = document.getElementById("next-page");
+    if (nextBtn) nextBtn.setAttribute("aria-label", t("aria_next_page"));
+
     const mobileFilterBtn = document.getElementById("mobile-filter-toggle");
     const mobileFilterText = document.getElementById("mobile-filter-text");
     const filtersWrapper = document.getElementById("filters-wrapper");
@@ -228,21 +235,18 @@ function translateUI() {
         mobileFilterText.textContent = isOpen ? t("btn_hide_filters") : t("btn_show_filters");
     }
 
-    const startInput = document.getElementById("start-date");
-    if (startInput) {
-        startInput.placeholder = t("placeholder_start_date");
-        if (startInput._flatpickr && startInput._flatpickr.altInput) {
-            startInput._flatpickr.altInput.placeholder = t("placeholder_start_date");
+    // Placeholder-only date inputs: keep placeholder and accessible name in sync
+    // (flatpickr swaps in an altInput, which is the element users actually see).
+    [["start-date", "placeholder_start_date"], ["end-date", "placeholder_end_date"]].forEach(([id, key]) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.placeholder = t(key);
+        input.setAttribute("aria-label", t(key));
+        if (input._flatpickr && input._flatpickr.altInput) {
+            input._flatpickr.altInput.placeholder = t(key);
+            input._flatpickr.altInput.setAttribute("aria-label", t(key));
         }
-    }
-    
-    const endInput = document.getElementById("end-date");
-    if (endInput) {
-        endInput.placeholder = t("placeholder_end_date");
-        if (endInput._flatpickr && endInput._flatpickr.altInput) {
-            endInput._flatpickr.altInput.placeholder = t("placeholder_end_date");
-        }
-    }
+    });
 
     COLUMNS.forEach(col => {
         col.label = t(col.labelKey);

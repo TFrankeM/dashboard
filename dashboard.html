@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title data-i18n="main_page_title">FGV IIBEx | Sala de Situação </title>
+    <meta name="description" content="Sala de situação do FGV IIBEx: indicador da imagem do Brasil no exterior a partir de notícias internacionais.">
+    <meta property="og:title" content="FGV IIBEx | Sala de Situação">
+    <meta property="og:description" content="Indicador da imagem do Brasil no exterior a partir de notícias internacionais.">
 
     <!-- FavIcon -->
     <link rel="icon" href="assets/favicon.png" type="image/png">
@@ -96,7 +99,7 @@
                         <div class="cbx-field cbx-skeleton">
                             <i data-lucide="eye" class="cbx-icon"></i>
                             <span class="cbx-summary" data-i18n="label_evaluatorEntity">Ente avaliador</span>
-                            <svg class="cbx-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                         <select id="evaluatorEntity" multiple></select>
                     </div>
@@ -105,7 +108,7 @@
                         <div class="cbx-field cbx-skeleton">
                             <i data-lucide="target" class="cbx-icon"></i>
                             <span class="cbx-summary" data-i18n="label_evaluatedEntity">Ente em avaliação</span>
-                            <svg class="cbx-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                         <select id="evaluatedEntity" multiple></select>
                     </div>
@@ -114,7 +117,7 @@
                         <div class="cbx-field cbx-skeleton">
                             <i data-lucide="tags" class="cbx-icon"></i>
                             <span class="cbx-summary" data-i18n="label_category">Categorias</span>
-                            <svg class="cbx-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                         <select id="category" multiple></select>
                     </div>
@@ -123,7 +126,7 @@
                         <div class="cbx-field cbx-skeleton">
                             <i data-lucide="calendar-days" class="cbx-icon"></i>
                             <span class="cbx-summary" data-i18n="label_period">Período</span>
-                            <svg class="cbx-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                         <select id="period"></select>
                     </div>
@@ -131,8 +134,8 @@
                     <div class="filter-group filter-aggregation">
                         <div class="agg-control">
                             <i data-lucide="clock" class="cbx-icon"></i>
-                            <span class="agg-label" data-i18n="label_aggregation">Agregação (h)</span>
-                            <input type="number" id="aggregation" min="0.25" step="0.5" class="input-aggregation">
+                            <span class="agg-label" id="aggregation-label" data-i18n="label_aggregation">Agregação (h)</span>
+                            <input type="number" id="aggregation" min="0.25" step="0.5" class="input-aggregation" aria-labelledby="aggregation-label">
                             <span class="info-icon" data-i18n-tooltip="tooltip_aggregation">?</span>
                         </div>
                     </div>

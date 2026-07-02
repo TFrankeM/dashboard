@@ -68,3 +68,10 @@
 .btn-outline:hover:not(:disabled):not(.disabled) {
     border-color: var(--fgv-blue-dark);
 }
+
+/* Keyboard focus indicator (mouse clicks don't trigger :focus-visible). */
+.btn-apply:focus-visible,
+.btn-outline:focus-visible {
+    outline: 2px solid var(--fgv-blue-light);
+    outline-offset: 2px;
+}

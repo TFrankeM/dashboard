@@ -156,6 +156,9 @@ function translateUI() {
             el._tippy.setContent(content);
         }
         el.setAttribute("data-tippy-content", content);
+        // Screen readers get the tooltip text; keyboard users can focus the icon.
+        el.setAttribute("aria-label", String(content || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+        if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
     });
 
     // filters
@@ -249,7 +252,8 @@ function initLanguageSelector() {
         if (langSelect) {
             langSelect.addEventListener("change", (e) => {
                 CURRENT_LANG = e.target.value;
-                
+                document.documentElement.lang = CURRENT_LANG;
+
                 const rawDate = new URLSearchParams(window.location.search).get("date");
                 if (rawDate) {
                     const dateObj = new Date(rawDate);
@@ -294,11 +298,11 @@ function buildCheckboxFilter(selectEl, opts) {
     const root = document.createElement("div");
     root.className = "cbx-filter";
     root.innerHTML = `
-        <button type="button" class="cbx-field">
+        <button type="button" class="cbx-field" aria-haspopup="listbox" aria-expanded="false">
             ${icon ? `<i data-lucide="${icon}" class="cbx-icon"></i>` : ""}
             <span class="cbx-summary"></span>
             ${infoKey ? `<span class="info-icon" data-i18n-tooltip="${infoKey}">?</span>` : ""}
-            <svg class="cbx-caret" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
         <div class="cbx-panel" hidden>
             <input type="text" class="cbx-search"${single ? " hidden" : ""} />
@@ -378,6 +382,7 @@ function buildCheckboxFilter(selectEl, opts) {
         computeOrder();                               // re-sort only on (re)open, never mid-selection
         panel.hidden = false;
         field.classList.add("is-open");
+        field.setAttribute("aria-expanded", "true");
         search.value = "";
         renderList();
         search.focus();
@@ -386,6 +391,7 @@ function buildCheckboxFilter(selectEl, opts) {
         open = false;
         panel.hidden = true;
         field.classList.remove("is-open");
+        field.setAttribute("aria-expanded", "false");
     };
 
     field.addEventListener("click", () => open ? closePanel() : openPanel());
@@ -398,6 +404,9 @@ function buildCheckboxFilter(selectEl, opts) {
         toggle(row.dataset.value);
     });
     search.addEventListener("input", renderList);
+    root.addEventListener("keydown", e => {
+        if (e.key === "Escape" && open) { closePanel(); field.focus(); }
+    });
     document.addEventListener("click", e => { if (open && !root.contains(e.target)) closePanel(); });
 
     // Pointer devices open the panel on hover and close it shortly after the cursor leaves.

@@ -858,6 +858,11 @@ input[type="text"].date-input {
     background: #f1f5f9;
     border-color: var(--fgv-blue-dark);
 }
+/* Keyboard focus indicator. */
+.btn-icon:focus-visible {
+    outline: 2px solid var(--fgv-blue-light);
+    outline-offset: 2px;
+}
 
 
         /* TABLE */
@@ -1295,21 +1300,22 @@ tr:hover {
         margin-top: 4px;
         margin-bottom: 4px;
     }
+    /* 40px keeps touch targets close to the WCAG minimum on small screens. */
     .btn-outline {
-        height: 32px;
+        height: 40px;
         font-size: 11px;
         padding: 0 8px;
     }
     .choices__inner {
-        height: 32px !important;
-        min-height: 32px !important;
+        height: 40px !important;
+        min-height: 40px !important;
         font-size: 11px !important;
         padding: 0 8px !important;
     }
     .btn-icon {
-        height: 32px;
-        width: 32px;
-        min-width: 32px;
+        height: 40px;
+        width: 40px;
+        min-width: 40px;
     }
     .limit-control, .range-control {
         font-size: 11px;

@@ -740,6 +740,13 @@ input:checked + .slider:before {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
+/* Keyboard focus indicator for filter fields and small icon controls. */
+.cbx-field:focus-visible,
+.reset-btn:focus-visible,
+.info-icon:focus-visible {
+    outline: 2px solid var(--fgv-blue-light);
+    outline-offset: 2px;
+}
 .cbx-icon {
     flex: none;
     width: 16px;
