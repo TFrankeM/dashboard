@@ -1,7 +1,5 @@
 /* details.css */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-
 @font-face {
     font-family: "Gotham";
     src: url("../assets/fonts/gotham_family/Gotham-Book.otf") format("opentype");
@@ -26,6 +24,12 @@
     --fgv-gray-dark: #5C5B5F;
     --fgv-gray-med: #88868B;
     --fgv-gray-pale: #D7D9DD;
+
+    /* Layering scale (small intra-component z-indexes stay local) */
+    --z-sticky: 50;
+    --z-nav: 100;
+    --z-dropdown: 200;
+    --z-drawer: 1200;
 }
 body { 
     font-family: "Gotham", "Arial", sans-serif; 
@@ -197,7 +201,7 @@ body {
     padding: 1rem 2rem; 
     position: sticky; 
     top: 0; 
-    z-index: 50;
+    z-index: var(--z-sticky);
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -320,7 +324,7 @@ data-type* means any type that contains select-one, like select-one-groups */
     border-radius: 0 0 4px 4px !important;
     box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
 
-    z-index: 200 !important; /* above filters */
+    z-index: var(--z-dropdown) !important; /* above filters */
     left: 0 !important;
     right: auto !important;     
     word-break: keep-all !important; /* prevents breaking words, keeps dropdown width consistent */
@@ -352,7 +356,7 @@ data-type* means any type that contains select-one, like select-one-groups */
     width: 80px;
     min-width: 80px;
     height: 38px;
-    z-index: 200; /* above filters */
+    z-index: var(--z-dropdown); /* above filters */
 }
 .lang-icon {
     position: absolute;
@@ -461,7 +465,7 @@ input[type="datetime-local"].date-input {
     box-sizing: border-box;
     box-shadow: 0 8px 16px rgba(0,0,0,0.15);
     padding: 0; 
-    z-index: 100; 
+    z-index: var(--z-nav); 
     border-radius: 0 0 4px 4px; 
     border: 1px solid var(--fgv-blue-dark);
     margin-top: 0; /* Zero space */
@@ -990,7 +994,7 @@ tr:hover {
     padding: 20px 40px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 100;
+    z-index: var(--z-nav);
 }
 /* Thin rotating ring used for every loading state; matches the dashboard. */
 .css-spinner {

@@ -1,9 +1,17 @@
 /* css/index.css */
 
+/* Landing-page dark theme (intentionally distinct from the FGV palette). */
+:root {
+    --night-bg: #020617;
+    --ink-bright: #ecfeff;
+    --ink-soft: #bfdbfe;
+    --accent: #60a5fa;
+}
+
 body { 
     margin: 0; 
     padding: 0; 
-    background-color: #020617; 
+    background-color: var(--night-bg); 
     overflow: hidden; 
     font-family: 'Inter', sans-serif; 
 }
@@ -36,7 +44,7 @@ body {
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #ecfeff;
+    color: var(--ink-bright);
     /* Stronger cyan fill + persistent glow so the CTA stands out from the
        other cards even at rest */
     background-color: rgba(8, 145, 178, 0.42);
@@ -60,7 +68,7 @@ body {
 .cta-arrow {
     width: 22px; height: 22px;
     flex: none;
-    color: #ecfeff;                       /* matches the text at rest */
+    color: var(--ink-bright);                       /* matches the text at rest */
     transition: transform 0.3s ease, color 0.3s ease;
 }
 .cta-card:hover .cta-arrow {
@@ -85,7 +93,7 @@ body {
     width: 15px;
     height: 15px;
     margin: 0 4px;
-    color: #60a5fa;
+    color: var(--accent);
     flex: none;
 }
 .lang-opt {
@@ -102,7 +110,7 @@ body {
     cursor: pointer;
     transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
 }
-.lang-opt:hover { color: #bfdbfe; }
+.lang-opt:hover { color: var(--ink-soft); }
 .lang-opt.is-active {
     color: #ffffff;
     background-color: rgba(59,130,246,0.25);
@@ -171,7 +179,7 @@ body {
     position: absolute;
     width: 4px; height: 4px;
     border-radius: 50%;
-    background: #60a5fa;
+    background: var(--accent);
     box-shadow: 0 0 6px 1px rgba(96,165,250,0.9);
 }
 .tech-corner.tl { top: 7px; left: 7px; border-top-width: 1.5px; border-left-width: 1.5px; }
@@ -222,7 +230,7 @@ body {
     font-size: 11px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: #60a5fa;
+    color: var(--accent);
 }
 .tech-counter {
     margin-left: auto;
@@ -238,7 +246,7 @@ body {
     font-weight: 700;
     letter-spacing: -0.02em;
     margin: 0 0 10px;
-    background: linear-gradient(180deg, #ffffff 0%, #bfdbfe 100%);
+    background: linear-gradient(180deg, #ffffff 0%, var(--ink-soft) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -291,7 +299,7 @@ body {
 .tech-timeline-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, rgba(59,130,246,0.4), #60a5fa);
+    background: linear-gradient(90deg, rgba(59,130,246,0.4), var(--accent));
     box-shadow: 0 0 10px 1px rgba(96,165,250,0.8);
 }
 
@@ -310,7 +318,7 @@ body {
     width: 7px; height: 7px;
     border-radius: 50%;
     background: #0a1223;
-    border: 1.5px solid #60a5fa;
+    border: 1.5px solid var(--accent);
     box-shadow: 0 0 8px 1px rgba(96,165,250,0.7);
 }
 
@@ -346,7 +354,7 @@ body {
 .mini-unit {
     font-size: 0.9rem;
     font-weight: 400;
-    color: #60a5fa;
+    color: var(--accent);
 }
 .mini-sub {
     font-size: 0.78rem;

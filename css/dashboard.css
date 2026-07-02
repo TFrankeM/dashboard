@@ -50,6 +50,12 @@
 
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+    /* Layering scale (small intra-component z-indexes stay local) */
+    --z-sticky: 50;
+    --z-nav: 100;
+    --z-dropdown: 200;
+    --z-drawer: 1200;
 }
 
 
@@ -86,7 +92,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    z-index: 100;
+    z-index: var(--z-nav);
 }
 
 .nav-dot {
@@ -333,7 +339,7 @@ data-type* means any type that contains select-one, like select-one-groups */
     border-radius: 0 0 4px 4px !important;
     box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
 
-    z-index: 200 !important;
+    z-index: var(--z-dropdown) !important;
     left: 0 !important;
     right: auto !important;     
     word-break: keep-all !important;
@@ -365,7 +371,7 @@ data-type* means any type that contains select-one, like select-one-groups */
     width: 80px;
     min-width: 80px;
     height: 38px;
-    z-index: 200;
+    z-index: var(--z-dropdown);
 }
 .lang-icon {
     position: absolute;
@@ -407,7 +413,7 @@ data-type* means any type that contains select-one, like select-one-groups */
     color: white;
     padding: 20px 40px;
     box-shadow: var(--shadow-sm);
-    z-index: 50;
+    z-index: var(--z-sticky);
     transition: padding 0.25s ease;
     border-bottom: 1px solid var(--fgv-blue-light);
 }
@@ -695,7 +701,7 @@ input:checked + .slider:before {
     border-radius: 0 0 4px 4px !important;
     box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
     margin-top: 0 !important;
-    z-index: 100;
+    z-index: var(--z-nav);
 }
 
 .filter-group .choices.collapsed .choices__inner {
@@ -791,7 +797,7 @@ input:checked + .slider:before {
     top: 100%;
     left: 0;
     right: 0;
-    z-index: 200;
+    z-index: var(--z-dropdown);
     background: #fff;
     border: 1px solid var(--fgv-blue-dark);
     border-top: none;
@@ -1178,7 +1184,7 @@ input:checked + .slider:before {
 
 .chart-popup {
     position: fixed;
-    z-index: 200;
+    z-index: var(--z-dropdown);
     background-color: var(--fgv-white);
     border: 1px solid var(--fgv-blue-dark);
     border-radius: 8px;
@@ -1626,7 +1632,7 @@ input:checked + .slider:before {
 .news-drawer {
     position: fixed;
     inset: 0;
-    z-index: 1200;
+    z-index: var(--z-drawer);
 }
 .news-drawer.hidden {
     display: none;
