@@ -17,18 +17,23 @@ let lineTickState = { key: "", map: new Map() };
 
 const DAY_MS = 86400000;
 
+// Data timestamps are UTC; labels and day-boundary math use Brasília time
+// (fixed UTC-3 — Brazil has no DST since 2019).
+const BRT_OFFSET_MS = 3 * 3600 * 1000;
+const brtDay = ms => Math.floor((ms - BRT_OFFSET_MS) / DAY_MS);
+
 function fmtAxisLabel(ms, withHour, locale) {
-    const opts = { day: "2-digit", month: "2-digit", timeZone: "UTC" };
+    const opts = { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" };
     if (withHour) { opts.hour = "2-digit"; opts.minute = "2-digit"; }
     return new Date(ms).toLocaleString(locale, opts);
 }
 
-// True when index i is the first bucket of a UTC day that lands on the 1st or 15th.
+// True when index i is the first bucket of a Brasília day that lands on the 1st or 15th.
 function isMonthMarker(dates, i) {
-    const day = new Date(dates[i]).getUTCDate();
+    const day = new Date(dates[i] - BRT_OFFSET_MS).getUTCDate();
     if (day !== 1 && day !== 15) return false;
     if (i === 0) return true;
-    return Math.floor(dates[i] / DAY_MS) !== Math.floor(dates[i - 1] / DAY_MS);
+    return brtDay(dates[i]) !== brtDay(dates[i - 1]);
 }
 
 function tickTarget(width) {

@@ -1,15 +1,16 @@
 
 /*
-    Responsable for comunicating with the backend `api/data.js`, the endpoint that provides the data for the widgets.
+    Communicates with the backend `api/data.js`, the endpoint that provides the data for the widgets.
 */
 
 const API_ENDPOINT = "/api/data";
+const FETCH_TIMEOUT_MS = 30000;
 
 
 function buildApiUrl(filters, widgetType) {
-    /* Builds the URL with parameters 
+    /* Builds the URL with parameters
     filters := Object containing filter parameters
-    widgetType := "grade", "volume", "gauge", "line", "details" or "relationships"
+    widgetType := "grade", "volume", "gauge", "line", "details", "relationships" or "stats"
     */
 
     const url_params = new URLSearchParams();
@@ -64,21 +65,21 @@ function buildApiUrl(filters, widgetType) {
     if (filters.sort_dir) {
         url_params.append("sort_dir", filters.sort_dir);
     }
-    console.log("Built URL Parameters:", url_params.toString());
     return url_params;
 }
 
 
 async function fetchFromApi(filters, widgetType) {
     /* Internal function to fetch data from the API */
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     try {
         let url_params = buildApiUrl(filters, widgetType);
-        url_params = url_params.toString().replace(/\+/g, "%20"); /* '\+' literal + symbol; '/ /' start and end of the expression; 'g' global flag */
+        // Encode spaces as %20 instead of "+" so the serverless parser reads them correctly.
+        url_params = url_params.toString().replace(/\+/g, "%20");
         const fullUrl = `${API_ENDPOINT}?${url_params.toString()}`;
 
-        console.log(`[Fetching from API] Requesting: ${fullUrl}`);
-
-        const response = await fetch(fullUrl);
+        const response = await fetch(fullUrl, { signal: controller.signal });
 
         if (!response.ok) {
             throw new Error(`API error (${response.status}): ${response.statusText}`);
@@ -88,11 +89,13 @@ async function fetchFromApi(filters, widgetType) {
     } catch (error) {
         console.error("Error fetching data from API:", error);
         return null;
+    } finally {
+        clearTimeout(timer);
     }
 }
 
 
-/* Functions exported to script.js */
+/* Functions consumed by the page scripts */
 export async function fetchGradesHistogramData(filters) {
     return await fetchFromApi(filters, "grade");
 }

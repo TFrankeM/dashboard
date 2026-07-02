@@ -21,6 +21,7 @@ export const DICTIONARY = {
         sort_date_desc: "Mais recente",
         drawer_open_full: "Ver tabela completa",
         drawer_empty: "Sem notícias neste período.",
+        drawer_error: "Erro ao carregar as notícias. Tente novamente.",
         read_more: "ler mais",
         read_less: "ler menos",
         read_original: "ver original",
@@ -198,6 +199,7 @@ export const DICTIONARY = {
         placeholder_start_date: "Data inicial...",
         placeholder_end_date: "Data final...",
         placeholder_search: "Procurar...",
+        label_of: "de",
         col_date: "Data",
         col_headline: "Manchete",
         col_summary: "Resumo",
@@ -254,6 +256,7 @@ export const DICTIONARY = {
         sort_date_desc: "Most recent",
         drawer_open_full: "Open full table",
         drawer_empty: "No news in this period.",
+        drawer_error: "Failed to load the news. Please try again.",
         read_more: "read more",
         read_less: "read less",
         read_original: "view original",
@@ -364,7 +367,7 @@ export const DICTIONARY = {
         // Popup see details
         popup_text: "Understand the IIBEx of ",
         btn_view_news: "View news",
-        btn_cancel: "Cancelar",
+        btn_cancel: "Cancel",
 
         // Footer
         footer_copyright: "FGV International Affairs Division",
@@ -420,12 +423,11 @@ export const DICTIONARY = {
             "presidente_trump": "President Trump"
         },
 
-        // Detailse page
+        // Details page
         details_page_title: "News details",
         placeholder_start_date: "Start date...",
         placeholder_end_date: "End date...",
         placeholder_search: "Search...",
-        title_sort_by: "Sort by",
         label_of: "of",
         btn_close: "Close",
         details_title_prefix: "News composing the FGV IIBEx on ",
@@ -468,6 +470,7 @@ export const DICTIONARY = {
         landing_footer_coverage: "COVERAGE: AUG 2024 — JAN 2026 • SYSTEM ONLINE",
     },
     "es-ES": {
+        main_page_title: "FGV IIBEx | Sala de Situación",
         app_logo: "assets/logodint_es.svg",
 
         // General
@@ -487,6 +490,7 @@ export const DICTIONARY = {
         sort_date_desc: "Más reciente",
         drawer_open_full: "Ver tabla completa",
         drawer_empty: "Sin noticias en este período.",
+        drawer_error: "Error al cargar las noticias. Inténtelo de nuevo.",
         read_more: "leer más",
         read_less: "leer menos",
         read_original: "ver original",
@@ -554,13 +558,13 @@ export const DICTIONARY = {
         tooltip_evolution: "Evolución del FGV IIBEx.",
 
         // Image labels
-        image_extremely_negative: "Imagem extremadamente negativa",
-        image_very_negative: "Imagem muy negativa",
-        image_slightly_negative: "Imagem levemente negativa",
-        image_neutral: "Imagem neutra",
-        image_slightly_positive: "Imagem levemente positiva",
-        image_very_positive: "Imagem muy positiva",
-        image_extremely_positive: "Imagem extremadamente positiva",
+        image_extremely_negative: "Imagen extremadamente negativa",
+        image_very_negative: "Imagen muy negativa",
+        image_slightly_negative: "Imagen levemente negativa",
+        image_neutral: "Imagen neutra",
+        image_slightly_positive: "Imagen levemente positiva",
+        image_very_positive: "Imagen muy positiva",
+        image_extremely_positive: "Imagen extremadamente positiva",
         
         // Histogram chart
         chart_histogram_title: "Frecuencia de calificaciones",

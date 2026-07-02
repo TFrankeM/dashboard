@@ -5,6 +5,9 @@ import { DICTIONARY } from "./i18n.js";
 // Global state variables
 let CURRENT_LANG = "pt-BR";
 
+// Data is stored in UTC; every user-facing datetime renders in Brasília time.
+const DISPLAY_TZ = "America/Sao_Paulo";
+
 // Shared tooltip config, reused for static and dynamically-built info icons.
 const INFO_TIPPY_OPTS = {
     placement: "auto-end",
@@ -614,10 +617,18 @@ function setupFilterListeners() {
 
     const aggregationInput = document.getElementById("aggregation");
     if (aggregationInput) {
+        const minAgg = parseFloat(aggregationInput.min) || 0.25;
         aggregationInput.addEventListener("input", () => {
             const val = parseFloat(aggregationInput.value);
-            if (!isNaN(val) && val > 0) {
+            if (!isNaN(val) && val >= minAgg) {
                 onFilterChange('aggregation', aggregationInput, false);
+            }
+        });
+        // Snap invalid or below-minimum values back to the last accepted one on blur.
+        aggregationInput.addEventListener("change", () => {
+            const val = parseFloat(aggregationInput.value);
+            if (isNaN(val) || val < minAgg) {
+                aggregationInput.value = pendingState.aggregation;
             }
         });
     }
@@ -695,13 +706,8 @@ function checkApplyButtonState() {
     const btnApply = document.getElementById("btn-apply");
 
     if (btnApply) {
-        if (isDifferent) {
-            btnApply.classList.remove("disabled");
-            btnApply.removeAttribute("disabled");
-        } else {
-            btnApply.classList.add("disabled");
-            btnApply.setAttribute("disabled", "true");
-        }
+        btnApply.classList.toggle("disabled", !isDifferent);
+        btnApply.disabled = !isDifferent;
     }
 }
 
@@ -847,9 +853,7 @@ function processAndUpdateVolumeChart(apiData) {
 
     sortedData.forEach(row => {
         const date = new Date(row.time_period);
-        let labelStr;
-        labelStr = date.toLocaleDateString("pt-BR");
-        labels.push(labelStr);
+        labels.push(date.toLocaleDateString(CURRENT_LANG, { timeZone: DISPLAY_TZ }));
 
         let count = parseInt(row.news_count, 10);
         values.push(count);
@@ -993,7 +997,7 @@ function processAndUpdateLineChart(apiData) {
 
     const tooltipDates = sortedDates.map(dateStr => {
         const date = new Date(dateStr);
-        const options = { day: "2-digit", month: "2-digit", year: "numeric" };
+        const options = { day: "2-digit", month: "2-digit", year: "numeric", timeZone: DISPLAY_TZ };
         if (showHours) {
             options.hour = "2-digit";
             options.minute = "2-digit";
@@ -1082,11 +1086,17 @@ function gradeColor(g) {
 function formatDrawerDate(iso) {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return iso || "";
-    return d.toLocaleString(CURRENT_LANG, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleString(CURRENT_LANG, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: DISPLAY_TZ });
 }
 
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+}
+
+// News URLs come from scraped external data; only http(s) links may become hrefs
+// (encodeURI alone would let javascript: URLs through).
+function safeUrl(u) {
+    return /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
 }
 
 // Reuse the current filters to deep-link into the full details table
@@ -1119,7 +1129,7 @@ function newsCardHTML(n) {
             ${analysis ? `<p class="news-analysis${long ? " clamp" : ""}">${escapeHtml(analysis)}</p>${gradeScaleHTML(n.grade)}` : ""}
             <div class="news-card-actions">
                 ${long ? `<button type="button" class="read-more">${t("read_more")}</button>` : "<span></span>"}
-                ${n.url ? `<a class="news-original" href="${encodeURI(n.url)}" target="_blank" rel="noopener">${t("read_original")} <i data-lucide="arrow-up-right"></i></a>` : ""}
+                ${safeUrl(n.url) ? `<a class="news-original" href="${escapeHtml(safeUrl(n.url))}" target="_blank" rel="noopener">${t("read_original")} <i data-lucide="arrow-up-right"></i></a>` : ""}
             </div>
         </article>`;
 }
@@ -1131,17 +1141,24 @@ async function loadDrawerNews(sort) {
     body.innerHTML = `<p class="drawer-state">${t("loading_data")}</p>`;
 
     const [field, dir] = (sort || "grade-desc").split("-");
-    const res = await fetchDetailsData({
-        evaluator: appState.evaluatorEntity,
-        evaluated: appState.evaluatedEntity,
-        category: appState.category,
-        startDate: currentClickedDate.startDate,
-        endDate: currentClickedDate.endDate,
-        sort_by: field === "date" ? "date" : "grade",
-        sort_dir: (dir || "desc").toUpperCase(),
-        limit: 50,
-        offset: 0
-    });
+    let res;
+    try {
+        res = await fetchDetailsData({
+            evaluator: appState.evaluatorEntity,
+            evaluated: appState.evaluatedEntity,
+            category: appState.category,
+            startDate: currentClickedDate.startDate,
+            endDate: currentClickedDate.endDate,
+            sort_by: field === "date" ? "date" : "grade",
+            sort_dir: (dir || "desc").toUpperCase(),
+            limit: 50,
+            offset: 0
+        });
+    } catch (err) {
+        console.error("Error loading drawer news:", err);
+        body.innerHTML = `<p class="drawer-state">${t("drawer_error")}</p>`;
+        return;
+    }
 
     const list = (res && res.data) || [];
     const total = (res && res.total_count) || list.length;
@@ -1189,12 +1206,22 @@ async function updateNewsstand(dateLabel) {
         const w = document.getElementById(`sheet-${b}`);
         if (w) w.innerHTML = `<p class="news-sheet-state">${t("loading_data")}</p>`;
     });
-    const res = await fetchDetailsData({
-        evaluator: appState.evaluatorEntity, evaluated: appState.evaluatedEntity,
-        category: appState.category,
-        startDate: currentClickedDate.startDate, endDate: currentClickedDate.endDate,
-        limit: 150, offset: 0
-    });
+    let res;
+    try {
+        res = await fetchDetailsData({
+            evaluator: appState.evaluatorEntity, evaluated: appState.evaluatedEntity,
+            category: appState.category,
+            startDate: currentClickedDate.startDate, endDate: currentClickedDate.endDate,
+            limit: 150, offset: 0
+        });
+    } catch (err) {
+        console.error("Error loading newsstand news:", err);
+        ["pos", "neu", "neg"].forEach(b => {
+            const w = document.getElementById(`sheet-${b}`);
+            if (w) w.innerHTML = `<p class="news-sheet-state">${t("drawer_error")}</p>`;
+        });
+        return;
+    }
     const list = (res && res.data) || [];
     newsstand.neg = list.filter(n => bucketOf(n.grade) === "neg");
     newsstand.neu = list.filter(n => bucketOf(n.grade) === "neu");
@@ -1246,7 +1273,7 @@ function renderSheet(bucket, animate = true, dir = 0) {
             ${body ? `<p class="news-sheet-body">${escapeHtml(body)}</p>` : ""}
             <div class="news-sheet-foot">
                 <span class="news-sheet-pageno">${pageInfo}</span>
-                ${n.url ? `<a class="news-sheet-detail" href="${encodeURI(n.url)}" target="_blank" rel="noopener">${t("newsstand_detail")} ↗</a>` : ""}
+                ${safeUrl(n.url) ? `<a class="news-sheet-detail" href="${escapeHtml(safeUrl(n.url))}" target="_blank" rel="noopener">${t("newsstand_detail")} ↗</a>` : ""}
             </div>
         </article>`;
     const postitHtml = n.analysis
@@ -1335,7 +1362,11 @@ function initDrawerResize() {
     handle.addEventListener("pointercancel", stop);
 }
 
+// Monotonic id so a slow response from an older apply never overwrites a newer one.
+let dashboardRequestId = 0;
+
 async function updateDashboard() {
+    const requestId = ++dashboardRequestId;
     const btnApply = document.getElementById("btn-apply");
     if (btnApply) {
         btnApply.innerHTML = `
@@ -1375,7 +1406,9 @@ async function updateDashboard() {
             fetchLineChartData(apiFilters)          
         ]);
 
-        const [histogramData, volumeData, gaugeVal, lineData] = results.map(res => 
+        if (requestId !== dashboardRequestId) return;   // a newer apply superseded this one
+
+        const [histogramData, volumeData, gaugeVal, lineData] = results.map(res =>
             res.status === "fulfilled" ? res.value : null
         );
 
@@ -1400,7 +1433,8 @@ async function updateDashboard() {
         const totalNewsEl = document.getElementById("total-news");
         if (totalNewsEl) totalNewsEl.textContent = "Erro";
     } finally {
-        if (btnApply) {
+        // Only the latest request may restore the button (an in-flight newer one owns it).
+        if (btnApply && requestId === dashboardRequestId) {
             btnApply.innerHTML = `
             <i data-lucide="check-circle" class="icon-sm"></i>
             <span data-i18n="btn_apply">${t("btn_apply")}</span>

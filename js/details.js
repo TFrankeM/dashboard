@@ -68,8 +68,20 @@ let visibleColumns = {
 let RELATIONSHIPS = {};
 
 
+// Data is stored in UTC; every user-facing datetime renders in Brasília time.
+const DISPLAY_TZ = "America/Sao_Paulo";
+
 function t(key) {
-    return DICTIONARY[CURRENT_LANG][key] || key;
+    return (DICTIONARY[CURRENT_LANG] && DICTIONARY[CURRENT_LANG][key]) || key;
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+}
+
+// News URLs come from scraped external data; only http(s) links may become hrefs.
+function safeUrl(u) {
+    return /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
 }
 
 function tCategory(val) {
@@ -519,7 +531,7 @@ function renderCategorySummary() {
     } else if (pendingState.category.length === 1) {
         summaryEl.textContent = tCategory(pendingState.category[0]);
     } else {
-        summaryEl.textContent = `${pendingState.category.length} selecionadas`;
+        summaryEl.textContent = `${pendingState.category.length} ${t("category_selected_plural")}`;
     }
 }
 
@@ -743,25 +755,15 @@ function updateFilterSummary(urlParams) {
     let dateFormatted = "-";
     
     if (startDate && endDate) {
-        // If it's UTC string, convert to local string (DD/MM/YY hh:mm)
+        // UTC timestamps rendered in Brasília time (DD/MM/YY hh:mm)
         const startDateObj = new Date(startDate);
         const endDateObj = new Date(endDate);
         if (!isNaN(startDateObj) && !isNaN(endDateObj)) {
-            const startStr = startDateObj.toLocaleDateString(CURRENT_LANG, { 
-                day: '2-digit',
-                month: '2-digit',
-                year: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            const endStr = endDateObj.toLocaleDateString(CURRENT_LANG, { 
-                day: '2-digit',
-                month: '2-digit',
-                year: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            dateFormatted = `${startStr} - ${endStr}`;
+            const fmt = {
+                day: '2-digit', month: '2-digit', year: '2-digit',
+                hour: '2-digit', minute: '2-digit', timeZone: DISPLAY_TZ
+            };
+            dateFormatted = `${startDateObj.toLocaleDateString(CURRENT_LANG, fmt)} - ${endDateObj.toLocaleDateString(CURRENT_LANG, fmt)}`;
         }
     }
     
@@ -938,6 +940,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 function renderColumnSelector() {
     /* Renders the column selector UI based on the available columns and their visibility settings. */
     const container = document.getElementById("column-selector");
+    if (!container) return;
     container.innerHTML = "";
     
     COLUMNS.forEach(col => {
@@ -1060,13 +1063,13 @@ function renderTableBody(data) {
                     td.title = t("click_to_expand");
                     td.onclick = function() { this.classList.toggle("expanded"); };
                 } else if (col.type === "link") {
-                    if (value) {
-                        td.innerHTML = `<a href="${value}" target="_blank" class="table-link">${t("table_link_view")} <i data-lucide="external-link" class="icon-12"></i></a>`;
+                    if (safeUrl(value)) {
+                        td.innerHTML = `<a href="${escapeHtml(safeUrl(value))}" target="_blank" rel="noopener" class="table-link">${t("table_link_view")} <i data-lucide="external-link" class="icon-12"></i></a>`;
                     } else {
                         td.textContent = "-";
                     }
                 } else if (col.type === "date") {
-                    td.textContent = value ? new Date(value).toLocaleString(CURRENT_LANG) : "-";
+                    td.textContent = value ? new Date(value).toLocaleString(CURRENT_LANG, { timeZone: DISPLAY_TZ }) : "-";
                 } else if (col.type === "number") {
                     td.textContent = value ? parseFloat(value).toFixed(2) : "-";
                     td.className = "font-mono font-bold";

@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderStat(currentIndex % stats.length);
             renderMiniCards(s);
         })
-        .catch(() => {});
+        .catch(err => console.warn("Stats fetch failed; keeping fallback values:", err));
 
     // Navigate to the dashboard
     if (btnEnterDashboard) {
@@ -385,6 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, flightTime);
     }
 
+    let arcInterval = null;
     fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
         .then(res => res.json())
         .then(countries => {
@@ -393,8 +394,10 @@ document.addEventListener('DOMContentLoaded', () => {
             world.ringsData(rings);
 
             spawnArc();
-            setInterval(spawnArc, 1000);
-        });
+            arcInterval = setInterval(spawnArc, 1000);
+        })
+        .catch(err => console.warn("Globe country data failed to load; skipping arcs:", err));
+    window.addEventListener("pagehide", () => { if (arcInterval) clearInterval(arcInterval); });
 
     // Camera, rotation and interaction. Pull the camera back on small screens so
     // the globe renders smaller and doesn't overwhelm the phone layout.

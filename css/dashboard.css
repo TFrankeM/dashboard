@@ -974,7 +974,7 @@ input:checked + .slider:before {
 
 .card {
     background-color: var(--fgv-white);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--fgv-gray-pale);
     border-radius: 8px;
     padding: 15px;
     box-sizing: border-box;
@@ -991,7 +991,7 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--fgv-gray-pale);
     padding-bottom: 5px;
 }
 
@@ -1219,7 +1219,7 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     gap: 5px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--fgv-gray-pale);
 }
 
 
@@ -1444,7 +1444,7 @@ input:checked + .slider:before {
     text-align: center; 
     padding: 40px 0; 
     margin-top: 40px; 
-    border-top: 1px solid var(--border-color); 
+    border-top: 1px solid var(--fgv-gray-pale); 
 }
 
 .link_dint_site { 
