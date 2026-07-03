@@ -11,14 +11,16 @@
     <!-- FavIcon -->
     <link rel="icon" href="assets/favicon.png" type="image/png">
 
-    <!-- Apply the saved theme before first paint (avoids a light flash);
-         the transition class comes later, so this first paint never animates. -->
+    <!-- Apply the theme before first paint (avoids a flash); dark is the
+         default, light only when the user explicitly chose it. -->
     <script>
         try {
-            if (localStorage.getItem("iibex_theme") === "dark") {
+            if (localStorage.getItem("iibex_theme") !== "light") {
                 document.documentElement.dataset.theme = "dark";
             }
-        } catch (e) { /* storage may be blocked; default to light */ }
+        } catch (e) {
+            document.documentElement.dataset.theme = "dark";
+        }
     </script>
 
     <!-- External libs (versions pinned to avoid silent breaking upgrades) -->
@@ -94,6 +96,7 @@
 
                 <!-- Toggle Dinâmico -->
                 <div class="toggle-container">
+                    <span id="mode-led" class="mode-led" aria-hidden="true"></span>
                     <span id="mode-label" class="toggle-label" data-i18n="mode_static">Modo estático</span>
 
                     <label class="switch">
@@ -171,7 +174,7 @@
         <!-- Executive summary -->
         <main class="main-content" id="metrics">
             <!-- Container left: grades histogram -->
-             <div class="card metric-card">
+             <div class="card metric-card hud-corners">
                 <div class="card-header">
                     <div>    
                         <div class="card-header-title-group">
@@ -197,7 +200,7 @@
             </div>
 
             <!-- Container center: quantity of news -->
-            <div class="card metric-card">
+            <div class="card metric-card hud-corners">
                 <div class="card-header">
                     <div class="card-header-title-group">
                         <h3 data-i18n="chart_volume_title">Quantidade de notícias</h3>
@@ -224,7 +227,7 @@
             </div>
 
             <!-- Container direita: gauge -->
-            <div class="card metric-card">
+            <div class="card metric-card hud-corners">
                 <div class="card-header">
                     <div class="card-header-title-group">
                         <h3 data-i18n="chart_gauge_title">Índice atual</h3>
@@ -252,7 +255,7 @@
         
         <!-- Container evolução temporal -->
         <section class="evolution-section" id="evolution">
-            <div class="card full-width-card">
+            <div class="card full-width-card hud-corners">
                 <div class="card-header-row">
                     <div>
                         <div class="card-header-title-group">
@@ -287,7 +290,7 @@
 
         <!-- Newsstand: 3-column newspaper view of the clicked point's news -->
         <section class="newsstand-section" id="newsstand">
-            <div class="card full-width-card">
+            <div class="card full-width-card hud-corners">
                 <div class="card-header-row">
                     <div>
                         <div class="card-header-title-group">

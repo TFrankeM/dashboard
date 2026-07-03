@@ -121,6 +121,7 @@ body {
     max-height: 0;
     opacity: 0;
     margin-top: 0;
+    padding-top: 0;
 }
 
 .brand-header.compact .logo-dint {
@@ -182,15 +183,20 @@ body {
 .subtitle {
     font-family: "Gotham", "Arial", sans-serif;
     font-size: 15px;
+    /* Gotham has a tall ascent; without the top padding and a roomier
+       max-height the clipped box (overflow hidden, used by the compact
+       header collapse) shaves the top of the glyphs. */
+    line-height: 1.35;
+    padding-top: 3px;
     color: var(--fgv-blue-med);
     text-transform: uppercase;
     letter-spacing: 1.2px;
     font-weight: 600;
     display: block;
     margin-top: 5px;
-    max-height: 28px;
+    max-height: 32px;
     overflow: hidden;
-    transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease;
+    transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease, padding-top 0.25s ease;
 }
 
 /* The definition of language button is after general definition of Choices.js */
@@ -1547,16 +1553,18 @@ input:checked + .slider:before {
         align-items: center;
     }
 
-    .lang-dropdown-wrapper {
+    /* The theme toggle + language selector wrapper is the grid child; the
+       area must be assigned to it, otherwise the group lands in the implicit
+       grid and overflows the right edge of the phone. */
+    .header-actions {
         grid-area: lang;
         justify-self: end;
-        margin-top: 0;
-        margin-bottom: 0;
         align-self: center;
+        gap: 8px;
     }
 
     .logo-dint {
-        height: 50px;
+        height: 40px;
     }
 
     .brand-header, .sticky-filters, .main-content, .evolution-section {
@@ -1590,8 +1598,12 @@ input:checked + .slider:before {
     .brand-title h1 {
         font-size: 18px;
     }
+    /* The uppercase subtitle is long: smaller type, tighter tracking and room
+       for a second line keep it inside narrow viewports. */
     .subtitle {
-        font-size: 11px;
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        max-height: 38px;
     }
     .gauge-value-text {
         font-size: 2.5rem;
@@ -1614,6 +1626,29 @@ input:checked + .slider:before {
     }
     .line-chart-container {
         height: 300px;
+    }
+
+    /* Applied-filter chips move to their own full-width row as a swipeable
+       strip; letting them wrap squeezed each chip down to just its icon. */
+    .filters-header {
+        flex-wrap: wrap;
+        row-gap: 10px;
+    }
+    .applied-chips {
+        order: 3;
+        flex: 1 1 100%;
+        min-width: 0;
+        max-width: 100%;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+    }
+    .applied-chips::-webkit-scrollbar { display: none; }
+    .chip {
+        flex: none;
+        max-width: none;
     }
 }
 
@@ -2313,9 +2348,28 @@ body.drawer-resizing {
 
 @media (max-width: 768px) {
     .newsstand-section {
-        padding: 20px 20px 0;
+        padding: 20px 15px 0;
         --news-measure: 100%;
         --news-body-size: 0.92rem;
+    }
+    /* Grid/flex items default to min-width auto, which lets long unbreakable
+       content inflate the column past the phone viewport; cap them so the
+       paper shrinks with the screen instead. */
+    .newsstand-col,
+    .news-sheet-row,
+    .news-sheet-wrap,
+    .news-sheet,
+    .news-postit {
+        min-width: 0;
+        max-width: 100%;
+    }
+    .news-sheet {
+        padding: 16px 16px 12px;
+    }
+    .news-sheet-body,
+    .news-sheet-headline,
+    .news-sheet-subtitle {
+        overflow-wrap: anywhere;
     }
     .news-sheet-source {
         font-size: 1.1rem;
@@ -2328,7 +2382,7 @@ body.drawer-resizing {
         transform: none;
     }
     .news-sheet-foot {
-        padding: 10px 44px 2px;
+        padding: 10px 16px 2px;
     }
 }
 
@@ -2452,3 +2506,52 @@ html[data-theme="dark"] .dashboard-footer {
     color: var(--dk-text-muted);
     border-top-color: var(--dk-border);
 }
+
+/* Motion: cards lift on hover, cascade in on load, key numbers align digits. */
+.card {
+    position: relative;
+    transition: transform 0.25s ease, box-shadow 0.25s ease,
+                background-color 0.3s ease, border-color 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+html[data-theme="dark"] .card:hover { box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55); }
+.card-enter {
+    animation: card-enter 0.35s ease-out both;
+    animation-delay: var(--enter-delay, 0ms);
+}
+.chip { animation: chip-in 0.2s ease-out both; }
+.cbx-panel:not([hidden]) { animation: panel-in 0.16s ease-out; }
+.gauge-value-text,
+.card-desc strong,
+.chip { font-variant-numeric: tabular-nums; }
+
+/* Applied dynamic-mode LED (vibrant green: live data heartbeat). */
+.mode-led {
+    display: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--fgv-vib-green);
+    flex: none;
+}
+.mode-led.on {
+    display: inline-block;
+    animation: led-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .mode-led.on { animation: none; }
+}
+
+/* Apply button success state: brief green check after the data lands. */
+.btn-apply.success {
+    background-color: #89A950;
+    color: #fff;
+}
+html[data-theme="dark"] .btn-apply.success {
+    background-color: var(--fgv-vib-green);
+    color: #08131F;
+}
+.btn-apply.success svg { animation: check-pop 0.35s ease-out both; }

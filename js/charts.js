@@ -153,6 +153,22 @@ function isDarkTheme() {
     return document.documentElement.dataset.theme === "dark";
 }
 
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Entry animations run for fresh data only; theme/language redraws stay snappy.
+let animationsEnabled = true;
+export function setChartsAnimation(on) {
+    animationsEnabled = on;
+}
+
+// Chart.js animation option: false when disabled, staggered per-bar when asked.
+function chartAnimation(stagger) {
+    if (!animationsEnabled || REDUCED_MOTION) return false;
+    return stagger
+        ? { delay: c => (c.type === "data" && c.mode === "default" ? c.dataIndex * 40 : 0) }
+        : {};
+}
+
 // Theme-aware chart chrome. Charts are fully redrawn on theme toggle, so each
 // draw call just reads the current values (celeste on dark per the FGV manual).
 function chartUI() {
@@ -298,6 +314,28 @@ const gaugeLabelsPlugin = {
     }
 };
 
+// Needle position currently shown, kept across chart rebuilds so each apply
+// sweeps the needle from the old index to the new one.
+let gaugeNeedleShown = null;
+let gaugeNeedleAnim = null;
+
+function animateNeedle(chart, from, to) {
+    if (gaugeNeedleAnim) cancelAnimationFrame(gaugeNeedleAnim);
+    const duration = 1100;
+    const start = performance.now();
+    const step = now => {
+        if (chart !== gaugeInstance) return;   // chart was rebuilt meanwhile
+        const p = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - p, 4);
+        const v = from + (to - from) * eased;
+        chart.data.datasets[0].needleValue = v;
+        gaugeNeedleShown = v;
+        chart.draw();
+        if (p < 1) gaugeNeedleAnim = requestAnimationFrame(step);
+    };
+    gaugeNeedleAnim = requestAnimationFrame(step);
+}
+
 export function drawGaugeChart(canvasElement, value, texts = {}) {
     if (canvasElement.parentElement) {
         canvasElement.parentElement.classList.remove("skeleton");
@@ -319,13 +357,18 @@ export function drawGaugeChart(canvasElement, value, texts = {}) {
         "#991b1b", "#dc2626", /*"#ea580c",*/ "#e6984b", "#94a3b8", "#65a30d", "#16a34a", "#14532d"
     ];
     
+    // Sweep the needle from where it was to the new value (from the scale
+    // start on the very first draw); jump straight there when animations are off.
+    const animateSweep = animationsEnabled && !REDUCED_MOTION && !document.hidden;
+    const needleStart = animateSweep ? (gaugeNeedleShown ?? 1) : value;
+
     gaugeInstance = new Chart(ctx, {
         type: "doughnut",
         data: {
             labels: gaugeSegmentDescriptions,
             datasets: [{
                 data: [0.5, 1, 1, 1, 1, 1, 0.5], // tamanho fatias
-                needleValue: value,
+                needleValue: needleStart,
                 backgroundColor: backgroundColor,
                 hoverBackgroundColor: hoverBackgroundColor,
                 borderWidth: 2,
@@ -339,6 +382,7 @@ export function drawGaugeChart(canvasElement, value, texts = {}) {
             cutout: "65%", // arco
             responsive: true,
             maintainAspectRatio: false,
+            animation: chartAnimation(false),
             layout: { padding: { top: 0, bottom: 10 } },
             plugins: {
                 legend: { display: false },
@@ -355,6 +399,12 @@ export function drawGaugeChart(canvasElement, value, texts = {}) {
         },
         plugins: [gaugeNeedlePlugin, gaugeLabelsPlugin]
     });
+
+    if (animateSweep && needleStart !== value) {
+        animateNeedle(gaugeInstance, needleStart, value);
+    } else {
+        gaugeNeedleShown = value;
+    }
 }
 
 export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}) {
@@ -365,7 +415,6 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
     // texts is expected to be: { labelFrequency: "", tooltipTitle: "", tooltipSuffix: "" }
     
     const ctx = canvasElement.getContext("2d");
-    if (histogramInstance) histogramInstance.destroy();
     applyChartDefaults();
 
     const sentimentColors = [
@@ -374,11 +423,11 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
         "#fdae61", // 3 Slightly negative
         "#94a3b8", // 4 Neutral
         "#84cc16", // 5 Slightly positive
-        "#22c55e", // 6 Positive    
+        "#22c55e", // 6 Positive
         "#15803d"  // 7 Extremely positive
     ];
 
-    histogramInstance = new Chart(ctx, {
+    const config = {
         type: "bar",
         data: {
             labels: labels, // [1, 2, 3, 4, 5, 6, 7]
@@ -393,12 +442,13 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout : { 
+            animation: chartAnimation(true),
+            layout : {
                 padding: { top: 5, bottom: 0, left: 0, right: 0 }
             },
             scales: {
-                y: { 
-                    beginAtZero: true, 
+                y: {
+                    beginAtZero: true,
                     grid: { display: false },
                     border: { display: true }
                 },
@@ -428,7 +478,18 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
                 }
             }
         }
-    });
+    };
+
+    // Updating in place lets Chart.js tween the bars from the old values to the
+    // new ones; a rebuild would restart the entry animation from zero.
+    if (histogramInstance && histogramInstance.canvas === canvasElement) {
+        histogramInstance.data = config.data;
+        histogramInstance.options = config.options;
+        histogramInstance.update(animationsEnabled && !REDUCED_MOTION ? undefined : "none");
+        return;
+    }
+    if (histogramInstance) histogramInstance.destroy();
+    histogramInstance = new Chart(ctx, config);
 }
 
 
@@ -438,7 +499,6 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
     }
     
     const ctx = canvasElement.getContext("2d");
-    if (volumeInstance) volumeInstance.destroy();
 
     const ui = chartUI();
     applyChartDefaults();
@@ -446,7 +506,7 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
     gradient.addColorStop(0, ui.volumeFillTop);
     gradient.addColorStop(1, ui.volumeFillBottom);
 
-    volumeInstance = new Chart(ctx, {
+    const config = {
         type: "line",
         data: {
             labels: labels,
@@ -485,11 +545,12 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: chartAnimation(false),
             interaction: {
                 mode: "index",
                 intersect: false
             },
-            layout : { 
+            layout : {
                 padding: { top: 5, bottom: 0, left: -4, right: 5}
             },
             scales: {
@@ -545,7 +606,20 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
                 }
             }
         }
-    });
+    };
+
+    // Update in place so the area morphs from the old series to the new one.
+    if (volumeInstance && volumeInstance.canvas === canvasElement) {
+        if (volumeInstance.isZoomedOrPanned && volumeInstance.isZoomedOrPanned()) {
+            volumeInstance.resetZoom("none");
+        }
+        volumeInstance.data = config.data;
+        volumeInstance.options = config.options;
+        volumeInstance.update(animationsEnabled && !REDUCED_MOTION ? undefined : "none");
+        return;
+    }
+    if (volumeInstance) volumeInstance.destroy();
+    volumeInstance = new Chart(ctx, config);
 }
 
 const verticalLinePlugin = {
@@ -581,16 +655,32 @@ const verticalLinePlugin = {
             ctx.restore();
         };
 
+        const crossFixed = isDarkTheme() ? "rgba(115, 191, 232, 0.8)" : "#88868B";
+        const crossHover = isDarkTheme() ? "rgba(115, 191, 232, 0.4)" : "rgba(136, 134, 139, 0.5)";
+
         // fixed vertical line (click)
         if (lineChartFixedIndex !== null) {
-            drawLine(lineChartFixedIndex, "#88868B", 2, [10, 5]);
+            drawLine(lineChartFixedIndex, crossFixed, 2, [10, 5]);
         }
-        // "?" verifies if tooltip exists and has _active elements
-        // mobile vertical line (hover)
+        // hover: crosshair plus a glowing dot on each active point
         if (chart.tooltip?._active?.length) {
             const hoverIndex = chart.tooltip._active[0].index;
             if (hoverIndex !== lineChartFixedIndex) {
-                drawLine(hoverIndex, "rgba(136, 134, 139, 0.5)", 1, [5, 5]);
+                drawLine(hoverIndex, crossHover, 1, [5, 5]);
+            }
+            for (const active of chart.tooltip._active) {
+                const el = active.element;
+                if (!el || el.skip) continue;
+                const dsColor = chart.data.datasets[active.datasetIndex]?.borderColor;
+                const color = typeof dsColor === "string" ? dsColor : "#73BFE8";
+                ctx.save();
+                ctx.beginPath();
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = color;
+                ctx.arc(el.x, el.y, 3.5, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.restore();
             }
         }
     }
@@ -605,7 +695,6 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
     // datasets: array of { label: string, data: [{ x: dateStr, y: grade, count: number }, ...] }
     // texts: { yAxisTitle: "", tooltipGrade: "", tooltipNews: "", originalDates: [] }
     const ctx = canvasElement.getContext("2d");
-    if (lineInstance) lineInstance.destroy();
 
     lineChartFixedIndex = null;
 
@@ -690,7 +779,17 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
             clip: 5
         };
     });
-    lineInstance = new Chart(ctx, {
+    // Single-series view gets a soft gradient under the line; with multiple
+    // series the fills would stack and hurt readability.
+    if (styledDatasets.length === 1) {
+        const grad = ctx.createLinearGradient(0, 0, 0, canvasElement.height || 400);
+        grad.addColorStop(0, isDarkTheme() ? "rgba(115, 191, 232, 0.22)" : "rgba(0, 58, 121, 0.12)");
+        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        styledDatasets[0].fill = true;
+        styledDatasets[0].backgroundColor = grad;
+    }
+
+    const config = {
         type: "line",
         data: {
             labels: labels,
@@ -699,12 +798,13 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: chartAnimation(false),
             interaction: {
                 mode: "index",
                 intersect: false,
             },
             layout: {
-                padding: smallScreen ? { top: 15, bottom: 15, left: 5, right: 5 } : { top: 15, bottom: 15, left: 10, right: 10 } 
+                padding: smallScreen ? { top: 15, bottom: 15, left: 5, right: 5 } : { top: 15, bottom: 15, left: 10, right: 10 }
             },
             scales: {
                 y: { 
@@ -770,7 +870,16 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                         boxHeight: smallScreen ? 13 : 15,
                         padding: smallScreen ? 10 : 16,
                         color: ui.legend,
-                        font: { size: smallScreen ? 10 : 12, weight: "600" }
+                        font: { size: smallScreen ? 10 : 12, weight: "600" },
+                        // The single-series area fill is a gradient; chips use the line color.
+                        generateLabels: (chart) => {
+                            const items = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                            items.forEach(item => {
+                                const ds = chart.data.datasets[item.datasetIndex];
+                                if (ds && typeof ds.borderColor === "string") item.fillStyle = ds.borderColor;
+                            });
+                            return items;
+                        }
                     }
                 },
                 tooltip: {
@@ -809,7 +918,22 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
             }
         },
         plugins: [verticalLinePlugin]
-    });
+    };
+
+    // Update in place so the line morphs from the old series to the new one
+    // (a stale zoom window is cleared first — the new data has its own range).
+    if (lineInstance && lineInstance.canvas === canvasElement) {
+        if (lineInstance.isZoomedOrPanned && lineInstance.isZoomedOrPanned()) {
+            lineInstance.resetZoom("none");
+        }
+        lineInstance.data.labels = labels;
+        lineInstance.data.datasets = styledDatasets;
+        lineInstance.options = config.options;
+        lineInstance.update(animationsEnabled && !REDUCED_MOTION ? undefined : "none");
+        return;
+    }
+    if (lineInstance) lineInstance.destroy();
+    lineInstance = new Chart(ctx, config);
 }
 
 export function resetLineChartZoom() {

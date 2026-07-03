@@ -1131,10 +1131,11 @@ tr:hover {
     .header-actions {
         grid-area: actions;
         justify-self: end;
+        gap: 8px;
     }
 
     .brand-header { padding: 10px 15px; }
-    .logo-dint { height: 45px; }
+    .logo-dint { height: 40px; }
     .brand-title h1 { font-size: 16px; }
     .subtitle { font-size: 10px; margin-top: 2px; }
 
@@ -1440,3 +1441,10 @@ html[data-theme="dark"] .flatpickr-monthDropdown-months {
 html[data-theme="dark"] .flatpickr-current-month input.cur-year { color: var(--dk-text-strong); }
 html[data-theme="dark"] .flatpickr-months .flatpickr-prev-month svg,
 html[data-theme="dark"] .flatpickr-months .flatpickr-next-month svg { fill: var(--dk-text-strong); }
+
+/* Motion: rows cascade in, sort arrow flips, hover gets a celeste accent. */
+.row-enter { animation: row-enter 0.3s ease-out both; }
+tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--fgv-blue-light); }
+html[data-theme="dark"] tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--fgv-blue-sky); }
+.dropdown.is-open .dropdown-content { animation: panel-in 0.16s ease-out; }
+.font-mono { font-variant-numeric: tabular-nums; }

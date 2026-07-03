@@ -70,6 +70,8 @@ let RELATIONSHIPS = {};
 // Data is stored in UTC; every user-facing datetime renders in Brasília time.
 const DISPLAY_TZ = "America/Sao_Paulo";
 
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 function t(key) {
     return (DICTIONARY[CURRENT_LANG] && DICTIONARY[CURRENT_LANG][key]) || key;
 }
@@ -1081,8 +1083,14 @@ function renderTableBody(data) {
         return;
     }
 
-    data.forEach(row => {
+    data.forEach((row, rowIndex) => {
         const tr = document.createElement("tr");
+        if (!REDUCED_MOTION) {
+            // Rows cascade in; the delay caps so long pages don't feel slow.
+            tr.classList.add("row-enter");
+            tr.style.animationDelay = `${Math.min(rowIndex * 20, 400)}ms`;
+            tr.addEventListener("animationend", () => tr.classList.remove("row-enter"), { once: true });
+        }
         
         COLUMNS.forEach(col => {
             if (visibleColumns[col.key]) {

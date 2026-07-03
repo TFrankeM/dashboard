@@ -11,13 +11,16 @@
     <!-- FavIcon -->
     <link rel="icon" href="assets/favicon.png" type="image/png">
 
-    <!-- Apply the saved theme before first paint (avoids a light flash). -->
+    <!-- Apply the theme before first paint (avoids a flash); dark is the
+         default, light only when the user explicitly chose it. -->
     <script>
         try {
-            if (localStorage.getItem("iibex_theme") === "dark") {
+            if (localStorage.getItem("iibex_theme") !== "light") {
                 document.documentElement.dataset.theme = "dark";
             }
-        } catch (e) { /* storage may be blocked; default to light */ }
+        } catch (e) {
+            document.documentElement.dataset.theme = "dark";
+        }
     </script>
 
     <!-- CSS -->

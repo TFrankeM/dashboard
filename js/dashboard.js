@@ -1,5 +1,5 @@
 import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships, fetchDetailsData, fetchStats } from "./api_adapter.js";
-import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, clearLineChartSelection } from "./charts.js";
+import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, clearLineChartSelection, setChartsAnimation } from "./charts.js";
 import { DICTIONARY } from "./i18n.js";
 
 // Global state variables
@@ -11,6 +11,37 @@ const DISPLAY_TZ = "America/Sao_Paulo";
 const POLL_INTERVAL_MS = 600000;      // dynamic-mode data refresh (10 min)
 const LAST_UPDATE_TICK_MS = 60000;    // "last update" relative label refresh
 const HOVER_CLOSE_DELAY_MS = 300;     // hover-opened panels linger before closing
+
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Whether the next chart draw should animate: true for fresh data (apply/load),
+// false for cosmetic redraws (theme toggle, language switch).
+let animateNextDraw = true;
+
+// Rolls a numeric text from its previously shown value to `target`
+// (easeOutQuart). The last target is kept in data-value so later applies
+// transition old -> new instead of restarting at zero. Hidden tabs get the
+// final value at once: rAF doesn't fire there and the roll would stall.
+function animateCount(el, target, { duration = 1100, formatter, from } = {}) {
+    if (!el) return;
+    const fmt = formatter || (v => Math.round(v).toString());
+    const prev = from !== undefined ? from : parseFloat(el.dataset.value);
+    const startValue = isNaN(prev) ? 0 : prev;
+    el.dataset.value = target;
+    if (REDUCED_MOTION || document.hidden || startValue === target) {
+        el.textContent = fmt(target);
+        return;
+    }
+    el.textContent = fmt(target);   // final value as fallback if rendering stalls
+    const start = performance.now();
+    const step = now => {
+        const p = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - p, 4);
+        el.textContent = fmt(startValue + (target - startValue) * eased);
+        if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
 
 // Shared tooltip config, reused for static and dynamically-built info icons.
 const INFO_TIPPY_OPTS = {
@@ -817,6 +848,7 @@ function renderAppliedChips() {
     ];
     wrap.innerHTML = chips.map(c => `<span class="chip"><i data-lucide="${c.icon}"></i>${c.label}</span>`).join("")
         + `<button type="button" id="btn-clear-filters" class="chip chip-clear"><i data-lucide="x"></i>${t("btn_clear_filters")}</button>`;
+    wrap.querySelectorAll(".chip").forEach((chip, i) => { chip.style.animationDelay = `${i * 30}ms`; });
     if (typeof lucide !== "undefined") lucide.createIcons();
     document.getElementById("btn-clear-filters").addEventListener("click", resetFilters);
 }
@@ -850,11 +882,18 @@ async function resetFilters() {
     applyFilters();
 }
 
+// Pulsing LED next to the mode label while the APPLIED mode is dynamic (live data).
+function updateModeLed() {
+    const led = document.getElementById("mode-led");
+    if (led) led.classList.toggle("on", !!appState.isDynamic);
+}
+
 function applyFilters() {
     appState = JSON.parse(JSON.stringify(pendingState));
     checkApplyButtonState();
     syncUrlWithState();
     renderAppliedChips();
+    updateModeLed();
     updateDashboard();
 
     const filtersWrapper = document.getElementById("filters-wrapper");
@@ -1013,7 +1052,20 @@ function processAndUpdateVolumeChart(apiData) {
     const sufixo = total === 1 ? t("chart_volume_desc_singular") : t("chart_volume_desc_plural");
     if (totalNewsEl) {
         totalNewsEl.classList.remove("skeleton");
-        totalNewsEl.innerHTML = `<strong>${total.toLocaleString('pt-BR')}</strong> ${sufixo}`;
+        // The <strong> is recreated on every render, so carry the previously
+        // shown total over to keep the old -> new transition.
+        const prevTotal = parseFloat(totalNewsEl.querySelector("strong")?.dataset.value);
+        totalNewsEl.innerHTML = `<strong></strong> ${sufixo}`;
+        const strongEl = totalNewsEl.querySelector("strong");
+        if (animateNextDraw) {
+            animateCount(strongEl, total, {
+                from: isNaN(prevTotal) ? undefined : prevTotal,
+                formatter: v => Math.round(v).toLocaleString(CURRENT_LANG)
+            });
+        } else {
+            strongEl.dataset.value = total;
+            strongEl.textContent = total.toLocaleString(CURRENT_LANG);
+        }
     }
     return total;
 }
@@ -1024,7 +1076,14 @@ function processAndUpdateGaugeDisplay(value) {
     const gaugeDescription = document.getElementById("gaugeDescription");
     const gaugeChartCanvas = document.getElementById("gaugeChart");
 
-    if (gaugeValueText) gaugeValueText.textContent = finalValue.toFixed(2);
+    if (gaugeValueText) {
+        if (animateNextDraw) {
+            animateCount(gaugeValueText, finalValue, { formatter: v => v.toFixed(2) });
+        } else {
+            gaugeValueText.dataset.value = finalValue;
+            gaugeValueText.textContent = finalValue.toFixed(2);
+        }
+    }
 
     let descText = t("no_data_found");
     let descColor = "#94a3b8";
@@ -1508,6 +1567,8 @@ let dashboardRequestId = 0;
 
 async function updateDashboard() {
     const requestId = ++dashboardRequestId;
+    animateNextDraw = true;   // fresh data: charts and counters animate in
+    setChartsAnimation(true);
     const btnApply = document.getElementById("btn-apply");
     if (btnApply) {
         btnApply.innerHTML = `
@@ -1576,24 +1637,42 @@ async function updateDashboard() {
     } finally {
         // Only the latest request may restore the button (an in-flight newer one owns it).
         if (btnApply && requestId === dashboardRequestId) {
-            btnApply.innerHTML = `
-            <i data-lucide="check-circle" class="icon-sm"></i>
-            <span data-i18n="btn_apply">${t("btn_apply")}</span>
-            `;
-            if (typeof lucide !== "undefined") {
-                lucide.createIcons();
+            const restoreButton = () => {
+                btnApply.classList.remove("success");
+                btnApply.innerHTML = `
+                <i data-lucide="check-circle" class="icon-sm"></i>
+                <span data-i18n="btn_apply">${t("btn_apply")}</span>
+                `;
+                if (typeof lucide !== "undefined") {
+                    lucide.createIcons();
+                }
+                // Clear the loading overrides and let pending-vs-applied state drive the look:
+                // the active (light blue) style only shows while a filter change is pending.
+                btnApply.style.opacity = "";
+                btnApply.style.cursor = "";
+                checkApplyButtonState();
+            };
+            if (REDUCED_MOTION) {
+                restoreButton();
+            } else {
+                // Brief green check confirming the data landed, then back to normal.
+                btnApply.classList.add("success");
+                btnApply.style.opacity = "";
+                btnApply.style.cursor = "";
+                btnApply.innerHTML = `
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>${t("btn_apply")}</span>
+                `;
+                setTimeout(restoreButton, 900);
             }
-            // Clear the loading overrides and let pending-vs-applied state drive the look:
-            // the active (light blue) style only shows while a filter change is pending.
-            btnApply.style.opacity = "";
-            btnApply.style.cursor = "";
-            checkApplyButtonState();
         }
     }
 }
 
 function redrawCharts() {
     if (!cachedApiData.histogramData) return;
+    animateNextDraw = false;   // cosmetic redraw (theme/language): no entry animation
+    setChartsAnimation(false);
     processAndUpdateHistogramChart(cachedApiData.histogramData);
     processAndUpdateVolumeChart(cachedApiData.volumeData);
     processAndUpdateGaugeDisplay(cachedApiData.gaugeVal);
@@ -1604,6 +1683,16 @@ document.addEventListener("DOMContentLoaded", function () {
     applyUrlState();
     initLanguageSelector();
     initThemeToggle();
+    updateModeLed();
+
+    // Cards cascade in on first load.
+    if (!REDUCED_MOTION) {
+        document.querySelectorAll(".card").forEach((card, i) => {
+            card.style.setProperty("--enter-delay", `${i * 70}ms`);
+            card.classList.add("card-enter");
+            card.addEventListener("animationend", () => card.classList.remove("card-enter"), { once: true });
+        });
+    }
 
     if (typeof lucide !== "undefined") {
         lucide.createIcons();
