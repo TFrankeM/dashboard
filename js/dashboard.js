@@ -178,6 +178,15 @@ function translateUI() {
         }
     });
 
+    // side-nav dot labels (CSS renders them via attr(data-label))
+    document.querySelectorAll("[data-i18n-label]").forEach(el => {
+        const key = el.getAttribute("data-i18n-label");
+        if (texts[key]) {
+            el.setAttribute("data-label", texts[key]);
+            el.setAttribute("aria-label", texts[key]);
+        }
+    });
+
     // tooltips
     document.querySelectorAll("[data-i18n-tooltip]").forEach(el => {
         const key = el.getAttribute("data-i18n-tooltip");
@@ -330,13 +339,20 @@ function initLanguageSelector() {
                 }
                 
                 translateUI();
-                renderAppliedChips();
                 updateThemeToggleAria();
                 redrawCharts();
                 updateToggleVisual(pendingState.isDynamic);
             });
         }
     }
+}
+
+// Closed-field summaries depend on available width, so they must be re-fit when
+// the field width or font size changes (viewport resize, compact bar, mobile
+// filters opening). Each filter registers its own renderer here.
+const summaryRefitters = [];
+function refitFilterSummaries() {
+    summaryRefitters.forEach(fn => fn());
 }
 
 // Searchable multi-select rendered as a checkbox list with a compact summary when
@@ -368,7 +384,7 @@ function buildCheckboxFilter(selectEl, opts) {
     root.innerHTML = `
         <button type="button" class="cbx-field" aria-haspopup="listbox" aria-expanded="false">
             ${icon ? `<i data-lucide="${icon}" class="cbx-icon"></i>` : ""}
-            <span class="cbx-summary"></span>
+            <span class="cbx-summary"><span class="cbx-summary-text"></span><span class="cbx-more" hidden></span></span>
             ${infoKey ? `<span class="info-icon" data-i18n-tooltip="${infoKey}">?</span>` : ""}
             <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
         </button>
@@ -382,6 +398,8 @@ function buildCheckboxFilter(selectEl, opts) {
 
     const field = root.querySelector(".cbx-field");
     const summaryEl = root.querySelector(".cbx-summary");
+    const summaryText = root.querySelector(".cbx-summary-text");
+    const summaryMore = root.querySelector(".cbx-more");
     const panel = root.querySelector(".cbx-panel");
     const search = root.querySelector(".cbx-search");
     const listEl = root.querySelector(".cbx-list");
@@ -392,10 +410,29 @@ function buildCheckboxFilter(selectEl, opts) {
             `<option value="${o.value}"${selected.has(o.value) ? " selected" : ""}></option>`).join("");
     };
 
-    // The field always shows its name, not the current selection.
+    // The closed field shows the current selection (the field name lives in the
+    // label above it). Names that don't fit collapse into a "+N" counter so the
+    // field keeps its fixed size regardless of how many options are selected.
     const renderSummary = () => {
-        summaryEl.textContent = nameKey ? t(nameKey) : "";
+        if (nameKey) field.setAttribute("aria-label", t(nameKey));
+        const names = Array.from(selected).map(translate);
+        if (!names.length) {
+            summaryText.textContent = "—";
+            summaryMore.hidden = true;
+            return;
+        }
+        // Try the longest prefix of full names first; each drop moves one more
+        // name into the counter. A lone name that still overflows keeps its
+        // CSS ellipsis. Selection is capped at 5, so the reflow cost is trivial.
+        for (let shown = names.length; shown >= 1; shown--) {
+            summaryText.textContent = names.slice(0, shown).join(", ");
+            const hiddenCount = names.length - shown;
+            summaryMore.hidden = hiddenCount === 0;
+            summaryMore.textContent = `+${hiddenCount}`;
+            if (summaryText.scrollWidth <= summaryText.clientWidth) return;
+        }
     };
+    summaryRefitters.push(renderSummary);
 
     // Order: selected first, then unselected, disabled last; alphabetical within each group.
     const computeOrder = () => {
@@ -527,7 +564,7 @@ async function initializeFilters() {
         if (evalEl) {
             choicesEvaluatorEntity = buildCheckboxFilter(evalEl, {
                 translate: tEntity, max: 5, searchKey: "placeholder_search",
-                icon: "eye", nameKey: "label_evaluatorEntity", infoKey: "tooltip_evaluatorEntity"
+                icon: "eye", nameKey: "label_evaluatorEntity"
             });
             const initialEvaluatorEntities = await fetchOptionsFromDB("evaluator", []);
             choicesEvaluatorEntity.setChoices(initialEvaluatorEntities);
@@ -538,7 +575,7 @@ async function initializeFilters() {
         if (evaluatedEl) {
             choicesEvaluatedEntity = buildCheckboxFilter(evaluatedEl, {
                 translate: tEntity, max: 5, searchKey: "placeholder_search",
-                icon: "target", nameKey: "label_evaluatedEntity", infoKey: "tooltip_evaluatedEntity"
+                icon: "target", nameKey: "label_evaluatedEntity"
             });
             const initialEvaluated = await fetchOptionsFromDB("evaluated", appState.evaluatorEntity);
             choicesEvaluatedEntity.setChoices(initialEvaluated);
@@ -549,7 +586,7 @@ async function initializeFilters() {
         if (periodEl) {
             choicesPeriod = buildCheckboxFilter(periodEl, {
                 translate: tPeriod, single: true, searchKey: "placeholder_search",
-                icon: "calendar-days", nameKey: "label_period", infoKey: "tooltip_period"
+                icon: "calendar-days", nameKey: "label_period"
             });
             updatePeriodDropdown(appState.isDynamic);
         }
@@ -564,7 +601,7 @@ async function initializeFilters() {
             choicesCategory = buildCheckboxFilter(catEl, {
                 translate: tCategory, max: 5, searchKey: "category_search",
                 values: CATEGORIESLIST.map(s => ({ value: s })),
-                icon: "tags", nameKey: "label_category", infoKey: "tooltip_category"
+                icon: "tags", nameKey: "label_category"
             });
             choicesCategory.setChoiceByValue(appState.category);
             choicesCategory.relabel();
@@ -576,7 +613,6 @@ async function initializeFilters() {
     translateUI();
     updateToggleVisual(pendingState.isDynamic);
     checkApplyButtonState();
-    renderAppliedChips();
 
     const langWrapper = document.querySelector(".lang-dropdown-wrapper");
     if (langWrapper && choicesLanguage) {
@@ -830,29 +866,6 @@ function applyUrlState() {
     pendingState = JSON.parse(JSON.stringify(st));
 }
 
-// Chips summarizing the APPLIED filters (pending changes only affect the button).
-function renderAppliedChips() {
-    const wrap = document.getElementById("applied-chips");
-    if (!wrap) return;
-    const entities = a => (Array.isArray(a) ? a : [a]).map(v => escapeHtml(tEntity(v))).join(", ");
-    const cats = appState.category || [];
-    const catLabel = !cats.length || cats.includes("include_all")
-        ? tCategory("include_all")
-        : cats.map(tCategory).join(", ");
-    const chips = [
-        { icon: "eye", label: entities(appState.evaluatorEntity) },
-        { icon: "target", label: entities(appState.evaluatedEntity) },
-        { icon: "tags", label: escapeHtml(catLabel) },
-        { icon: "calendar-days", label: escapeHtml(tPeriod(appState.periodValue)) },
-        { icon: "clock", label: `${escapeHtml(appState.aggregation)}h` },
-    ];
-    wrap.innerHTML = chips.map(c => `<span class="chip"><i data-lucide="${c.icon}"></i>${c.label}</span>`).join("")
-        + `<button type="button" id="btn-clear-filters" class="chip chip-clear"><i data-lucide="x"></i>${t("btn_clear_filters")}</button>`;
-    wrap.querySelectorAll(".chip").forEach((chip, i) => { chip.style.animationDelay = `${i * 30}ms`; });
-    if (typeof lucide !== "undefined") lucide.createIcons();
-    document.getElementById("btn-clear-filters").addEventListener("click", resetFilters);
-}
-
 // Back to the default view: reset the pending selection, rebuild the entity
 // options unconstrained and apply.
 async function resetFilters() {
@@ -892,7 +905,6 @@ function applyFilters() {
     appState = JSON.parse(JSON.stringify(pendingState));
     checkApplyButtonState();
     syncUrlWithState();
-    renderAppliedChips();
     updateModeLed();
     updateDashboard();
 
@@ -1026,14 +1038,35 @@ function processAndUpdateVolumeChart(apiData) {
     }
 
     const labels = [];
+    const rangeLabels = [];
     const values = [];
     let total = 0;
 
     const sortedData = apiData.sort((a, b) => new Date(a.time_period) - new Date(b.time_period));
 
+    // Each point is a bucket of `aggregation` hours starting at time_period, but
+    // the axis label only shows the day. The tooltip gets the full local range
+    // (start – end) so the reader knows which slice of the day the point covers.
+    const aggMs = (parseFloat(appState.aggregation) || 0) * 3600 * 1000;
+    const rangeFmt = new Intl.DateTimeFormat(CURRENT_LANG, {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", timeZone: DISPLAY_TZ
+    });
+
     sortedData.forEach(row => {
         const date = new Date(row.time_period);
         labels.push(date.toLocaleDateString(CURRENT_LANG, { timeZone: DISPLAY_TZ }));
+
+        const end = new Date(date.getTime() + aggMs);
+        if (!aggMs) {
+            rangeLabels.push(rangeFmt.format(date));
+        } else if (typeof rangeFmt.formatRange === "function") {
+            // formatRange collapses the shared parts ("01/03/2025, 09:00 – 12:00")
+            // and repeats the date when the bucket crosses midnight.
+            rangeLabels.push(rangeFmt.formatRange(date, end));
+        } else {
+            rangeLabels.push(`${rangeFmt.format(date)} – ${rangeFmt.format(end)}`);
+        }
 
         let count = parseInt(row.news_count, 10);
         values.push(count);
@@ -1044,6 +1077,7 @@ function processAndUpdateVolumeChart(apiData) {
         drawVolumeChart(volumeChartCanvas, labels, values, {
             labelNews: t("chart_label_news"),
             tooltipDay: t("chart_volume_tooltip_day"),
+            tooltipRanges: rangeLabels,
             suffixSingular: t("chart_volume_tooltip_unit_singular"),
             suffixPlural: t("chart_volume_tooltip_unit_plural")
         });
@@ -1709,18 +1743,52 @@ document.addEventListener("DOMContentLoaded", function () {
         mobileFilterBtn.addEventListener("click", () => {
             const isOpen = filtersWrapper.classList.toggle("open");
             mobileFilterBtn.classList.toggle("expanded");
-            
+
             const textKey = isOpen ? "btn_hide_filters" : "btn_show_filters";
             if (mobileFilterText) mobileFilterText.textContent = t(textKey);
-            
+
             if (typeof lucide !== "undefined") lucide.createIcons();
+            // The fields were display:none while collapsed, so their summaries
+            // were fitted against a zero width; redo it now that they can measure.
+            if (isOpen) refitFilterSummaries();
         });
     }
+
+    const clearFiltersBtn = document.getElementById("btn-clear-filters");
+    if (clearFiltersBtn) clearFiltersBtn.addEventListener("click", resetFilters);
+
+    // The mode toggle sits in the filter row on wide screens; on phones it moves
+    // back to the header band so it stays visible while the row is collapsed
+    // behind "Show filters". Listeners/tooltips survive the reparenting.
+    const modeCell = document.getElementById("mode-cell");
+    const toggleHome = document.querySelector(".filters-header");
+    const toggleContainer = document.querySelector(".toggle-container");
+    const modeMq = window.matchMedia("(max-width: 768px)");
+    const placeModeToggle = () => {
+        if (!modeCell || !toggleHome || !toggleContainer) return;
+        const target = modeMq.matches ? toggleHome : modeCell;
+        if (toggleContainer.parentElement !== target) {
+            target.appendChild(toggleContainer);
+            refitFilterSummaries();   // the move changes the fields' widths
+        }
+    };
+    placeModeToggle();
+    modeMq.addEventListener("change", placeModeToggle);
+
+    // Summary fitting depends on field width: refit after viewport resizes settle.
+    let summaryRefitTimer;
+    window.addEventListener("resize", () => {
+        clearTimeout(summaryRefitTimer);
+        summaryRefitTimer = setTimeout(refitFilterSummaries, 120);
+    });
 
     const filterSection = document.getElementById("filters-container");
     const brandHeader = document.querySelector(".brand-header");
     const navDots = document.querySelectorAll(".nav-dot");
-    const sections = document.querySelectorAll("header, section, main");
+    // Scroll-spy only over sections a dot points to; other ids (e.g. the
+    // filter bar) would otherwise match no dot and clear the active state.
+    const dotTargets = new Set([...navDots].map(dot => dot.getAttribute("href").slice(1)));
+    const sections = [...document.querySelectorAll("header, section, main")].filter(s => dotTargets.has(s.id));
     const confirmPopup = document.getElementById("chart-popup");
 
     // Compact-header thresholds. The gap between them is hysteresis: shrinking the
@@ -1739,9 +1807,11 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!isCompact && scrollY > COMPACT_ON) {
             if (filterSection) filterSection.classList.add("compact");
             if (brandHeader) brandHeader.classList.add("compact");
+            refitFilterSummaries();   // compact mode shrinks the summary font
         } else if (isCompact && scrollY < COMPACT_OFF) {
             if (filterSection) filterSection.classList.remove("compact");
             if (brandHeader) brandHeader.classList.remove("compact");
+            refitFilterSummaries();
         }
 
         let current = "";

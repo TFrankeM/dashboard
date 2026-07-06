@@ -194,7 +194,9 @@ body {
     font-weight: 600;
     display: block;
     margin-top: 5px;
-    max-height: 32px;
+    /* Room for two wrapped lines on mid widths (~769-980px); the box only
+       grows to its content, so wide single-line headers are unaffected. */
+    max-height: 48px;
     overflow: hidden;
     transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease, padding-top 0.25s ease;
 }
@@ -399,7 +401,7 @@ data-type* means any type that contains select-one, like select-one-groups */
 }
 
 .sticky-filters.compact .filters-header,
-.sticky-filters.compact label {
+.sticky-filters.compact .filter-label {
     display: none;
 }
 
@@ -408,60 +410,21 @@ data-type* means any type that contains select-one, like select-one-groups */
     font-size: 12px !important;
 }
 
+/* Mobile-only header band: on phones the mode toggle lives here, above the
+   "Show filters" button, so it stays reachable while the row is collapsed.
+   On wider screens JS moves the toggle into the filter row (#mode-cell) and
+   this band is hidden entirely. */
 .filters-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     gap: 16px;
     margin-bottom: 14px;
 }
-
-/* Applied-filter chips: read-only summary of the state the charts reflect. */
-.applied-chips {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    flex: 1;
-    min-width: 0;
-}
-.chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    max-width: 260px;
-    padding: 3px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-family: "Gotham", Arial, sans-serif;
-    font-size: 11px;
-    font-weight: 400;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.chip svg {
-    width: 12px;
-    height: 12px;
-    flex: none;
-    color: var(--fgv-blue-sky);
-}
-.chip-clear {
-    cursor: pointer;
-    background: transparent;
-    border-style: dashed;
-    color: var(--fgv-blue-sky);
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-.chip-clear:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-}
-.chip-clear svg {
-    color: currentColor;
+@media (min-width: 769px) {
+    .filters-header {
+        display: none;
+    }
 }
 
 /* Interaction hint under the evolution chart header. */
@@ -479,22 +442,11 @@ data-type* means any type that contains select-one, like select-one-groups */
     flex: none;
 }
 
-.filters-header h2 {
-    font-size: 18px;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-    font-weight: 600;
-    font-family: "Gotham", "Arial", sans-serif;
-}
-
 /* Toggle switch */
 .toggle-container {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
 }
 
 .switch {       /* the switch - the box around the slider */
@@ -565,16 +517,28 @@ input:checked + .slider:before {
 
 
 /* GRID FOR THE FILTERS GROUPS */
-.filter-group label {
+
+/* Filter name above each field; the field itself shows the current selection. */
+.filter-label {
     display: flex;
     align-items: center;
-    font-size: 15px;
-    font-weight: 560;
-    color: white;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
     margin-bottom: 6px;
-    text-transform: none;
     font-family: "Gotham", "Arial", sans-serif;
     white-space: nowrap;
+    overflow: hidden;
+}
+/* Squeezed label: the name gives way with an ellipsis; the help icon never clips. */
+.filter-label > span:first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.filter-label .info-icon {
+    flex: none;
 }
 
 /* All filters and the apply button sit on a single row; they wrap only when the
@@ -609,22 +573,91 @@ input:checked + .slider:before {
 }
 
 .filter-apply {
-    flex: 1 1 150px;
+    flex: 1 1 200px;
     display: flex;
     justify-content: left;
     align-items: flex-end;
+    gap: 8px;
 }
 
 /* Filter apply button; visual style lives in the shared buttons.css. */
 .btn-apply {
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     height: 38px;
     white-space: nowrap;
 }
 
-/* Aggregation: a compact pill matching the dropdown fields (icon + label + value). */
+/* Ghost reset button next to Apply: outline over the bar, no fill. */
+.btn-clear-filters {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 14px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 4px;
+    color: #fff;
+    font-family: "Gotham", Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.btn-clear-filters:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.7);
+}
+.btn-clear-filters:focus-visible {
+    outline: 2px solid var(--fgv-blue-light);
+    outline-offset: 2px;
+}
+.btn-clear-filters svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+}
+
+/* Aggregation holds a short number, so it cedes row width to the other fields
+   and to the mode toggle. The floor still fits "Agregação (h)" plus the whole
+   help icon in the label above. */
 .filter-aggregation {
-    flex: 1 1 150px;
+    flex: 0 1 132px;
+    min-width: 128px;
+}
+
+/* Mode toggle cell: sits at the right end of the filter row, bottom-aligned
+   with the fields. Empty on phones (the toggle moves back to the header band). */
+.filter-mode {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 38px;
+    margin-left: auto;
+}
+.filter-mode:empty {
+    display: none;
+}
+.filter-mode .toggle-label {
+    font-size: 14px;
+    min-width: 108px;
+}
+.sticky-filters.compact .filter-mode {
+    height: 32px;
+}
+
+/* When the row can no longer hold everything inline, the toggle gets its own
+   strip ABOVE the filters (right-aligned) instead of dangling below them. */
+@media (min-width: 769px) and (max-width: 1399px) {
+    .filter-mode {
+        order: -1;
+        flex: 1 1 100%;
+        height: auto;
+    }
 }
 .agg-control {
     display: flex;
@@ -640,35 +673,21 @@ input:checked + .slider:before {
     border-radius: 4px;
     transition: border-color 0.2s ease;
 }
-/* Pin the info icon to the right edge and let the label give way when the pill is
-   squeezed, so the icon never spills outside the box on narrow viewports. */
-.agg-control .info-icon {
-    margin-left: auto;
-    flex: none;
-}
 .agg-control:focus-within {
     border-color: var(--fgv-blue-dark);
 }
-.agg-label {
-    font-family: "Gotham", Arial, sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--fgv-blue-dark);
-    white-space: nowrap;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+/* The box holds only the value; the field name sits in the label above it. */
 .input-aggregation {
-    width: 48px;
-    flex: none;
-    text-align: center;
+    flex: 1;
+    min-width: 0;
+    text-align: left;
     box-sizing: border-box;
     border: none;
     background: transparent;
     padding: 4px 2px;
     font-size: 13px;
-    color: var(--fgv-gray-dark);
+    font-weight: 700;
+    color: var(--fgv-blue-dark);
     font-family: "Gotham", Arial, sans-serif;
     outline: none;
 }
@@ -802,24 +821,35 @@ input:checked + .slider:before {
     cursor: default;
     pointer-events: none;
 }
+/* Selection summary: full names that fit + a fixed "+N" counter for the rest.
+   The text span truncates instead of growing, so the field size never changes
+   with the number of selected options. */
 .cbx-summary {
     flex: 1;
     min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     text-align: left;
     color: var(--fgv-blue-dark);
     font-size: 13px;
     font-weight: 700;
+}
+.cbx-summary-text {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-/* Help icon lives in the field next to the name; only shown while the panel is open
-   (the closed field already names the filter, so showing it collapsed is redundant). */
-.cbx-field .info-icon {
-    display: none;
-}
-.cbx-field.is-open .info-icon {
-    display: inline-grid;
+.cbx-more {
+    flex: none;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--fgv-blue-dark);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
 }
 .cbx-caret {
     flex: none;
@@ -917,7 +947,6 @@ input:checked + .slider:before {
 .sticky-filters.compact .agg-control {
     height: 32px;
 }
-.sticky-filters.compact .agg-label,
 .sticky-filters.compact .input-aggregation {
     font-size: 11px;
 }
@@ -926,6 +955,14 @@ input:checked + .slider:before {
     min-height: 32px;
     padding: 0 16px;
     font-size: 12px;
+}
+.sticky-filters.compact .btn-clear-filters {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+.sticky-filters.compact .cbx-more {
+    font-size: 10px;
 }
 
 .sticky-filters.compact .choices__inner {
@@ -1485,6 +1522,11 @@ input:checked + .slider:before {
         flex: 1 1 45%;
     }
 
+    /* Re-assert the toggle's own full-width strip over the 45% rule above. */
+    .filter-mode {
+        flex: 1 1 100%;
+    }
+
     /* category filter fills the entire row */
     .span-2 {
         grid-column: 1 / -1;
@@ -1628,28 +1670,6 @@ input:checked + .slider:before {
         height: 300px;
     }
 
-    /* Applied-filter chips move to their own full-width row as a swipeable
-       strip; letting them wrap squeezed each chip down to just its icon. */
-    .filters-header {
-        flex-wrap: wrap;
-        row-gap: 10px;
-    }
-    .applied-chips {
-        order: 3;
-        flex: 1 1 100%;
-        min-width: 0;
-        max-width: 100%;
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-        overflow-x: auto;
-        padding-bottom: 2px;
-        scrollbar-width: none;
-    }
-    .applied-chips::-webkit-scrollbar { display: none; }
-    .chip {
-        flex: none;
-        max-width: none;
-    }
 }
 
 /* max 480px | small mobile */
@@ -2420,8 +2440,23 @@ html[data-theme="dark"] .cbx-field:hover,
 html[data-theme="dark"] .cbx-field.is-open,
 html[data-theme="dark"] .agg-control:focus-within { border-color: var(--dk-border-strong); }
 html[data-theme="dark"] .cbx-summary,
-html[data-theme="dark"] .agg-label,
 html[data-theme="dark"] .input-aggregation { color: var(--dk-text-strong); }
+html[data-theme="dark"] .filter-label { color: var(--dk-text-body); }
+html[data-theme="dark"] .cbx-more {
+    background: var(--dk-surface);
+    border: 1px solid var(--dk-border-strong);
+    color: var(--fgv-blue-sky);
+}
+html[data-theme="dark"] .btn-clear-filters {
+    border-color: var(--dk-border);
+    color: var(--dk-text-body);
+}
+html[data-theme="dark"] .btn-clear-filters:hover {
+    background: var(--dk-surface-2);
+    border-color: var(--dk-border-strong);
+    color: var(--dk-text-strong);
+}
+html[data-theme="dark"] .btn-clear-filters:focus-visible { outline-color: var(--fgv-vib-cyan-dark); }
 html[data-theme="dark"] .cbx-icon,
 html[data-theme="dark"] .cbx-caret { color: var(--fgv-blue-sky); }
 html[data-theme="dark"] .cbx-panel {
@@ -2522,11 +2557,9 @@ html[data-theme="dark"] .card:hover { box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55)
     animation: card-enter 0.35s ease-out both;
     animation-delay: var(--enter-delay, 0ms);
 }
-.chip { animation: chip-in 0.2s ease-out both; }
 .cbx-panel:not([hidden]) { animation: panel-in 0.16s ease-out; }
 .gauge-value-text,
-.card-desc strong,
-.chip { font-variant-numeric: tabular-nums; }
+.card-desc strong { font-variant-numeric: tabular-nums; }
 
 /* Applied dynamic-mode LED (vibrant green: live data heartbeat). */
 .mode-led {

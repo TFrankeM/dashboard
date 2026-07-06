@@ -583,10 +583,14 @@ export function drawVolumeChart(canvasElement, labels, data, texts = {}) {
                     titleAlign: "left",
                     labelAlign: "left",
                     filter: (item) => item.datasetIndex === 0,
-                    callbacks: { 
+                    callbacks: {
                         title: (ctx) => {
-                            const label = Array.isArray(ctx) ? ctx[0].label : ctx.label;
-                            return `${texts.tooltipDay || "Dia"} ${label}`;
+                            const item = Array.isArray(ctx) ? ctx[0] : ctx;
+                            // Full local time range of the aggregation bucket when
+                            // available; the bare day label is the no-data fallback.
+                            const range = texts.tooltipRanges && texts.tooltipRanges[item.dataIndex];
+                            if (range) return range;
+                            return `${texts.tooltipDay || "Dia"} ${item.label}`;
                         },
                         label: (ctx) => {
                             const valor = ctx.raw;

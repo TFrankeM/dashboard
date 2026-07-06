@@ -46,9 +46,10 @@
 <body>
     <!-- Menu lateral de navegação -->
     <nav class="side-nav">
-        <a href="#top" class="nav-dot active" data-label="Filtros"></a>
-        <a href="#metrics" class="nav-dot" data-label="Métricas principais"></a>
-        <a href="#evolution" class="nav-dot" data-label="Evolução temporal"></a>
+        <a href="#top" class="nav-dot active" data-label="Filtros" data-i18n-label="nav_filters"></a>
+        <a href="#metrics" class="nav-dot" data-label="Métricas principais" data-i18n-label="nav_metrics"></a>
+        <a href="#evolution" class="nav-dot" data-label="Evolução temporal" data-i18n-label="nav_evolution"></a>
+        <a href="#newsstand" class="nav-dot" data-label="Notícias do ponto" data-i18n-label="nav_newsstand"></a>
     </nav>
 
     <div class="dashboard-wrapper">
@@ -86,14 +87,6 @@
         <!-- Barra de filtros -->
         <section class="sticky-filters" id="filters-container">
            <div class="filters-header">
-                <h2>
-                    <i data-lucide="sliders-horizontal" class="icon-sm"></i>
-                    <span data-i18n="filter_section_title">Filtros</span>
-                </h2>
-
-                <!-- Applied-filter chips (filled by JS after each apply) -->
-                <div id="applied-chips" class="applied-chips" aria-live="polite"></div>
-
                 <!-- Toggle Dinâmico -->
                 <div class="toggle-container">
                     <span id="mode-led" class="mode-led" aria-hidden="true"></span>
@@ -117,47 +110,65 @@
             <div id="filters-wrapper" class="filters-collapse">
                 <div class="filters-grid">
                     <div class="filter-group">
+                        <span class="filter-label">
+                            <span data-i18n="label_evaluatorEntity">Ente avaliador</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_evaluatorEntity">?</span>
+                        </span>
                         <div class="cbx-field cbx-skeleton">
                             <i data-lucide="eye" class="cbx-icon"></i>
-                            <span class="cbx-summary" data-i18n="label_evaluatorEntity">Ente avaliador</span>
+                            <span class="cbx-summary"></span>
                             <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                         <select id="evaluatorEntity" multiple></select>
                     </div>
 
                     <div class="filter-group">
+                        <span class="filter-label">
+                            <span data-i18n="label_evaluatedEntity">Ente em avaliação</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_evaluatedEntity">?</span>
+                        </span>
                         <div class="cbx-field cbx-skeleton">
                             <i data-lucide="target" class="cbx-icon"></i>
-                            <span class="cbx-summary" data-i18n="label_evaluatedEntity">Ente em avaliação</span>
+                            <span class="cbx-summary"></span>
                             <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                         <select id="evaluatedEntity" multiple></select>
                     </div>
 
                     <div class="filter-group">
+                        <span class="filter-label">
+                            <span data-i18n="label_category">Categorias</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_category">?</span>
+                        </span>
                         <div class="cbx-field cbx-skeleton">
                             <i data-lucide="tags" class="cbx-icon"></i>
-                            <span class="cbx-summary" data-i18n="label_category">Categorias</span>
+                            <span class="cbx-summary"></span>
                             <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                         <select id="category" multiple></select>
                     </div>
 
                     <div class="filter-group">
+                        <span class="filter-label">
+                            <span data-i18n="label_period">Período</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_period">?</span>
+                        </span>
                         <div class="cbx-field cbx-skeleton">
                             <i data-lucide="calendar-days" class="cbx-icon"></i>
-                            <span class="cbx-summary" data-i18n="label_period">Período</span>
+                            <span class="cbx-summary"></span>
                             <svg class="cbx-caret" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                         <select id="period"></select>
                     </div>
 
                     <div class="filter-group filter-aggregation">
+                        <span class="filter-label">
+                            <span id="aggregation-label" data-i18n="label_aggregation">Agregação (h)</span>
+                            <span class="info-icon" data-i18n-tooltip="tooltip_aggregation">?</span>
+                        </span>
                         <div class="agg-control">
                             <i data-lucide="clock" class="cbx-icon"></i>
-                            <span class="agg-label" id="aggregation-label" data-i18n="label_aggregation">Agregação (h)</span>
                             <input type="number" id="aggregation" min="0.25" step="0.5" class="input-aggregation" aria-labelledby="aggregation-label">
-                            <span class="info-icon" data-i18n-tooltip="tooltip_aggregation">?</span>
                         </div>
                     </div>
 
@@ -166,7 +177,14 @@
                             <i data-lucide="check-circle" class="icon-sm"></i>
                             <span data-i18n="btn_apply">Aplicar mudanças</span>
                         </button>
+                        <button type="button" class="btn-clear-filters" id="btn-clear-filters">
+                            <i data-lucide="eraser" class="icon-sm"></i>
+                            <span data-i18n="btn_clear_filters">Limpar filtros</span>
+                        </button>
                     </div>
+
+                    <!-- JS parks the mode toggle here on wide screens (see placeModeToggle) -->
+                    <div class="filter-group filter-mode" id="mode-cell"></div>
                 </div>
             </div>
         </section>

@@ -192,10 +192,6 @@ html.theme-anim .agg-control {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes chip-in {
-    from { opacity: 0; transform: scale(0.85); }
-    to   { opacity: 1; transform: scale(1); }
-}
 @keyframes panel-in {
     from { opacity: 0; transform: translateY(-4px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -244,6 +240,7 @@ html[data-theme="dark"] .hud-corners::after { border-color: var(--fgv-blue-sky);
 .reset-btn:active,
 .btn-icon:active:not(:disabled),
 .theme-toggle:active,
+.btn-clear-filters:active,
 .newsstand-table-btn:active {
     transform: scale(0.97);
 }
@@ -263,10 +260,10 @@ html[data-theme="dark"] .skeleton::after {
 
 /* Decorative motion off for users who asked the OS for less movement. */
 @media (prefers-reduced-motion: reduce) {
-    .card-enter, .chip, .cbx-panel, .dropdown-content, .row-enter { animation: none !important; }
+    .card-enter, .cbx-panel, .dropdown-content, .row-enter { animation: none !important; }
     .skeleton::after { animation: none; display: none; }
-    .btn-apply:active, .btn-outline:active, .reset-btn:active,
-    .btn-icon:active, .theme-toggle:active, .newsstand-table-btn:active { transform: none; }
+    .btn-apply:active, .btn-outline:active, .reset-btn:active, .btn-icon:active,
+    .theme-toggle:active, .btn-clear-filters:active, .newsstand-table-btn:active { transform: none; }
     .card:hover { transform: none; }
     html.theme-anim body, html.theme-anim .card { transition: none; }
 }
