@@ -1428,14 +1428,16 @@ let newsstandSortDesc = true;
 
 const bucketOf = grade => { const g = Math.round(Number(grade)); return g <= 3 ? "neg" : g === 4 ? "neu" : "pos"; };
 
-// "News published between X and Y · Evaluator: countries" for the newsstand card.
+// "News published between X and Y, evaluated by A about B" for the newsstand card.
 function newsstandDescription() {
     if (!currentClickedDate) return "";
     const rev = Array.isArray(appState.evaluatorEntity) ? appState.evaluatorEntity : [appState.evaluatorEntity];
+    const ent = Array.isArray(appState.evaluatedEntity) ? appState.evaluatedEntity : [appState.evaluatedEntity];
     return t("newsstand_desc")
         .replace("{start}", formatDrawerDate(currentClickedDate.startDate))
         .replace("{end}", formatDrawerDate(currentClickedDate.endDate))
-        .replace("{countries}", rev.map(r => tEntity(r)).join(", "));
+        .replace("{evaluator}", rev.map(r => tEntity(r)).join(", "))
+        .replace("{evaluated}", ent.map(e => tEntity(e)).join(", "));
 }
 
 async function updateNewsstand() {
