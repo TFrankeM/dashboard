@@ -1286,7 +1286,7 @@ function processAndUpdateLineChart(apiData) {
             endDate: new Date(startDateObj.getTime() + aggHours * 3600 * 1000).toISOString(),
             aggregation: aggHours
         };
-        updateNewsstand(tooltipDates ? tooltipDates[index] : "");
+        updateNewsstand();
     };
 
     // User clicked a point: load it AND bring the news below the chart into view.
@@ -1428,10 +1428,20 @@ let newsstandSortDesc = true;
 
 const bucketOf = grade => { const g = Math.round(Number(grade)); return g <= 3 ? "neg" : g === 4 ? "neu" : "pos"; };
 
-async function updateNewsstand(dateLabel) {
+// "News published between X and Y · Evaluator: countries" for the newsstand card.
+function newsstandDescription() {
+    if (!currentClickedDate) return "";
+    const rev = Array.isArray(appState.evaluatorEntity) ? appState.evaluatorEntity : [appState.evaluatorEntity];
+    return t("newsstand_desc")
+        .replace("{start}", formatDrawerDate(currentClickedDate.startDate))
+        .replace("{end}", formatDrawerDate(currentClickedDate.endDate))
+        .replace("{countries}", rev.map(r => tEntity(r)).join(", "));
+}
+
+async function updateNewsstand() {
     const dateEl = document.getElementById("newsstand-date");
     if (!currentClickedDate || !dateEl) return;
-    dateEl.textContent = dateLabel || formatDrawerDate(currentClickedDate.startDate);
+    dateEl.textContent = newsstandDescription();
     // Reveal the stand on first selection and drop the "click a point" hint
     document.getElementById("newsstand-hint")?.setAttribute("hidden", "");
     document.getElementById("newsstand-grid")?.removeAttribute("hidden");
