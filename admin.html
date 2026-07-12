@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>IIBEx — Painel de módulos</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <script type="module" src="js/admin.js" defer></script>
+</head>
+<body>
+    <main class="admin">
+        <header class="admin-header">
+            <h1>Painel de módulos</h1>
+            <p>Controla quais gráficos aparecem no dashboard em produção.
+               Módulos desligados continuam visíveis no
+               <a href="dashboard.html?lab=1" target="_blank" rel="noopener">modo laboratório</a>.</p>
+        </header>
+
+        <section class="admin-auth" aria-label="Autenticação">
+            <label for="admin-token">Token de administração</label>
+            <div class="admin-auth-row">
+                <input type="password" id="admin-token" autocomplete="off"
+                       placeholder="Cole o token para poder alterar as flags">
+            </div>
+            <p class="admin-hint">O token não é armazenado: vale só enquanto esta aba estiver aberta.</p>
+        </section>
+
+        <section class="admin-modules" aria-label="Módulos">
+            <div class="admin-meta" id="flags-meta">Carregando…</div>
+            <ul class="module-list" id="module-list"></ul>
+        </section>
+
+        <div class="admin-feedback" id="admin-feedback" role="status"></div>
+
+        <footer class="admin-footer">
+            <a href="dashboard.html">← Voltar ao dashboard</a>
+        </footer>
+    </main>
+</body>
+</html>

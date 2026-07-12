@@ -2740,3 +2740,29 @@ html[data-theme="dark"] .cbx-custom-range input.date-input:focus { border-color:
     right: 8px;
     bottom: 34%;
 }
+
+/* Feature flags: lab preview of disabled modules */
+.module-preview {
+    position: relative;
+    outline: 2px dashed var(--fgv-blue-light, #008BC9);
+    outline-offset: 4px;
+}
+
+.module-badge {
+    position: absolute;
+    top: -12px;
+    left: 16px;
+    z-index: 20;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--fgv-blue-light, #008BC9);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Metrics row reflow when feature flags remove cards (set by js/flags.js). */
+.main-content[data-module-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.main-content[data-module-count="1"] { grid-template-columns: minmax(0, 1fr); }

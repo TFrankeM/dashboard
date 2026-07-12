@@ -4,6 +4,7 @@ import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawThermome
 // Sketch toggle: thermometer in place of the gauge (drawGaugeChart stays available).
 const USE_THERMOMETER = true;
 import { DICTIONARY } from "./i18n.js";
+import { initModuleFlags } from "./flags.js";
 
 // Global state variables
 let CURRENT_LANG = "pt-BR";
@@ -1909,7 +1910,9 @@ function redrawCharts() {
     processAndUpdateLineChart(cachedApiData.lineData);
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+    // Disabled modules must leave the DOM before anything below queries it.
+    await initModuleFlags();
     applyUrlState();
     initLanguageSelector();
     initThemeToggle();
