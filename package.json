@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/TFrankeM/dashboard#readme",
   "dependencies": {
-    "@vercel/postgres": "^0.10.0",
-    "recharts": "^3.7.0"
+    "@vercel/postgres": "^0.10.0"
   }
 }
