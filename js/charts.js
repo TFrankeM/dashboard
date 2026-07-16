@@ -23,7 +23,7 @@ const BRT_OFFSET_MS = 3 * 3600 * 1000;
 const brtDay = ms => Math.floor((ms - BRT_OFFSET_MS) / DAY_MS);
 
 function fmtAxisLabel(ms, withHour, locale) {
-    const opts = { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" };
+    const opts = { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Sao_Paulo" };
     if (withHour) { opts.hour = "2-digit"; opts.minute = "2-digit"; }
     return new Date(ms).toLocaleString(locale, opts);
 }
@@ -36,15 +36,14 @@ function isMonthMarker(dates, i) {
     return brtDay(dates[i]) !== brtDay(dates[i - 1]);
 }
 
-function tickTarget(width) {
-    return width < 360 ? 3 : width < 560 ? 4 : width < 900 ? 6 : width < 1300 ? 9 : 12;
+// Width budget per tick: dd/mm/yyyy labels (~58px) or dd/mm/yyyy hh:mm (~100px),
+// plus breathing room so neighbours never touch.
+function tickTarget(width, withHour) {
+    return Math.max(2, Math.floor((width || 0) / (withHour ? 150 : 100)));
 }
 
-// Day 1/15 markers are date-only (~35px each), so far more fit per row than the
-// mixed date/hour ticks. Scale the budget to the width instead of capping at 12,
-// so a wide chart can show every 1st and 15th of the period.
 function markerTarget(width) {
-    return Math.max(2, Math.floor((width || 0) / 55));
+    return Math.max(2, Math.floor((width || 0) / 100));
 }
 
 function computeLineTicks(scale) {
@@ -62,7 +61,6 @@ function computeLineTicks(scale) {
     }
     if (hi < lo) hi = lo;
 
-    const target = tickTarget(chart.width || 0);
     const markers = [];
     for (let i = lo; i <= hi; i++) if (isMonthMarker(dates, i)) markers.push(i);
 
@@ -85,9 +83,10 @@ function computeLineTicks(scale) {
         // time once ticks land less than a day apart (or aggregation is sub-hourly),
         // which also keeps the labels distinct.
         const span = dates[hi] - dates[lo];
-        const count = Math.min(target, hi - lo + 1);
+        let count = Math.min(tickTarget(chart.width, false), hi - lo + 1);
         const step = count > 1 ? span / (count - 1) : span;
         withHour = step < DAY_MS || (meta.aggHours && meta.aggHours < 1);
+        if (withHour) count = Math.min(tickTarget(chart.width, true), hi - lo + 1);
         if (count <= 1) {
             map.set(lo, fmtAxisLabel(dates[lo], withHour, meta.locale));
         } else {

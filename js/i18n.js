@@ -115,7 +115,7 @@ export const DICTIONARY = {
         chart_volume_tooltip_unit_plural: "notícias analisadas",
         
         // Gauge chart
-        chart_gauge_title: "Índice atual",
+        chart_gauge_title: "Indicador atual",
         last_update: "Última atualização: ",
         update_min_ago: "há {n} min",
         update_over_hour: "há mais de 1 hora",
@@ -361,7 +361,7 @@ export const DICTIONARY = {
         chart_volume_tooltip_unit_plural: "news items analyzed",
         
         // Gauge chart
-        chart_gauge_title: "Current index",
+        chart_gauge_title: "Current indicator",
         last_update: "Last update: ",
         update_min_ago: "{n} min ago",
         update_over_hour: "more than 1 hour ago",
@@ -606,7 +606,7 @@ export const DICTIONARY = {
         chart_volume_tooltip_unit_plural: "noticias analizadas",
         
         // Gauge chart
-        chart_gauge_title: "Índice actual",
+        chart_gauge_title: "Indicador actual",
         last_update: "Última actualización: ",
         update_min_ago: "hace {n} min",
         update_over_hour: "hace más de 1 hora",
