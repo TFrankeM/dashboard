@@ -81,7 +81,8 @@ const PERIODS_CONFIG = {
         { value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
         { value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
         { value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
-        { value: "set_dez_2024", start: "2024-09-01", end: "2024-12-31" }
+        { value: "set_dez_2024", start: "2024-09-01", end: "2024-12-31" },
+        { value: "custom" }
     ],
     dynamic: [
         { value: "last30d" },
@@ -412,6 +413,12 @@ function buildCheckboxFilter(selectEl, opts) {
     // field keeps its fixed size regardless of how many options are selected.
     const renderSummary = () => {
         if (nameKey) field.setAttribute("aria-label", t(nameKey));
+        const override = opts.summaryOverride && opts.summaryOverride(Array.from(selected));
+        if (override) {
+            summaryText.textContent = override;
+            summaryMore.hidden = true;
+            return;
+        }
         const names = Array.from(selected).map(translate);
         if (!names.length) {
             summaryText.textContent = "—";
@@ -480,7 +487,9 @@ function buildCheckboxFilter(selectEl, opts) {
         renderSummary();
         renderList();
         selectEl.dispatchEvent(new Event("change", { bubbles: true }));
-        if (single) closePanel();                        // single-select commits and closes
+        // Single-select commits and closes, except options that need the panel
+        // to stay open (e.g. the custom date range, whose pickers live inside it).
+        if (single && value !== opts.stayOpenOn) closePanel();
     };
 
     const openPanel = () => {
@@ -514,7 +523,10 @@ function buildCheckboxFilter(selectEl, opts) {
     root.addEventListener("keydown", e => {
         if (e.key === "Escape" && open) { closePanel(); field.focus(); }
     });
-    document.addEventListener("click", e => { if (open && !root.contains(e.target)) closePanel(); });
+    // Flatpickr appends its calendar to <body>; clicking it must not count as outside.
+    document.addEventListener("click", e => {
+        if (open && !root.contains(e.target) && !e.target.closest(".flatpickr-calendar")) closePanel();
+    });
 
     // Pointer devices open the panel on hover and close it shortly after the cursor leaves.
     if (hoverCapable) {
@@ -550,7 +562,73 @@ function buildCheckboxFilter(selectEl, opts) {
             syncSelect(); renderSummary(); if (open) { computeOrder(); renderList(); }
         },
         relabel() { search.placeholder = t(searchKey); renderSummary(); if (open) { computeOrder(); renderList(); } },
+        panel,
+        // Keeps the hover-close timer from firing while the pointer is over `el`
+        // (used for body-appended flatpickr calendars).
+        holdOpen(el) {
+            el.addEventListener("mouseenter", () => clearTimeout(closeTimer));
+            el.addEventListener("mouseleave", () => { closeTimer = setTimeout(closePanel, HOVER_CLOSE_DELAY_MS); });
+        },
     };
+}
+
+// dd/mm/aaaa a partir do trecho de data de um ISO UTC
+const fmtRangeDate = iso => (iso || "").slice(0, 10).split("-").reverse().join("/");
+
+// "Intervalo personalizado": two date pickers inside the period panel (static mode).
+// Same flatpickr setup as details.html; values are UTC wall time stored with a Z.
+let syncCustomRangeUI = () => {};
+function setupCustomRange() {
+    if (!choicesPeriod || typeof flatpickr === "undefined") return;
+    const box = document.createElement("div");
+    box.className = "cbx-custom-range";
+    box.hidden = true;
+    box.innerHTML = `
+        <label class="cbx-range-row">
+            <span class="cbx-range-label" data-i18n="custom_range_start">Início</span>
+            <input type="text" class="date-input" id="period-custom-start">
+        </label>
+        <label class="cbx-range-row">
+            <span class="cbx-range-label" data-i18n="custom_range_end">Fim</span>
+            <input type="text" class="date-input" id="period-custom-end">
+        </label>`;
+    choicesPeriod.panel.appendChild(box);
+
+    const localeMap = { "pt-BR": "pt", "es-ES": "es", "en-US": "en" };
+    const cfg = {
+        enableTime: true,
+        dateFormat: "Y-m-d\\TH:i",
+        altInput: true,
+        altFormat: "d/m/Y H:i",
+        time_24hr: true,
+        allowInput: true,
+        locale: localeMap[CURRENT_LANG] || "pt",
+    };
+    const mk = (sel, key, labelKey) => {
+        const fp = flatpickr(box.querySelector(sel), {
+            ...cfg,
+            onChange: (dates, dateStr) => {
+                pendingState[key] = dateStr ? `${dateStr}:00.000Z` : "";
+                choicesPeriod.relabel();          // refresh the "<start> até <end>" summary
+                checkApplyButtonState();
+            },
+        });
+        fp.input.closest(".cbx-range-row").querySelector(".cbx-range-label").textContent = t(labelKey);
+        choicesPeriod.holdOpen(fp.calendarContainer);
+        return fp;
+    };
+    const fpStart = mk("#period-custom-start", "customStartDate", "custom_range_start");
+    const fpEnd = mk("#period-custom-end", "customEndDate", "custom_range_end");
+
+    syncCustomRangeUI = () => {
+        const on = pendingState.periodValue === "custom" && !pendingState.isDynamic;
+        box.hidden = !on;
+        if (on) {
+            fpStart.setDate((pendingState.customStartDate || "").slice(0, 16), false);
+            fpEnd.setDate((pendingState.customEndDate || "").slice(0, 16), false);
+        }
+    };
+    syncCustomRangeUI();
 }
 
 async function initializeFilters() {
@@ -588,9 +666,17 @@ async function initializeFilters() {
         if (periodEl) {
             choicesPeriod = buildCheckboxFilter(periodEl, {
                 translate: tPeriod, single: true, fixedOrder: true, searchKey: "placeholder_search",
-                icon: "calendar-days", nameKey: "label_period"
+                icon: "calendar-days", nameKey: "label_period",
+                stayOpenOn: "custom",
+                summaryOverride: sel => {
+                    if (!sel.includes("custom") || pendingState.isDynamic) return null;
+                    const s = fmtRangeDate(pendingState.customStartDate);
+                    const e = fmtRangeDate(pendingState.customEndDate);
+                    return s && e ? `${s} ${t("custom_range_to")} ${e}` : null;
+                },
             });
             updatePeriodDropdown(appState.isDynamic);
+            setupCustomRange();
         }
 
         const aggregationInput = document.getElementById("aggregation");
@@ -718,14 +804,16 @@ function setupFilterListeners() {
         periodSelect.addEventListener("change", () => {
             const val = periodSelect.value;
             pendingState.periodValue = val;
-            
+
             if (!pendingState.isDynamic) {
                 const config = PERIODS_CONFIG.static.find(p => p.value === val);
-                if (config) { 
-                    pendingState.customStartDate = config.start; 
-                    pendingState.customEndDate = config.end; 
+                // "custom" has no fixed range: the pickers own the dates.
+                if (config && config.start) {
+                    pendingState.customStartDate = config.start;
+                    pendingState.customEndDate = config.end;
                 }
             }
+            syncCustomRangeUI();
             checkApplyButtonState();
         });
     }
@@ -837,6 +925,10 @@ function syncUrlWithState() {
     const p = new URLSearchParams();
     if (appState.isDynamic) p.set("mode", "dynamic");
     p.set("period", appState.periodValue);
+    if (!appState.isDynamic && appState.periodValue === "custom") {
+        p.set("start", appState.customStartDate);
+        p.set("end", appState.customEndDate);
+    }
     (appState.evaluatorEntity || []).forEach(v => p.append("evaluator", v));
     (appState.evaluatedEntity || []).forEach(v => p.append("evaluated", v));
     (appState.category || []).forEach(v => p.append("category", v));
@@ -856,12 +948,23 @@ function applyUrlState() {
         const cfg = pool.find(x => x.value === period);
         if (cfg) {
             st.periodValue = period;
-            if (!st.isDynamic) { st.customStartDate = cfg.start; st.customEndDate = cfg.end; }
+            if (!st.isDynamic) {
+                if (period === "custom") {
+                    const s = p.get("start"), e = p.get("end");
+                    if (s && e) { st.customStartDate = s; st.customEndDate = e; }
+                    else st.periodValue = DEFAULT_CONFIG.periodValue; // custom sem datas na URL
+                } else {
+                    st.customStartDate = cfg.start;
+                    st.customEndDate = cfg.end;
+                }
+            }
         }
     }
     if (p.getAll("evaluator").length) st.evaluatorEntity = p.getAll("evaluator");
     if (p.getAll("evaluated").length) st.evaluatedEntity = p.getAll("evaluated");
-    if (p.getAll("category").length) st.category = p.getAll("category");
+    // Ignore category slugs the filter no longer offers (e.g. old shared URLs).
+    const urlCats = p.getAll("category").filter(c => CATEGORIESLIST.includes(c));
+    if (urlCats.length) st.category = urlCats;
     const agg = parseFloat(p.get("agg"));
     if (!isNaN(agg) && agg >= 0.25) st.aggregation = agg;
     appState = JSON.parse(JSON.stringify(st));
@@ -947,6 +1050,7 @@ function updatePeriodDropdown(isDynamic) {
             pendingState.customEndDate = def.end;
         }
     }
+    syncCustomRangeUI();
 }
 
 function updateToggleVisual(isDynamic) {
@@ -1190,7 +1294,7 @@ function updateEvolutionHeader(totalNews) {
     } else {
         const formatDate = (isoDate) => {
             if (!isoDate) return "??";
-            const parts = isoDate.split('-');
+            const parts = isoDate.slice(0, 10).split('-');
             return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`;
         };
         dateStr = `${t("evo_date_connector_static")}${formatDate(appState.customStartDate)}${t("evo_date_connector_static_to")}${formatDate(appState.customEndDate)}`;

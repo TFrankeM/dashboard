@@ -125,6 +125,9 @@ export const DICTIONARY = {
         chart_evolution_title: "Evolução temporal",
         evolution_hint: "Arraste para dar zoom · Clique em um ponto para ver as notícias",
         tz_note: "Horários em UTC (Greenwich)",
+        custom_range_to: "até",
+        custom_range_start: "Início",
+        custom_range_end: "Fim",
         btn_clear_filters: "Limpar filtros",
         theme_to_dark: "Ativar modo escuro",
         theme_to_light: "Ativar modo claro",
@@ -152,6 +155,7 @@ export const DICTIONARY = {
         period_options: {
             // "key": "label"
             "set_dez_2024": "Set a Dez de 2024",
+            "custom": "Intervalo personalizado",
             "sem1_2025": "2025 semestre 1 de 2",
             "sem2_2025": "2025 semestre 2 de 2",
             "year_2025": "2025",
@@ -176,7 +180,6 @@ export const DICTIONARY = {
             "interesse_humano": "Interesse humano",
             "meio_ambiente": "Meio ambiente",
             "meteorologia": "Meteorologia",
-            "nao_informado": "Não informado",
             "outros": "Outros",
             "politica": "Política",
             "religiao_crencas": "Religião e crenças",
@@ -369,6 +372,9 @@ export const DICTIONARY = {
         chart_evolution_title: "Evolution over time",
         evolution_hint: "Drag to zoom · Click a point to see the news",
         tz_note: "Times in UTC (Greenwich)",
+        custom_range_to: "to",
+        custom_range_start: "Start",
+        custom_range_end: "End",
         btn_clear_filters: "Clear filters",
         theme_to_dark: "Enable dark mode",
         theme_to_light: "Enable light mode",
@@ -396,6 +402,7 @@ export const DICTIONARY = {
         period_options: {
             // "key": "label"
             "set_dez_2024": "Sep to Dec 2024",
+            "custom": "Custom range",
             "sem1_2025": "2025 semester 1 of 2",
             "sem2_2025": "2025 semester 2 of 2",
             "year_2025": "2025",
@@ -420,7 +427,6 @@ export const DICTIONARY = {
             "interesse_humano": "Human interest",
             "meio_ambiente": "Environment",
             "meteorologia": "Weather",
-            "nao_informado": "Not informed",
             "outros": "Others",
             "politica": "Politics",
             "religiao_crencas": "Religion and belief",
@@ -612,6 +618,9 @@ export const DICTIONARY = {
         chart_evolution_title: "Evolución temporal",
         evolution_hint: "Arrastra para hacer zoom · Haz clic en un punto para ver las noticias",
         tz_note: "Horarios en UTC (Greenwich)",
+        custom_range_to: "a",
+        custom_range_start: "Inicio",
+        custom_range_end: "Fin",
         btn_clear_filters: "Limpiar filtros",
         theme_to_dark: "Activar modo oscuro",
         theme_to_light: "Activar modo claro",
@@ -639,6 +648,7 @@ export const DICTIONARY = {
         period_options: {
             // "key": "label"
             "set_dez_2024": "Sep a Dic de 2024",
+            "custom": "Intervalo personalizado",
             "sem1_2025": "2025 semestre 1 de 2",
             "sem2_2025": "2025 semestre 2 de 2",
             "year_2025": "2025",
@@ -663,7 +673,6 @@ export const DICTIONARY = {
             "interesse_humano": "Interés humano",
             "meio_ambiente": "Medio ambiente",
             "meteorologia": "Meteorología",
-            "nao_informado": "No informado",
             "outros": "Otros",
             "politica": "Política",
             "religiao_crencas": "Religión y creencias",
