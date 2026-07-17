@@ -625,8 +625,9 @@ input:checked + .slider:before {
    and to the mode toggle. The floor still fits "Agregação (h)" plus the whole
    help icon in the label above. */
 .filter-aggregation {
-    flex: 0 1 132px;
-    min-width: 128px;
+    /* Wide enough for the longest label ("Aggregation (h)") plus the help icon. */
+    flex: 0 1 150px;
+    min-width: 142px;
 }
 
 /* Mode toggle cell: sits at the right end of the filter row, bottom-aligned
