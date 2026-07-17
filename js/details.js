@@ -89,8 +89,13 @@ function tCategory(val) {
     return DICTIONARY[CURRENT_LANG].category_options?.[val] || val;
 }
 
+// Entities come from the database; slugs without an i18n label fall back to
+// Title Case ("nova_entidade" -> "Nova Entidade").
+function prettySlug(slug) {
+    return String(slug).split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
 function tEntity(val) {
-    return DICTIONARY[CURRENT_LANG].entity_options?.[val] || val;
+    return DICTIONARY[CURRENT_LANG].entity_options?.[val] || prettySlug(val);
 }
 
 const LANG_STORAGE_KEY = "iibex_lang";

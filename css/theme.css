@@ -5,6 +5,8 @@
    Brand rules come from assets/FGV Manual da marca mar19.pdf (p.32-41). */
 
 :root {
+    color-scheme: light;
+
     /* FGV primary blues (tonal range) */
     --fgv-blue-navy: #002D4D;
     --fgv-blue-dark: #003A79;
@@ -63,6 +65,8 @@
 }
 
 /* Dark theme: html[data-theme="dark"] outranks page-level :root re-declarations. */
+
+html[data-theme="dark"] { color-scheme: dark; }
 
 html[data-theme="dark"] body {
     color: var(--dk-text-body);

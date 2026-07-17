@@ -1,5 +1,8 @@
 import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships, fetchDetailsData, fetchStats } from "./api_adapter.js";
-import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawLineChart, clearLineChartSelection, setChartsAnimation } from "./charts.js";
+import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawThermometerChart, drawLineChart, clearLineChartSelection, setChartsAnimation } from "./charts.js";
+
+// Sketch toggle: thermometer in place of the gauge (drawGaugeChart stays available).
+const USE_THERMOMETER = true;
 import { DICTIONARY } from "./i18n.js";
 
 // Global state variables
@@ -110,8 +113,13 @@ let periodByMode = { static: null, dynamic: null };
 function t(key) {
     return DICTIONARY[CURRENT_LANG][key] || key;
 }
+// Entities come from the database; slugs without an i18n label fall back to
+// Title Case ("nova_entidade" -> "Nova Entidade").
+function prettySlug(slug) {
+    return String(slug).split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
 function tEntity(val) {
-    return DICTIONARY[CURRENT_LANG].entity_options[val] || val;
+    return DICTIONARY[CURRENT_LANG].entity_options[val] || prettySlug(val);
 }
 function tPeriod(val) {
     return DICTIONARY[CURRENT_LANG].period_options[val] || val;
@@ -374,6 +382,8 @@ function buildCheckboxFilter(selectEl, opts) {
     let open = false;
     let order = [];                                   // display order, frozen while the panel is open
     let closeTimer;
+    let hoverSuppressed = false;                       // true while a child popup (e.g. a calendar) owns closing
+    const closeHooks = [];
 
     selectEl.style.display = "none";
 
@@ -414,6 +424,7 @@ function buildCheckboxFilter(selectEl, opts) {
     const renderSummary = () => {
         if (nameKey) field.setAttribute("aria-label", t(nameKey));
         const override = opts.summaryOverride && opts.summaryOverride(Array.from(selected));
+        summaryText.classList.toggle("cbx-summary-text--compact", !!override);
         if (override) {
             summaryText.textContent = override;
             summaryMore.hidden = true;
@@ -508,6 +519,7 @@ function buildCheckboxFilter(selectEl, opts) {
         panel.hidden = true;
         field.classList.remove("is-open");
         field.setAttribute("aria-expanded", "false");
+        closeHooks.forEach(fn => fn());
     };
 
     field.addEventListener("click", () => open ? closePanel() : openPanel());
@@ -529,9 +541,13 @@ function buildCheckboxFilter(selectEl, opts) {
     });
 
     // Pointer devices open the panel on hover and close it shortly after the cursor leaves.
+    // Suppressed while a calendar (or similar child popup) is open: from then on, only an
+    // explicit outside click closes anything (see setHoverSuppressed / the document handler).
     if (hoverCapable) {
         root.addEventListener("mouseenter", () => { clearTimeout(closeTimer); openPanel(); });
-        root.addEventListener("mouseleave", () => { closeTimer = setTimeout(closePanel, HOVER_CLOSE_DELAY_MS); });
+        root.addEventListener("mouseleave", () => {
+            if (!hoverSuppressed) closeTimer = setTimeout(closePanel, HOVER_CLOSE_DELAY_MS);
+        });
     }
 
     syncSelect();
@@ -567,13 +583,28 @@ function buildCheckboxFilter(selectEl, opts) {
         // (used for body-appended flatpickr calendars).
         holdOpen(el) {
             el.addEventListener("mouseenter", () => clearTimeout(closeTimer));
-            el.addEventListener("mouseleave", () => { closeTimer = setTimeout(closePanel, HOVER_CLOSE_DELAY_MS); });
+            el.addEventListener("mouseleave", () => {
+                if (!hoverSuppressed) closeTimer = setTimeout(closePanel, HOVER_CLOSE_DELAY_MS);
+            });
         },
+        // While suppressed, hover alone never closes the panel — only an explicit
+        // outside click (the document listener above) does.
+        setHoverSuppressed(v) { hoverSuppressed = v; if (v) clearTimeout(closeTimer); },
+        // Runs whenever the panel closes, for children (e.g. flatpickr instances)
+        // that must close in lockstep instead of being left orphaned open.
+        addCloseHook(fn) { closeHooks.push(fn); },
     };
 }
 
-// dd/mm/aaaa a partir do trecho de data de um ISO UTC
-const fmtRangeDate = iso => (iso || "").slice(0, 10).split("-").reverse().join("/");
+// Bare "YYYY-MM-DD" (from a preset period) -> full UTC datetime string.
+const toFullIso = date => (date && date.length === 10 ? `${date}T00:00:00.000Z` : date);
+
+// dd/mm/aaaa hh:mm a partir de um ISO UTC (tolera data sem hora)
+const fmtRangeDateTime = iso => {
+    if (!iso) return "";
+    const [d, time] = iso.slice(0, 16).split("T");
+    return `${d.split("-").reverse().join("/")} ${time || "00:00"}`;
+};
 
 // "Intervalo personalizado": two date pickers inside the period panel (static mode).
 // Same flatpickr setup as details.html; values are UTC wall time stored with a Z.
@@ -602,23 +633,47 @@ function setupCustomRange() {
         altFormat: "d/m/Y H:i",
         time_24hr: true,
         allowInput: true,
+        closeOnSelect: false,     // this panel closes as a unit, only on an outside click
         locale: localeMap[CURRENT_LANG] || "pt",
+    };
+
+    // Grades a value straight from the picker's own selected date, so a click on a
+    // day, a click on the time up/down arrows, or leaving a typed field all commit
+    // immediately — no separate "apply" step inside the calendar itself.
+    let openCount = 0;
+    const commit = (fp, key) => {
+        const d = fp.selectedDates[0];
+        if (!d) return;
+        pendingState[key] = `${fp.formatDate(d, "Y-m-d\\TH:i")}:00.000Z`;
+        linkRange();
+        choicesPeriod.relabel();          // refresh the "<start> até <end>" summary
+        checkApplyButtonState();
     };
     const mk = (sel, key, labelKey) => {
         const fp = flatpickr(box.querySelector(sel), {
             ...cfg,
-            onChange: (dates, dateStr) => {
-                pendingState[key] = dateStr ? `${dateStr}:00.000Z` : "";
-                choicesPeriod.relabel();          // refresh the "<start> até <end>" summary
-                checkApplyButtonState();
-            },
+            onChange: () => commit(fp, key),
+            onOpen: () => { openCount++; choicesPeriod.setHoverSuppressed(true); },
+            onClose: () => { openCount = Math.max(0, openCount - 1); if (openCount === 0) choicesPeriod.setHoverSuppressed(false); },
         });
+        // focusout bubbles (unlike blur), so a typed value commits the instant the
+        // user leaves the field — not just on Enter. Two listeners: the visible text
+        // field lives in `box`, the calendar's own time spinners in calendarContainer.
+        fp.altInput.addEventListener("focusout", () => commit(fp, key));
+        fp.calendarContainer.addEventListener("focusout", () => commit(fp, key));
         fp.input.closest(".cbx-range-row").querySelector(".cbx-range-label").textContent = t(labelKey);
         choicesPeriod.holdOpen(fp.calendarContainer);
         return fp;
     };
     const fpStart = mk("#period-custom-start", "customStartDate", "custom_range_start");
     const fpEnd = mk("#period-custom-end", "customEndDate", "custom_range_end");
+    choicesPeriod.addCloseHook(() => { fpStart.close(); fpEnd.close(); });
+
+    // Neither picker lets the user land on an inverted range: each bounds the other.
+    function linkRange() {
+        fpEnd.set("minDate", fpStart.selectedDates[0] || null);
+        fpStart.set("maxDate", fpEnd.selectedDates[0] || null);
+    }
 
     syncCustomRangeUI = () => {
         const on = pendingState.periodValue === "custom" && !pendingState.isDynamic;
@@ -626,6 +681,7 @@ function setupCustomRange() {
         if (on) {
             fpStart.setDate((pendingState.customStartDate || "").slice(0, 16), false);
             fpEnd.setDate((pendingState.customEndDate || "").slice(0, 16), false);
+            linkRange();
         }
     };
     syncCustomRangeUI();
@@ -670,8 +726,8 @@ async function initializeFilters() {
                 stayOpenOn: "custom",
                 summaryOverride: sel => {
                     if (!sel.includes("custom") || pendingState.isDynamic) return null;
-                    const s = fmtRangeDate(pendingState.customStartDate);
-                    const e = fmtRangeDate(pendingState.customEndDate);
+                    const s = fmtRangeDateTime(pendingState.customStartDate);
+                    const e = fmtRangeDateTime(pendingState.customEndDate);
                     return s && e ? `${s} ${t("custom_range_to")} ${e}` : null;
                 },
             });
@@ -807,10 +863,15 @@ function setupFilterListeners() {
 
             if (!pendingState.isDynamic) {
                 const config = PERIODS_CONFIG.static.find(p => p.value === val);
-                // "custom" has no fixed range: the pickers own the dates.
+                // "custom" has no fixed range: the pickers own the dates. Coming from a
+                // preset, seed them with its bare date upgraded to a full UTC datetime,
+                // so the pickers and the "<start> até <end>" summary have a time to show.
                 if (config && config.start) {
                     pendingState.customStartDate = config.start;
                     pendingState.customEndDate = config.end;
+                } else if (val === "custom") {
+                    pendingState.customStartDate = toFullIso(pendingState.customStartDate);
+                    pendingState.customEndDate = toFullIso(pendingState.customEndDate);
                 }
             }
             syncCustomRangeUI();
@@ -838,6 +899,17 @@ function setupFilterListeners() {
             if (isNaN(val) || val < minAgg) {
                 aggregationInput.value = pendingState.aggregation;
             }
+        });
+        // Custom +/- buttons stand in for the native number spinner (see dashboard.css)
+        // so its background can match the theme exactly; they just drive the same input.
+        const step = parseFloat(aggregationInput.step) || 1;
+        document.querySelectorAll(".agg-spin-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const dir = parseFloat(btn.dataset.dir);
+                const next = Math.max(minAgg, (parseFloat(aggregationInput.value) || minAgg) + dir * step);
+                aggregationInput.value = Math.round(next * 100) / 100;
+                aggregationInput.dispatchEvent(new Event("input", { bubbles: true }));
+            });
         });
     }
 
@@ -951,8 +1023,9 @@ function applyUrlState() {
             if (!st.isDynamic) {
                 if (period === "custom") {
                     const s = p.get("start"), e = p.get("end");
-                    if (s && e) { st.customStartDate = s; st.customEndDate = e; }
-                    else st.periodValue = DEFAULT_CONFIG.periodValue; // custom sem datas na URL
+                    // ISO 8601 UTC strings sort lexicographically the same as chronologically.
+                    if (s && e && s <= e) { st.customStartDate = s; st.customEndDate = e; }
+                    else st.periodValue = DEFAULT_CONFIG.periodValue; // datas ausentes ou invertidas
                 } else {
                     st.customStartDate = cfg.start;
                     st.customEndDate = cfg.end;
@@ -1225,30 +1298,32 @@ function processAndUpdateGaugeDisplay(value) {
         }
     }
 
+    // Text variants of the grade scale: darker steps on light, brighter on dark.
+    const dark = document.documentElement.dataset.theme === "dark";
     let descText = t("no_data_found");
-    let descColor = "#94a3b8";
+    let descColor = dark ? "#9FB3C8" : "#8494A8";
 
-    if (finalValue <= 1.50) { 
-        descText = t("image_extremely_negative"); 
-        descColor = "#b91c1c";
-    } else if (finalValue <= 2.50) { 
-        descText = t("image_very_negative"); 
-        descColor = "#ef4444";
-    } else if (finalValue <= 3.50) { 
-        descText = t("image_slightly_negative"); 
-        descColor = "#fdae61";
-    } else if (finalValue <= 4.49) { 
-        descText = t("image_neutral"); 
-        descColor = "#64748b";
-    } else if (finalValue <= 5.49) { 
-        descText = t("image_slightly_positive"); 
-        descColor = "#84cc16";
-    } else if (finalValue <= 6.49) { 
-        descText = t("image_very_positive"); 
-        descColor = "#22c55e";
-    } else { 
-        descText = t("image_extremely_positive"); 
-        descColor = "#15803d";
+    if (finalValue <= 1.50) {
+        descText = t("image_extremely_negative");
+        descColor = dark ? "#FF7A6C" : "#8E1D14";
+    } else if (finalValue <= 2.50) {
+        descText = t("image_very_negative");
+        descColor = dark ? "#E88A75" : "#B03D29";
+    } else if (finalValue <= 3.50) {
+        descText = t("image_slightly_negative");
+        descColor = dark ? "#F2C795" : "#B26235";
+    } else if (finalValue <= 4.49) {
+        descText = t("image_neutral");
+        descColor = dark ? "#9FB3C8" : "#64748B";
+    } else if (finalValue <= 5.49) {
+        descText = t("image_slightly_positive");
+        descColor = dark ? "#A9CF7C" : "#5C8F3B";
+    } else if (finalValue <= 6.49) {
+        descText = t("image_very_positive");
+        descColor = dark ? "#5FCB7E" : "#2A8236";
+    } else {
+        descText = t("image_extremely_positive");
+        descColor = dark ? "#35E68C" : "#14602F";
     }
 
     if (gaugeDescription) {
@@ -1267,7 +1342,8 @@ function processAndUpdateGaugeDisplay(value) {
     ];
 
     if (gaugeChartCanvas) {
-        drawGaugeChart(gaugeChartCanvas, finalValue, { segments });
+        if (USE_THERMOMETER) drawThermometerChart(gaugeChartCanvas, finalValue, { segments });
+        else drawGaugeChart(gaugeChartCanvas, finalValue, { segments });
     }
 }
 
@@ -1372,10 +1448,12 @@ function processAndUpdateLineChart(apiData) {
             };
         });
 
-        let translatedLabel = tEntity(labelName);
-        if (translatedLabel === labelName) {
-            translatedLabel = tCategory(labelName);
-        }
+        // series_label is either an entity slug (multi-evaluator mode) or a category
+        // slug (multi-category mode); check both dictionaries directly rather than
+        // via tEntity/tCategory's own prettySlug fallback, which would always differ
+        // from labelName and mask a real category_options hit (e.g. "include_all").
+        const dict = DICTIONARY[CURRENT_LANG];
+        const translatedLabel = dict.entity_options[labelName] || dict.category_options[labelName] || prettySlug(labelName);
         // key = stable slug for colour mapping; label = translated display text
         return { label: translatedLabel, key: labelName, data: alignedData };
     });

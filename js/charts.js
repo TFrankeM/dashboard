@@ -212,6 +212,44 @@ function applyChartDefaults() {
     Chart.defaults.borderColor = ui.axisBorder;
 }
 
+// Diverging 1-7 grade scale (red pole / neutral mid / green pole), one tuning per
+// theme. Steps validated for adjacent-pair CVD separation and surface contrast;
+// identity is carried by the 1-7 axis position, color is reinforcement.
+function gradeScale() {
+    return isDarkTheme() ? {
+        colors: ["#F4695B", "#C25A44", "#F2C795", "#7E8CA2", "#A9CF7C", "#3E9B58", "#35E68C"],
+        hover:  ["#FF8578", "#D26D57", "#F7D6AE", "#93A0B4", "#BCDA93", "#4FAF6A", "#5BEBA1"],
+    } : {
+        colors: ["#8E1D14", "#C44B36", "#E2926A", "#8494A8", "#8CBD60", "#33923F", "#14602F"],
+        hover:  ["#7A170F", "#B03D29", "#D97F53", "#75859A", "#7CAE50", "#2A8236", "#0F5228"],
+    };
+}
+
+function compactNumber(n) {
+    return new Intl.NumberFormat(document.documentElement.lang || "pt-BR",
+        { notation: "compact", maximumFractionDigits: 1 }).format(n);
+}
+
+// Direct value labels above each histogram bar (muted ink, never the bar color).
+const barValueLabels = {
+    id: "barValueLabels",
+    afterDatasetsDraw(chart) {
+        const meta = chart.getDatasetMeta(0);
+        const { ctx } = chart;
+        ctx.save();
+        ctx.font = "700 11px 'Gotham', 'Arial', sans-serif";
+        ctx.fillStyle = chartUI().tick;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        chart.data.datasets[0].data.forEach((v, i) => {
+            const bar = meta.data[i];
+            if (v == null || !bar) return;
+            ctx.fillText(compactNumber(v), bar.x, bar.y - 4);
+        });
+        ctx.restore();
+    },
+};
+
 const TOOLTIP_BASE = {
     borderWidth: 1,
     titleFont: { size: 13, weight: "bold", family: "'Gotham', 'Arial', sans-serif" },
@@ -239,72 +277,71 @@ const gaugeNeedlePlugin = {
         const { ctx, data } = chart;
         ctx.save();
         const needleValue = data.datasets[0].needleValue;
-        
+
         // arc from 150 to 390 degrees
         const startAngle = 150 * (Math.PI / 180);
         const sweepAngle = 240 * (Math.PI / 180);
-        
+
         // Limits the value between 1 and 7
         const safeValue = Math.max(1, Math.min(7, needleValue));
         const valueFraction = (safeValue - 1) / (7 - 1);
         const angle = startAngle + (valueFraction * sweepAngle);
 
-        // Center of the chart
-        const cx = chart.getDatasetMeta(0).data[0].x;
-        const cy = chart.getDatasetMeta(0).data[0].y;
-        
-        // needle
+        const arc = chart.getDatasetMeta(0).data[0];
+        const cx = arc.x;
+        const cy = arc.y;
+        // Slim tapered needle reaching into the ring
+        const length = arc.innerRadius + (arc.outerRadius - arc.innerRadius) * 0.55;
+
         ctx.translate(cx, cy);
         ctx.rotate(angle);
+        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 1;
         ctx.beginPath();
-        ctx.moveTo(0, -5); // needle base width
-        ctx.lineTo((chart.chartArea.height / 2) + 10, 0);
-        ctx.lineTo(0, 5);
+        ctx.moveTo(-4, -2.5);
+        ctx.lineTo(length, 0);
+        ctx.lineTo(-4, 2.5);
+        ctx.closePath();
         ctx.fillStyle = chartUI().needle;
         ctx.fill();
         ctx.rotate(-angle);
         ctx.translate(-cx, -cy);
 
-        // central pin
+        // hub: filled pin with a surface-colored core
         ctx.beginPath();
-        ctx.arc(cx, cy, 10, 0, 2 * Math.PI);
-        ctx.fillStyle = chartUI().needle;
+        ctx.arc(cx, cy, 7, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.shadowColor = "transparent";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 2.8, 0, 2 * Math.PI);
+        ctx.fillStyle = chartUI().surfaceBorder;
         ctx.fill();
         ctx.restore();
     }
 };
 
+// Small 1-7 markers just outside the ring, in the muted tick ink.
 const gaugeLabelsPlugin = {
     id: "gaugeLabels",
     afterDatasetDraw(chart) {
         const { ctx, data } = chart;
         ctx.save();
 
-        ctx.font = "bold 30px sans-serif";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.font = "700 11px 'Gotham', 'Arial', sans-serif";
+        ctx.fillStyle = chartUI().tick;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        const innerRadius = chart.getDatasetMeta(0).data[0].innerRadius;
         const outerRadius = chart.getDatasetMeta(0).data[0].outerRadius;
-        const radius = (innerRadius + outerRadius) / 2; // half of the way between the center and the edge
+        const radius = outerRadius + 11;
 
         for (let i = 0; i < data.datasets[0].data.length; i++) {
             const meta = chart.getDatasetMeta(0).data[i];
-            
-            // average angle of the current slice
-            const startAngle = meta.startAngle;
-            const endAngle = meta.endAngle;
-            const angle = startAngle + (endAngle - startAngle) / 2;
-
-            // Calculate the X Y position of the center of the slice
+            const angle = meta.startAngle + (meta.endAngle - meta.startAngle) / 2;
             const x = meta.x + Math.cos(angle) * radius;
             const y = meta.y + Math.sin(angle) * radius;
-
-            // section number (from 1 to 7)
-            const labelText = (i + 1).toString(); 
-
-            ctx.fillText(labelText, x, y);
+            ctx.fillText((i + 1).toString(), x, y);
         }
 
         ctx.restore();
@@ -345,15 +382,8 @@ export function drawGaugeChart(canvasElement, value, texts = {}) {
     if (gaugeInstance) gaugeInstance.destroy();
     
     const gaugeSegmentDescriptions = texts.segments || [];
+    const scale = gradeScale();
 
-    const backgroundColor = [
-        "#b91c1c", "#ef4444", /*"#f97316",*/ "#fdae61", "#cbd5e1", "#84cc16", "#22c55e", "#15803d"  
-    ];
-
-    const hoverBackgroundColor = [
-        "#991b1b", "#dc2626", /*"#ea580c",*/ "#e6984b", "#94a3b8", "#65a30d", "#16a34a", "#14532d"
-    ];
-    
     // Sweep the needle from where it was to the new value (from the scale
     // start on the very first draw); jump straight there when animations are off.
     const animateSweep = animationsEnabled && !REDUCED_MOTION && !document.hidden;
@@ -366,21 +396,22 @@ export function drawGaugeChart(canvasElement, value, texts = {}) {
             datasets: [{
                 data: [0.5, 1, 1, 1, 1, 1, 0.5], // tamanho fatias
                 needleValue: needleStart,
-                backgroundColor: backgroundColor,
-                hoverBackgroundColor: hoverBackgroundColor,
-                borderWidth: 2,
-                borderColor: chartUI().surfaceBorder,
+                backgroundColor: scale.colors,
+                hoverBackgroundColor: scale.hover,
+                borderWidth: 0,
+                spacing: 3,
+                borderRadius: 6,
                 hoverOffset: 4
             }]
         },
         options: {
             rotation: -120,
             circumference: 240,
-            cutout: "65%", // arco
+            cutout: "76%", // thin modern ring
             responsive: true,
             maintainAspectRatio: false,
             animation: chartAnimation(false),
-            layout: { padding: { top: 0, bottom: 10 } },
+            layout: { padding: { top: 14, bottom: 12, left: 16, right: 16 } },
             plugins: {
                 legend: { display: false },
                 tooltip: { 
@@ -404,6 +435,215 @@ export function drawGaugeChart(canvasElement, value, texts = {}) {
     }
 }
 
+// --- Thermometer (sketch) ---------------------------------------------------
+// Prototype replacement for the gauge card; drawGaugeChart above stays intact.
+// Pure-canvas render loop: the liquid fills from empty on first load, ripples
+// while settling on a new value, and its color tracks the displayed grade.
+let thermoInstance = null;   // { raf }
+let thermoShownValue = null; // level currently on screen, survives redraws
+
+const THERMO_STOPS = [
+    [1.0, [226, 56, 69]],    // deep red
+    [2.6, [240, 129, 62]],   // orange
+    [3.4, [246, 196, 120]],  // warm sand
+    [3.8, [63, 160, 220]],   // FGV celeste (neutral band)
+    [4.4, [63, 160, 220]],
+    [5.4, [69, 196, 107]],   // green
+    [7.0, [0, 184, 116]],    // emerald
+];
+function thermoRGB(v) {
+    const x = Math.max(1, Math.min(7, v));
+    for (let i = 0; i < THERMO_STOPS.length - 1; i++) {
+        const [a, ca] = THERMO_STOPS[i];
+        const [b, cb] = THERMO_STOPS[i + 1];
+        if (x <= b) {
+            const t = Math.max(0, (x - a) / (b - a));
+            return ca.map((c, j) => Math.round(c + (cb[j] - c) * t));
+        }
+    }
+    return THERMO_STOPS.at(-1)[1];
+}
+// shade < 1 darkens the same hue (used for the liquid depth gradient).
+function thermoColor(v, alpha = 1, shade = 1) {
+    const rgb = thermoRGB(v).map(c => Math.round(c * shade));
+    return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}
+
+export function drawThermometerChart(canvasElement, value, texts = {}) {
+    if (canvasElement.parentElement) {
+        canvasElement.parentElement.classList.remove("skeleton");
+    }
+    if (gaugeInstance && gaugeInstance.canvas === canvasElement) {
+        gaugeInstance.destroy();
+        gaugeInstance = null;
+    }
+    if (thermoInstance) cancelAnimationFrame(thermoInstance.raf);
+    thermoInstance = { raf: 0 };
+    const instance = thermoInstance;
+
+    const ctx = canvasElement.getContext("2d");
+    const target = Math.max(1, Math.min(7, value));
+    // Fill animation is suppressed on cosmetic redraws (theme/language switches),
+    // but the idle waves keep rolling unless the user prefers reduced motion.
+    const fillAnim = animationsEnabled && !REDUCED_MOTION && !document.hidden;
+    const waves = !REDUCED_MOTION;
+    // First load rises from empty (level 0); later applies start from the level on screen.
+    const fromLevel = fillAnim ? (thermoShownValue ?? 0) : levelOf(target);
+    const startTime = performance.now();
+    const FILL_MS = 1600;
+
+    function levelOf(v) { return (v - 1) / 6; }  // 0..1 along the tube
+
+    function frame(now) {
+        if (instance !== thermoInstance) return;
+
+        const box = canvasElement.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const W = Math.max(120, box.width);
+        const H = Math.max(140, box.height);
+        if (canvasElement.width !== W * dpr || canvasElement.height !== H * dpr) {
+            canvasElement.width = W * dpr;
+            canvasElement.height = H * dpr;
+            canvasElement.style.width = `${W}px`;
+            canvasElement.style.height = `${H}px`;
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+
+        const ui = chartUI();
+        const dark = isDarkTheme();
+
+        // Geometry: tube on the left third (the value overlays own the right side).
+        const bulbR = Math.min(26, H * 0.10);
+        const tubeW = bulbR * 1.05;
+        const cx = Math.max(bulbR + 8, W * 0.26);
+        const bulbCy = H - bulbR - 8;
+        const tubeTop = 12;
+        const w = tubeW / 2;
+
+        // Concave fillets join the tube walls to the bulb: an outward-facing arc of
+        // a larger circle, tangent to both the wall and the bulb (real glass shape).
+        const f = w * 0.9;
+        const dy = Math.sqrt((bulbR + f) ** 2 - (w + f) ** 2);
+        const filletY = bulbCy - dy;             // fillet centers' height
+        const aB = Math.atan2(dy, w + f);        // tangency angle on the bulb
+
+        const tubeBottom = filletY;
+        const yOf = level => tubeBottom - level * (tubeBottom - tubeTop - tubeW / 2);
+
+        // Fill progress with easing; ripple strength decays as it settles.
+        const p = fillAnim ? Math.min(1, (now - startTime) / FILL_MS) : 1;
+        const eased = 1 - Math.pow(1 - p, 3);
+        const level = fromLevel + (levelOf(target) - fromLevel) * eased;
+        thermoShownValue = level;
+        const shownValue = 1 + level * 6;
+        const settle = fillAnim ? 1 - eased : 0;
+
+        const liquid = thermoColor(target);
+        const liquidDeep = thermoColor(target, 0.97, 0.72);
+
+        // One continuous glass silhouette: left wall, top cap, right wall, right
+        // fillet, bulb bottom, left fillet. No stroke ever crosses the bulb.
+        const glass = new Path2D();
+        glass.moveTo(cx - w, filletY);
+        glass.lineTo(cx - w, tubeTop + w);
+        glass.arc(cx, tubeTop + w, w, Math.PI, 0);
+        glass.lineTo(cx + w, filletY);
+        glass.arc(cx + w + f, filletY, f, Math.PI, Math.PI - aB, true);
+        glass.arc(cx, bulbCy, bulbR, -aB, Math.PI + aB, false);
+        glass.arc(cx - w - f, filletY, f, aB, 0, true);
+        glass.closePath();
+
+        // Track (empty glass)
+        ctx.fillStyle = dark ? "rgba(115, 191, 232, 0.08)" : "rgba(0, 45, 77, 0.06)";
+        ctx.fill(glass);
+
+        // Liquid fills the bulb and rises up the tube, wavy surface on top
+        ctx.save();
+        ctx.clip(glass);
+        const surfY = yOf(level);
+        const t = now / 1000;
+        const amp = waves ? (1.6 + settle * 5) : 0;
+        ctx.beginPath();
+        ctx.moveTo(cx - bulbR - 2, bulbCy + bulbR + 2);
+        ctx.lineTo(cx - bulbR - 2, surfY);
+        for (let x = -bulbR - 2; x <= bulbR + 2; x += 2) {
+            const wave = Math.sin(x * 0.35 + t * 3.1) * amp + Math.sin(x * 0.18 - t * 2.2) * amp * 0.5;
+            ctx.lineTo(cx + x, surfY + wave);
+        }
+        ctx.lineTo(cx + bulbR + 2, bulbCy + bulbR + 2);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, tubeTop, 0, bulbCy);
+        grad.addColorStop(0, liquid);
+        grad.addColorStop(1, liquidDeep);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Depth + glow inside the bulb reservoir
+        ctx.shadowColor = thermoColor(target, dark ? 0.6 : 0.4);
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = liquidDeep;
+        ctx.beginPath();
+        ctx.arc(cx, bulbCy, bulbR * 0.85, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Bulb highlight
+        ctx.beginPath();
+        ctx.ellipse(cx - bulbR * 0.35, bulbCy - bulbR * 0.3, bulbR * 0.22, bulbR * 0.14, -0.6, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+        ctx.fill();
+
+        // Glass border, drawn once over the whole silhouette
+        ctx.strokeStyle = dark ? "rgba(185, 201, 217, 0.35)" : "rgba(0, 45, 77, 0.25)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke(glass);
+
+        // Reflection along the tube-bulb contact: highlight arcs on both fillets
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx + w + f, filletY, f + 1.5, Math.PI, Math.PI - aB, true);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cx - w - f, filletY, f + 1.5, aB, 0, true);
+        ctx.stroke();
+
+        // Soft shine along the left wall
+        ctx.save();
+        ctx.clip(glass);
+        const shine = ctx.createLinearGradient(cx - w, 0, cx, 0);
+        shine.addColorStop(0, "rgba(255, 255, 255, 0.28)");
+        shine.addColorStop(1, "rgba(255, 255, 255, 0)");
+        ctx.fillStyle = shine;
+        ctx.fillRect(cx - w, tubeTop, w, tubeBottom - tubeTop);
+        ctx.restore();
+
+        // Scale: ticks + numbers 1..7 on the right, current level emphasized
+        ctx.font = "700 11px 'Gotham', 'Arial', sans-serif";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        for (let v = 1; v <= 7; v++) {
+            const y = yOf(levelOf(v));
+            const active = Math.round(shownValue) === v;
+            ctx.strokeStyle = active ? thermoColor(target) : ui.axisBorder;
+            ctx.lineWidth = active ? 2 : 1;
+            ctx.beginPath();
+            ctx.moveTo(cx + tubeW / 2 + 4, y);
+            ctx.lineTo(cx + tubeW / 2 + (active ? 14 : 10), y);
+            ctx.stroke();
+            ctx.fillStyle = active ? thermoColor(target) : ui.tick;
+            ctx.fillText(String(v), cx + tubeW / 2 + 18, y);
+        }
+
+        // Waves keep rolling while the tab is visible; a static frame is enough otherwise.
+        if (waves) instance.raf = requestAnimationFrame(frame);
+        else thermoShownValue = levelOf(target);
+    }
+
+    instance.raf = requestAnimationFrame(frame);
+}
+
 export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}) {
     if (canvasElement.parentElement) {
         canvasElement.parentElement.classList.remove("skeleton");
@@ -414,15 +654,8 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
     const ctx = canvasElement.getContext("2d");
     applyChartDefaults();
 
-    const sentimentColors = [
-        "#b91c1c", // 1 Extremely negative
-        "#ef4444", // 2 Very negative
-        "#fdae61", // 3 Slightly negative
-        "#94a3b8", // 4 Neutral
-        "#84cc16", // 5 Slightly positive
-        "#22c55e", // 6 Positive
-        "#15803d"  // 7 Extremely positive
-    ];
+    const scale = gradeScale();
+    const ui = chartUI();
 
     const config = {
         type: "bar",
@@ -431,9 +664,12 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
             datasets: [{
                 label: texts.labelFrequency || "Frequência",
                 data: data,
-                backgroundColor: sentimentColors,
-                borderRadius: 4,
-                barPercentage: 0.8
+                backgroundColor: scale.colors,
+                hoverBackgroundColor: scale.hover,
+                borderRadius: 5,
+                borderSkipped: "start", // rounded data-end, square baseline
+                barPercentage: 0.72,
+                maxBarThickness: 46
             }]
         },
         options: {
@@ -441,17 +677,24 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
             maintainAspectRatio: false,
             animation: chartAnimation(true),
             layout : {
-                padding: { top: 5, bottom: 0, left: 0, right: 0 }
+                padding: { top: 20, bottom: 0, left: 0, right: 0 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: { display: false },
-                    border: { display: true }
+                    grid: { display: true, color: ui.axisBorder, drawTicks: false },
+                    border: { display: false },
+                    ticks: {
+                        maxTicksLimit: 4,
+                        padding: 6,
+                        font: { size: 11, family: "'Gotham', 'Arial', sans-serif" },
+                        callback: v => compactNumber(v),
+                    }
                 },
-                x: { 
+                x: {
                     grid: { display: false },
-                    border: { display: true },
+                    border: { display: true, color: ui.axisBorder },
+                    ticks: { font: { size: 12, weight: "700", family: "'Gotham', 'Arial', sans-serif" } }
                 }
             },
             plugins: { 
@@ -474,7 +717,8 @@ export function drawGradesHistogramChart(canvasElement, labels, data, texts = {}
                     }
                 }
             }
-        }
+        },
+        plugins: [barValueLabels]
     };
 
     // Updating in place lets Chart.js tween the bars from the old values to the

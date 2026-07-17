@@ -695,7 +695,37 @@ input:checked + .slider:before {
 
 .filter-group input[type=number] {
     margin: 0;
+    -moz-appearance: textfield;
 }
+/* Native spinner replaced by .agg-spin below: its own background can't be
+   recolored reliably across browsers, so we draw the buttons ourselves. */
+.filter-group input[type=number]::-webkit-outer-spin-button,
+.filter-group input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.agg-spin {
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    gap: 1px;
+}
+.agg-spin-btn {
+    width: 14px;
+    height: 11px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--fgv-gray-med);
+    cursor: pointer;
+    border-radius: 2px;
+    line-height: 0;
+}
+.agg-spin-btn:hover { background: rgba(0, 0, 0, 0.06); color: var(--fgv-blue-dark); }
+.agg-spin-btn:focus-visible { outline: 1px solid var(--fgv-blue-light); outline-offset: 1px; }
 
 /* Category choice box and other Selects with the same style */
 
@@ -841,6 +871,10 @@ input:checked + .slider:before {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+.cbx-summary-text--compact {
+    font-size: 9px;
+    letter-spacing: -0.02em;
 }
 .cbx-more {
     flex: none;
@@ -2442,6 +2476,8 @@ html[data-theme="dark"] .cbx-field.is-open,
 html[data-theme="dark"] .agg-control:focus-within { border-color: var(--dk-border-strong); }
 html[data-theme="dark"] .cbx-summary,
 html[data-theme="dark"] .input-aggregation { color: var(--dk-text-strong); }
+html[data-theme="dark"] .agg-spin-btn { color: var(--dk-text-muted); }
+html[data-theme="dark"] .agg-spin-btn:hover { background: var(--dk-surface); color: var(--dk-text-strong); }
 html[data-theme="dark"] .filter-label { color: var(--dk-text-body); }
 html[data-theme="dark"] .cbx-more {
     background: var(--dk-surface);
@@ -2691,4 +2727,16 @@ html[data-theme="dark"] .cbx-custom-range input.date-input:focus { border-color:
 .flatpickr-weekdays .flatpickr-weekday {
     color: var(--fgv-gray-med) !important;
     font-weight: 700 !important;
+}
+
+/* Thermometer sketch: tube on the left, value column on the right */
+.gauge-wrapper .gauge-value-text {
+    left: 44%;
+    right: 8px;
+    bottom: 48%;
+}
+.gauge-wrapper .gauge-description {
+    left: 44%;
+    right: 8px;
+    bottom: 34%;
 }
