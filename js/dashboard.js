@@ -76,15 +76,11 @@ let cachedApiData = {};
 
 const PERIODS_CONFIG = {
     static: [
+        { value: "set_dez_2024", start: "2024-09-01", end: "2024-12-31" },
         { value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
         { value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
-        { value: "q1_2025", start: "2025-01-01", end: "2025-03-31" },
-        { value: "q2_2025", start: "2025-04-01", end: "2025-06-30" },
-        { value: "q3_2025", start: "2025-07-01", end: "2025-09-30" },
-        { value: "q4_2025", start: "2025-10-01", end: "2025-12-31" },
         { value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
-        { value: "year_2026", start: "2026-01-01", end: "2026-12-31" },
-        { value: "dec2025_jan2026", start: "2025-12-01", end: "2026-02-10" }
+        { value: "all_period", start: "2024-09-01", end: "2025-12-31" }
     ],
     dynamic: [
         { value: "last30d" },

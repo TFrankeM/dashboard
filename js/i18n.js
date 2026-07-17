@@ -150,15 +150,11 @@ export const DICTIONARY = {
         // Filter options
         period_options: {
             // "key": "label"
+            "set_dez_2024": "Set a Dez de 2024",
             "sem1_2025": "2025 semestre 1 de 2",
             "sem2_2025": "2025 semestre 2 de 2",
-            "q1_2025": "2025 trimestre 1 de 4",
-            "q2_2025": "2025 trimestre 2 de 4",
-            "q3_2025": "2025 trimestre 3 de 4",
-            "q4_2025": "2025 trimestre 4 de 4",
             "year_2025": "2025",
-            "year_2026": "2026",
-            "dec2025_jan2026": "Dez de 2025 a Fev de 2026",
+            "all_period": "Todo o período disponível",
             "last30d": "Últimos 30 dias",
             "last120d": "Últimos 120 dias",
             "last180d": "Últimos 180 dias",
@@ -180,6 +176,7 @@ export const DICTIONARY = {
             "meio_ambiente": "Meio ambiente",
             "meteorologia": "Meteorologia",
             "nao_informado": "Não informado",
+            "outros": "Outros",
             "politica": "Política",
             "religiao_crencas": "Religião e crenças",
             "saude": "Saúde",
@@ -396,15 +393,11 @@ export const DICTIONARY = {
         // Filter options
         period_options: {
             // "key": "label"
+            "set_dez_2024": "Sep to Dec 2024",
             "sem1_2025": "2025 semester 1 of 2",
             "sem2_2025": "2025 semester 2 of 2",
-            "q1_2025": "2025 quarter 1 of 4",
-            "q2_2025": "2025 quarter 2 of 4",
-            "q3_2025": "2025 quarter 3 of 4",
-            "q4_2025": "2025 quarter 4 of 4",
             "year_2025": "2025",
-            "year_2026": "2026",
-            "dec2025_jan2026": "Dec 2025 to Feb 2026",
+            "all_period": "Entire available period",
             "last30d": "Last 30 days",
             "last120d": "Last 120 days",
             "last180d": "Last 180 days",
@@ -426,6 +419,7 @@ export const DICTIONARY = {
             "meio_ambiente": "Environment",
             "meteorologia": "Weather",
             "nao_informado": "Not informed",
+            "outros": "Others",
             "politica": "Politics",
             "religiao_crencas": "Religion and belief",
             "saude": "Health",
@@ -641,15 +635,11 @@ export const DICTIONARY = {
         // Filter options
         period_options: {
             // "key": "label"
+            "set_dez_2024": "Sep a Dic de 2024",
             "sem1_2025": "2025 semestre 1 de 2",
             "sem2_2025": "2025 semestre 2 de 2",
-            "q1_2025": "2025 trimestre 1 de 4",
-            "q2_2025": "2025 trimestre 2 de 4",
-            "q3_2025": "2025 trimestre 3 de 4",
-            "q4_2025": "2025 trimestre 4 de 4",
             "year_2025": "2025",
-            "year_2026": "2026",
-            "dec2025_jan2026": "Dic 2025 a Feb 2026",
+            "all_period": "Todo el período disponible",
             "last30d": "Últimos 30 dias",
             "last120d": "Últimos 120 dias",
             "last180d": "Últimos 180 dias",
@@ -671,6 +661,7 @@ export const DICTIONARY = {
             "meio_ambiente": "Medio ambiente",
             "meteorologia": "Meteorología",
             "nao_informado": "No informado",
+            "outros": "Otros",
             "politica": "Política",
             "religiao_crencas": "Religión y creencias",
             "saude": "Salud",
