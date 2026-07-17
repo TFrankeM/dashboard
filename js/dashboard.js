@@ -6,7 +6,7 @@ import { DICTIONARY } from "./i18n.js";
 let CURRENT_LANG = "pt-BR";
 
 // Data is stored in UTC; every user-facing datetime renders in Brasília time.
-const DISPLAY_TZ = "America/Sao_Paulo";
+const DISPLAY_TZ = "UTC";
 
 const POLL_INTERVAL_MS = 600000;      // dynamic-mode data refresh (10 min)
 const LAST_UPDATE_TICK_MS = 60000;    // "last update" relative label refresh
@@ -75,12 +75,13 @@ let pendingState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let cachedApiData = {};
 
 const PERIODS_CONFIG = {
+    // Display order: full range on top, then most recent first.
     static: [
-        { value: "set_dez_2024", start: "2024-09-01", end: "2024-12-31" },
-        { value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
-        { value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
+        { value: "all_period", start: "2024-09-01", end: "2025-12-31" },
         { value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
-        { value: "all_period", start: "2024-09-01", end: "2025-12-31" }
+        { value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
+        { value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
+        { value: "set_dez_2024", start: "2024-09-01", end: "2024-12-31" }
     ],
     dynamic: [
         { value: "last30d" },
@@ -431,7 +432,12 @@ function buildCheckboxFilter(selectEl, opts) {
     summaryRefitters.push(renderSummary);
 
     // Order: selected first, then unselected, disabled last; alphabetical within each group.
+    // With fixedOrder, the insertion order of the options is kept as-is.
     const computeOrder = () => {
+        if (opts.fixedOrder) {
+            order = options.map(o => o.value);
+            return;
+        }
         const rank = o => (o.disabled ? 2 : selected.has(o.value) ? 0 : 1);
         order = options.slice()
             .sort((a, b) => rank(a) - rank(b) || translate(a.value).localeCompare(translate(b.value)))
@@ -581,7 +587,7 @@ async function initializeFilters() {
         const periodEl = document.getElementById("period");
         if (periodEl) {
             choicesPeriod = buildCheckboxFilter(periodEl, {
-                translate: tPeriod, single: true, searchKey: "placeholder_search",
+                translate: tPeriod, single: true, fixedOrder: true, searchKey: "placeholder_search",
                 icon: "calendar-days", nameKey: "label_period"
             });
             updatePeriodDropdown(appState.isDynamic);

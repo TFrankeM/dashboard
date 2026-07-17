@@ -68,7 +68,7 @@ let RELATIONSHIPS = {};
 
 
 // Data is stored in UTC; every user-facing datetime renders in Brasília time.
-const DISPLAY_TZ = "America/Sao_Paulo";
+const DISPLAY_TZ = "UTC";
 
 const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -440,9 +440,10 @@ async function initializeFilters(urlParams) {
     if (startInput) {
         const fpStart = flatpickr(startInput, {
             ...dateConfig,
-            defaultDate: pendingState.startDate || null,
+            // Strip the zone so the picker shows the UTC wall time as-is
+            defaultDate: (pendingState.startDate || "").slice(0, 16) || null,
             onChange: function(selectedDates, dateStr) {
-                pendingState.startDate = dateStr;
+                pendingState.startDate = dateStr ? `${dateStr}:00.000Z` : "";
                 checkApplyButtonState();
             }
         });
@@ -463,9 +464,9 @@ async function initializeFilters(urlParams) {
     if (endInput) {
         const fpEnd = flatpickr(endInput, {
             ...dateConfig,
-            defaultDate: pendingState.endDate || null,
+            defaultDate: (pendingState.endDate || "").slice(0, 16) || null,
             onChange: function(selectedDates, dateStr) {
-                pendingState.endDate = dateStr;
+                pendingState.endDate = dateStr ? `${dateStr}:00.000Z` : "";
                 checkApplyButtonState();
             }
         });

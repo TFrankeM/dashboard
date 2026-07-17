@@ -124,6 +124,7 @@ export const DICTIONARY = {
         // Evolution chart
         chart_evolution_title: "Evolução temporal",
         evolution_hint: "Arraste para dar zoom · Clique em um ponto para ver as notícias",
+        tz_note: "Horários em UTC (Greenwich)",
         btn_clear_filters: "Limpar filtros",
         theme_to_dark: "Ativar modo escuro",
         theme_to_light: "Ativar modo claro",
@@ -367,6 +368,7 @@ export const DICTIONARY = {
         // Evolution chart
         chart_evolution_title: "Evolution over time",
         evolution_hint: "Drag to zoom · Click a point to see the news",
+        tz_note: "Times in UTC (Greenwich)",
         btn_clear_filters: "Clear filters",
         theme_to_dark: "Enable dark mode",
         theme_to_light: "Enable light mode",
@@ -609,6 +611,7 @@ export const DICTIONARY = {
         // Evolution chart
         chart_evolution_title: "Evolución temporal",
         evolution_hint: "Arrastra para hacer zoom · Haz clic en un punto para ver las noticias",
+        tz_note: "Horarios en UTC (Greenwich)",
         btn_clear_filters: "Limpiar filtros",
         theme_to_dark: "Activar modo oscuro",
         theme_to_light: "Activar modo claro",

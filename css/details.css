@@ -220,8 +220,13 @@ body {
 }
 #filter-summary {
     font-size: 0.875rem;
-    color: #64748b;     
+    color: #64748b;
     margin: 4px 0 0 0;
+}
+.tz-note {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin: 2px 0 0 0;
 }
 .controls { 
     display: flex;
