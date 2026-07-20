@@ -45,3 +45,4 @@ js/index copy.js
 
 # Locks temporários de aplicativos (LibreOffice/Excel)
 .~lock.*#
+.env*
