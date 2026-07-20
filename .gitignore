@@ -45,4 +45,7 @@ js/index copy.js
 
 # Locks temporários de aplicativos (LibreOffice/Excel)
 .~lock.*#
+
+# Flags locais de desenvolvimento (feature flags sem Edge Config)
+.dev-flags.json
 .env*

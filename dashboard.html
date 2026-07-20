@@ -198,9 +198,9 @@
         </section>
 
         <!-- Executive summary -->
-        <main class="main-content" id="metrics">
+        <main class="main-content" id="metrics" data-module-group>
             <!-- Container left: grades histogram -->
-             <div class="card metric-card hud-corners">
+             <div class="card metric-card hud-corners" data-module="grades-histogram">
                 <div class="card-header">
                     <div>    
                         <div class="card-header-title-group">
@@ -226,7 +226,7 @@
             </div>
 
             <!-- Container center: quantity of news -->
-            <div class="card metric-card hud-corners">
+            <div class="card metric-card hud-corners" data-module="news-volume">
                 <div class="card-header">
                     <div class="card-header-title-group">
                         <h3 data-i18n="chart_volume_title">Quantidade de notícias</h3>
@@ -253,7 +253,7 @@
             </div>
 
             <!-- Container direita: gauge -->
-            <div class="card metric-card hud-corners">
+            <div class="card metric-card hud-corners" data-module="gauge-thermometer">
                 <div class="card-header">
                     <div class="card-header-title-group">
                         <h3 data-i18n="chart_gauge_title">Indicador atual</h3>
@@ -277,10 +277,36 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Retired variant: speedometer gauge, kept behind a flag -->
+            <div class="card metric-card hud-corners" data-module="gauge-speedometer">
+                <div class="card-header">
+                    <div class="card-header-title-group">
+                        <h3 data-i18n="chart_gauge_title">Indicador atual</h3>
+                        <span class="info-icon" data-i18n-tooltip="tooltip_gauge">?</span>
+                    </div>
+                    <i data-lucide="gauge" class="card-icon"></i>
+                </div>
+                <div class="card-desc">
+                    <span id="speedo-last-update"></span>
+                </div>
+                <div class="card-body">
+                    <div class="gauge-wrapper speedo-wrapper skeleton">
+                        <div class="skeleton-overlay">
+                            <div class="css-spinner"></div>
+                            <span data-i18n="loading_data">Carregando...</span>
+                        </div>
+
+                        <canvas id="speedoChart"></canvas>
+                        <div id="speedoValueText" class="gauge-value-text">0.0</div>
+                        <div id="speedoDescription" class="gauge-description"> </div>
+                    </div>
+                </div>
+            </div>
         </main>
         
         <!-- Container evolução temporal -->
-        <section class="evolution-section" id="evolution">
+        <section class="evolution-section" id="evolution" data-module="evolution">
             <div class="card full-width-card hud-corners">
                 <div class="card-header-row">
                     <div>
@@ -315,7 +341,7 @@
         </section>
 
         <!-- Newsstand: 3-column newspaper view of the clicked point's news -->
-        <section class="newsstand-section" id="newsstand">
+        <section class="newsstand-section" id="newsstand" data-module="newsstand">
             <div class="card full-width-card hud-corners">
                 <div class="card-header-row">
                     <div>

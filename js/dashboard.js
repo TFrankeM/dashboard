@@ -1,9 +1,8 @@
 import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships, fetchDetailsData, fetchStats } from "./api_adapter.js";
 import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawThermometerChart, drawLineChart, clearLineChartSelection, setChartsAnimation } from "./charts.js";
 
-// Sketch toggle: thermometer in place of the gauge (drawGaugeChart stays available).
-const USE_THERMOMETER = true;
 import { DICTIONARY } from "./i18n.js";
+import { initModuleFlags } from "./flags.js";
 
 // Global state variables
 let CURRENT_LANG = "pt-BR";
@@ -197,7 +196,7 @@ function translateUI() {
     document.querySelectorAll("[data-i18n-tooltip]").forEach(el => {
         const key = el.getAttribute("data-i18n-tooltip");
         // The gauge tooltip depends on the applied mode, not just the language.
-        const content = el.id === "gauge-info-icon" ? texts[gaugeTooltipKey()] : texts[key];
+        const content = key === "tooltip_gauge" ? texts[gaugeTooltipKey()] : texts[key];
         if (el._tippy) {
             el._tippy.setContent(content);
         }
@@ -1146,18 +1145,19 @@ function gaugeTooltipKey() {
 }
 
 function updateGaugeTooltip() {
-    const el = document.getElementById("gauge-info-icon");
-    if (!el) return;
     const content = t(gaugeTooltipKey());
-    if (el._tippy) el._tippy.setContent(content);
-    el.setAttribute("data-tippy-content", content);
+    document.querySelectorAll('[data-i18n-tooltip="tooltip_gauge"]').forEach(el => {
+        if (el._tippy) el._tippy.setContent(content);
+        el.setAttribute("data-tippy-content", content);
+    });
 }
 
 // Builds the "Última atualização: há X min" description from the latest ingested data date.
 function renderLastUpdate() {
-    const el = document.getElementById("gauge-last-update");
-    if (!el) return;
-    if (!lastDataDate) { el.textContent = ""; return; }
+    const els = ["gauge-last-update", "speedo-last-update"]
+        .map(id => document.getElementById(id)).filter(Boolean);
+    if (!els.length) return;
+    if (!lastDataDate) { els.forEach(el => { el.textContent = ""; }); return; }
 
     const diffMin = Math.max(0, Math.floor((Date.now() - lastDataDate.getTime()) / 60000));
     let rel;
@@ -1168,7 +1168,7 @@ function renderLastUpdate() {
     } else {
         rel = t("update_over_day");
     }
-    el.textContent = `${t("last_update")}${rel}`;
+    els.forEach(el => { el.textContent = `${t("last_update")}${rel}`; });
 }
 
 function processAndUpdateHistogramChart(apiData) {
@@ -1285,18 +1285,21 @@ function processAndUpdateVolumeChart(apiData) {
 
 function processAndUpdateGaugeDisplay(value) {
     const finalValue = value !== undefined && value !== null ? parseFloat(value) : 4.00;
-    const gaugeValueText = document.getElementById("gaugeValueText");
-    const gaugeDescription = document.getElementById("gaugeDescription");
+    const gaugeValueTexts = ["gaugeValueText", "speedoValueText"]
+        .map(id => document.getElementById(id)).filter(Boolean);
+    const gaugeDescriptions = ["gaugeDescription", "speedoDescription"]
+        .map(id => document.getElementById(id)).filter(Boolean);
     const gaugeChartCanvas = document.getElementById("gaugeChart");
+    const speedoChartCanvas = document.getElementById("speedoChart");
 
-    if (gaugeValueText) {
+    gaugeValueTexts.forEach(el => {
         if (animateNextDraw) {
-            animateCount(gaugeValueText, finalValue, { formatter: v => v.toFixed(2) });
+            animateCount(el, finalValue, { formatter: v => v.toFixed(2) });
         } else {
-            gaugeValueText.dataset.value = finalValue;
-            gaugeValueText.textContent = finalValue.toFixed(2);
+            el.dataset.value = finalValue;
+            el.textContent = finalValue.toFixed(2);
         }
-    }
+    });
 
     // Text variants of the grade scale: darker steps on light, brighter on dark.
     const dark = document.documentElement.dataset.theme === "dark";
@@ -1326,10 +1329,10 @@ function processAndUpdateGaugeDisplay(value) {
         descColor = dark ? "#35E68C" : "#14602F";
     }
 
-    if (gaugeDescription) {
-        gaugeDescription.textContent = descText;
-        gaugeDescription.style.color = descColor;
-    }
+    gaugeDescriptions.forEach(el => {
+        el.textContent = descText;
+        el.style.color = descColor;
+    });
 
     const segments = [
         `${t("image_extremely_negative")} (1.0 - 1.5)`,
@@ -1341,10 +1344,8 @@ function processAndUpdateGaugeDisplay(value) {
         `${t("image_extremely_positive")} (6.5 - 7.0)`
     ];
 
-    if (gaugeChartCanvas) {
-        if (USE_THERMOMETER) drawThermometerChart(gaugeChartCanvas, finalValue, { segments });
-        else drawGaugeChart(gaugeChartCanvas, finalValue, { segments });
-    }
+    if (gaugeChartCanvas) drawThermometerChart(gaugeChartCanvas, finalValue, { segments });
+    if (speedoChartCanvas) drawGaugeChart(speedoChartCanvas, finalValue, { segments });
 }
 
 function updateEvolutionHeader(totalNews) {
@@ -1909,7 +1910,9 @@ function redrawCharts() {
     processAndUpdateLineChart(cachedApiData.lineData);
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+    // Disabled modules must leave the DOM before anything below queries it.
+    await initModuleFlags();
     applyUrlState();
     initLanguageSelector();
     initThemeToggle();
