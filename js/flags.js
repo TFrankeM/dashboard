@@ -22,12 +22,13 @@ async function fetchFlags() {
     return res.json();
 }
 
-function addPreviewBadge(el) {
+function addPreviewBadge(el, status) {
     el.classList.add("module-preview");
     const badge = document.createElement("span");
     badge.className = "module-badge";
-    badge.setAttribute("data-i18n", "flag_preview_badge");
-    badge.textContent = "Em desenvolvimento";
+    const retired = status === "retired";
+    badge.setAttribute("data-i18n", retired ? "flag_retired_badge" : "flag_preview_badge");
+    badge.textContent = retired ? "Descontinuado" : "Em desenvolvimento";
     el.prepend(badge);
 }
 
@@ -61,7 +62,7 @@ export async function initModuleFlags() {
         if (mod.enabled) continue;
         const el = document.querySelector(`[data-module="${mod.id}"]`);
         if (!el) continue;
-        if (lab) addPreviewBadge(el);
+        if (lab) addPreviewBadge(el, mod.status);
         else el.remove();
     }
     if (!lab) pruneEmptyContainers();
