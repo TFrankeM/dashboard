@@ -1993,7 +1993,7 @@ body.drawer-resizing {
     --news-body-size: 0.95rem;
     --news-leading: 1.72;
     --news-measure: 62ch;
-    --news-row-max: 880px;
+    --news-row-max: 940px;
 }
 
 .newsstand-hint {
@@ -2014,6 +2014,23 @@ body.drawer-resizing {
     grid-template-columns: 1fr;
     gap: 26px;
     margin-top: 10px;
+    position: relative;
+}
+/* FGV diagonal-line pattern fills the empty sides of the full-width card,
+   fading out behind the reading area. */
+.newsstand-grid::before {
+    content: "";
+    position: absolute;
+    inset: -10px 0;
+    background: repeating-linear-gradient(45deg,
+        transparent 0 13px, rgba(12, 99, 170, 0.07) 13px 14px);
+    -webkit-mask: linear-gradient(90deg, #000, transparent 28%, transparent 72%, #000);
+    mask: linear-gradient(90deg, #000, transparent 28%, transparent 72%, #000);
+    pointer-events: none;
+}
+html[data-theme="dark"] .newsstand-grid::before {
+    background: repeating-linear-gradient(45deg,
+        transparent 0 13px, rgba(115, 191, 232, 0.09) 13px 14px);
 }
 .newsstand-col-head {
     display: flex;
@@ -2048,7 +2065,7 @@ body.drawer-resizing {
 }
 .news-postit {
     flex: none;
-    width: 240px;
+    width: 280px;
     align-self: flex-start;
     margin-top: 14px;
     background: #fef9c3;
@@ -2739,6 +2756,18 @@ html[data-theme="dark"] .cbx-custom-range input.date-input:focus { border-color:
     left: 44%;
     right: 8px;
     bottom: 34%;
+}
+
+/* Speedometer card keeps the original bottom-centered value */
+.speedo-wrapper .gauge-value-text {
+    left: 0;
+    right: 0;
+    bottom: 20px;
+}
+.speedo-wrapper .gauge-description {
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 /* Feature flags: lab preview of disabled modules */

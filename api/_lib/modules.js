@@ -10,7 +10,8 @@
 export const MODULES = [
     { id: "grades-histogram", label: "Distribuição de notas", status: "production", defaultEnabled: true },
     { id: "news-volume", label: "Quantidade de notícias", status: "production", defaultEnabled: true },
-    { id: "gauge", label: "Indicador atual", status: "production", defaultEnabled: true },
+    { id: "gauge-thermometer", label: "Indicador atual (termômetro)", status: "production", defaultEnabled: true },
+    { id: "gauge-speedometer", label: "Indicador atual (acelerador)", status: "retired", defaultEnabled: false },
     { id: "evolution", label: "Evolução temporal", status: "production", defaultEnabled: true },
     { id: "newsstand", label: "Notícias do ponto", status: "production", defaultEnabled: true },
 ];

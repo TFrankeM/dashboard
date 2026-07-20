@@ -118,6 +118,11 @@ body {
     color: var(--fgv-aux-yellow);
 }
 
+.module-status.is-retired {
+    background: rgba(148, 163, 184, 0.14);
+    color: var(--dk-text-muted, #94a3b8);
+}
+
 /* Toggle: a role="switch" button; aria-checked drives the visual state. */
 .module-toggle {
     flex: none;

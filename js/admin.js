@@ -40,7 +40,7 @@ function render() {
         name.textContent = mod.label;
         const status = document.createElement("span");
         status.className = `module-status is-${mod.status}`;
-        status.textContent = mod.status === "production" ? "produção" : "em desenvolvimento";
+        status.textContent = { production: "produção", retired: "descontinuado" }[mod.status] || "em desenvolvimento";
         info.append(name, status);
 
         const toggle = document.createElement("button");

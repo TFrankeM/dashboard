@@ -253,7 +253,7 @@
             </div>
 
             <!-- Container direita: gauge -->
-            <div class="card metric-card hud-corners" data-module="gauge">
+            <div class="card metric-card hud-corners" data-module="gauge-thermometer">
                 <div class="card-header">
                     <div class="card-header-title-group">
                         <h3 data-i18n="chart_gauge_title">Indicador atual</h3>
@@ -274,6 +274,32 @@
                         <canvas id="gaugeChart"></canvas>
                         <div id="gaugeValueText" class="gauge-value-text">0.0</div>
                         <div id="gaugeDescription" class="gauge-description"> </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retired variant: speedometer gauge, kept behind a flag -->
+            <div class="card metric-card hud-corners" data-module="gauge-speedometer">
+                <div class="card-header">
+                    <div class="card-header-title-group">
+                        <h3 data-i18n="chart_gauge_title">Indicador atual</h3>
+                        <span class="info-icon" data-i18n-tooltip="tooltip_gauge">?</span>
+                    </div>
+                    <i data-lucide="gauge" class="card-icon"></i>
+                </div>
+                <div class="card-desc">
+                    <span id="speedo-last-update"></span>
+                </div>
+                <div class="card-body">
+                    <div class="gauge-wrapper speedo-wrapper skeleton">
+                        <div class="skeleton-overlay">
+                            <div class="css-spinner"></div>
+                            <span data-i18n="loading_data">Carregando...</span>
+                        </div>
+
+                        <canvas id="speedoChart"></canvas>
+                        <div id="speedoValueText" class="gauge-value-text">0.0</div>
+                        <div id="speedoDescription" class="gauge-description"> </div>
                     </div>
                 </div>
             </div>
