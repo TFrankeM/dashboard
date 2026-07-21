@@ -48,4 +48,5 @@ js/index copy.js
 
 # Flags locais de desenvolvimento (feature flags sem Edge Config)
 .dev-flags.json
+.dev-layouts.json
 .env*

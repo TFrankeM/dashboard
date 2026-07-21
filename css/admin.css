@@ -1,47 +1,103 @@
-/* Admin panel (admin.html): internal page, dark-first, built on theme.css tokens. */
+/* Admin panel (admin.html): internal page, dark-first, built on theme.css
+   tokens. Full-width shell: topbar + auth gate, then layout gallery + editor. */
 
 * { box-sizing: border-box; }
+
+/* The author display rules below (flex/grid) would beat the UA rule for the
+   hidden attribute; restate it with priority. */
+[hidden] { display: none !important; }
 
 body {
     margin: 0;
     min-height: 100vh;
     font-family: "Gotham", "Montserrat", "Segoe UI", sans-serif;
-    background: linear-gradient(160deg, var(--dk-bg-0), var(--dk-bg-1));
+    background: linear-gradient(160deg, var(--dk-bg-0), var(--dk-bg-1)) fixed;
     color: var(--dk-text-body);
 }
 
-.admin {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 48px 24px 64px;
+a { color: var(--fgv-blue-sky); }
+
+.admin-hint {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--fgv-gray-med);
+}
+
+/* ---- Topbar ---- */
+
+.admin-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--dk-border);
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.admin-brand h1 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--dk-text-strong);
+}
+
+.admin-brand h1 span {
+    font-weight: 400;
+    color: var(--fgv-gray-med);
+}
+
+.admin-brand p {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: var(--fgv-gray-med);
+}
+
+.admin-back {
+    font-size: 0.85rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.admin-back:hover { text-decoration: underline; }
+
+/* ---- Auth gate ---- */
+
+.auth-gate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 140px);
+    padding: 32px;
+}
+
+.auth-card {
+    width: min(400px, 100%);
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 14px;
+    padding: 32px 28px;
+    border: 1px solid var(--dk-border);
+    border-radius: 14px;
+    background: var(--dk-surface);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
 }
 
-.admin-header h1 {
-    margin: 0 0 8px;
-    font-size: 1.5rem;
+.auth-card h2 {
+    margin: 0;
+    font-size: 1.2rem;
     color: var(--dk-text-strong);
 }
 
-.admin-header p { margin: 0; line-height: 1.5; }
-
-.admin a { color: var(--fgv-blue-sky); }
-
-.admin-auth label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--dk-text-strong);
+.auth-card p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
 }
 
 #admin-token {
     width: 100%;
-    padding: 10px 14px;
+    padding: 11px 14px;
     border-radius: 8px;
     border: 1px solid var(--dk-border-strong);
     background: var(--dk-surface-2);
@@ -54,127 +110,611 @@ body {
     outline-offset: 1px;
 }
 
-.admin-hint {
-    margin: 6px 0 0;
-    font-size: 0.8rem;
-    color: var(--fgv-gray-med);
-}
-
-.admin-meta {
-    margin-bottom: 12px;
+.auth-error {
+    margin: 0;
+    min-height: 1.2em;
     font-size: 0.85rem;
+    color: #ef4444;
+}
+
+/* ---- Buttons ---- */
+
+.btn-primary,
+.btn-ghost,
+.btn-danger {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-primary {
+    border: 1px solid var(--fgv-blue-light);
+    background: var(--fgv-blue-light);
+    color: var(--fgv-white);
+}
+
+.btn-primary:hover { filter: brightness(1.1); }
+
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--dk-border-strong);
+    background: transparent;
+    color: var(--dk-text-body);
+    text-decoration: none;
+}
+
+.btn-ghost:hover {
+    border-color: var(--fgv-blue-light);
+    color: var(--dk-text-strong);
+}
+
+/* Delete: a quiet red so the destructive action reads as such at rest. */
+.btn-danger {
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.08);
+    color: #f87171;
+}
+
+.btn-danger:hover {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.16);
+    color: #ef4444;
+}
+
+.btn-primary[data-armed],
+.btn-danger[data-armed] {
+    border-color: var(--fgv-aux-yellow);
+    background: transparent;
+    color: var(--fgv-aux-yellow);
+}
+
+.btn-primary:disabled,
+.btn-ghost:disabled,
+.btn-danger:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* ---- Main sections ---- */
+
+.admin-main {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    padding: 28px 32px 72px;
+}
+
+.section-head h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--dk-text-strong);
+}
+
+/* ---- Layout gallery ---- */
+
+.layout-gallery {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+    gap: 16px;
+    align-items: stretch;
+}
+
+.layout-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid var(--dk-border);
+    border-radius: 12px;
+    background: var(--dk-surface);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.layout-card:hover {
+    border-color: var(--dk-border-strong);
+    transform: translateY(-2px);
+}
+
+.layout-card.is-live {
+    border-color: var(--fgv-vib-green);
+}
+
+.layout-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.layout-card-head h3 {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    font-size: 0.98rem;
+    color: var(--dk-text-strong);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.layout-badge {
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    background: rgba(148, 163, 184, 0.14);
+    color: var(--dk-text-muted, #94a3b8);
+}
+
+.layout-badge.is-live {
+    background: rgba(0, 225, 172, 0.14);
+    color: var(--fgv-vib-green);
+}
+
+/* Miniature of the page grid: same 6-column/span model as the dashboard. */
+.layout-thumb {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    align-content: start;
+}
+
+.layout-thumb > span {
+    grid-column: span 2;
+    padding: 10px 4px;
+    border: 1px solid var(--dk-border-strong);
+    border-radius: 6px;
+    background: var(--dk-surface-2);
+    font-size: 0.66rem;
+    text-align: center;
+    color: var(--dk-text-body);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layout-thumb .size-2x1 { grid-column: span 4; }
+.layout-thumb .size-3x1 { grid-column: 1 / -1; }
+
+.layout-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* "+" card: first tile of the gallery. */
+.layout-add {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 190px;
+    padding: 18px;
+    border: 2px dashed var(--dk-border-strong);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--fgv-gray-med);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.layout-add:hover {
+    border-color: var(--fgv-blue-light);
+    color: var(--fgv-blue-light);
+}
+
+.layout-add-plus {
+    font-size: 2.4rem;
+    font-weight: 400;
+    line-height: 1;
+}
+
+/* ---- Layout editor ---- */
+
+.admin-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 24px;
+    border: 1px solid var(--dk-border);
+    border-radius: 14px;
+    background: var(--dk-surface);
+}
+
+.admin-editor h3 {
+    margin: 0 0 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
     color: var(--fgv-gray-med);
 }
 
-.module-list {
+.editor-name label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--dk-text-strong);
+}
+
+#editor-label {
+    width: min(480px, 100%);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--dk-border-strong);
+    background: var(--dk-surface-2);
+    color: var(--dk-text-strong);
+    font-size: 0.95rem;
+}
+
+#editor-label:focus {
+    outline: 2px solid var(--fgv-blue-light);
+    outline-offset: 1px;
+}
+
+.editor-columns {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 20px;
+}
+
+.editor-tray {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
+    gap: 8px;
+}
+
+.editor-tray li {
+    padding: 12px;
+    border: 1px dashed var(--dk-border-strong);
+    border-radius: 8px;
+    background: var(--dk-surface-2);
+    font-size: 0.82rem;
+    text-align: center;
+    color: var(--dk-text-body);
+    cursor: grab;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.editor-tray li:hover {
+    border-color: var(--fgv-blue-light);
+    color: var(--dk-text-strong);
+}
+
+.editor-tray:empty::after {
+    content: "Todos os gráficos estão na página";
+    font-size: 0.75rem;
+    color: var(--fgv-gray-med);
+}
+
+.editor-grid {
+    list-style: none;
+    margin: 0;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    min-height: 80px;
+    border: 1px dashed var(--dk-border-strong);
+    border-radius: 10px;
+}
+
+.editor-grid:empty::after {
+    content: "Clique ou arraste gráficos do inventário para cá";
+    grid-column: 1 / -1;
+    align-self: center;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--fgv-gray-med);
+}
+
+.editor-grid li {
+    grid-column: span 2;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid var(--dk-border-strong);
+    border-radius: 8px;
+    background: var(--dk-surface-2);
+    font-size: 0.8rem;
+    cursor: grab;
+}
+
+.editor-grid li.size-2x1 { grid-column: span 4; }
+.editor-grid li.size-3x1 { grid-column: 1 / -1; }
+
+.editor-card-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--dk-text-strong);
+}
+
+.editor-size,
+.editor-remove {
+    flex: none;
+    padding: 3px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--dk-border-strong);
+    background: var(--dk-surface);
+    color: var(--dk-text-body);
+    font-family: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.editor-size:hover,
+.editor-remove:hover {
+    border-color: var(--fgv-blue-light);
+    color: var(--dk-text-strong);
+}
+
+.editor-actions {
+    display: flex;
     gap: 10px;
 }
 
-.module-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 14px 18px;
-    border: 1px solid var(--dk-border);
+/* ---- Feedback toast ---- */
+
+.admin-feedback {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    max-width: min(420px, calc(100vw - 48px));
+    padding: 12px 18px;
+    border: 1px solid var(--fgv-vib-green);
     border-radius: 10px;
     background: var(--dk-surface);
+    color: var(--fgv-vib-green);
+    font-size: 0.88rem;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.module-info {
+.admin-feedback.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.admin-feedback.is-error {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 820px) {
+    .admin-topbar,
+    .admin-main { padding-left: 18px; padding-right: 18px; }
+
+    .editor-columns { grid-template-columns: 1fr; }
+
+    /* Stacked below the name field, the tray works better as a tile grid
+       than as one long column. */
+    .editor-tray {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .admin-main { padding: 20px 14px 64px; }
+    .auth-gate { padding: 24px 14px; }
+
+    .layout-gallery { grid-template-columns: 1fr; }
+
+    .layout-add { min-height: 120px; }
+
+    /* Editing on a phone: one card per row, spans off. */
+    .editor-grid { grid-template-columns: 1fr; }
+
+    .editor-grid li,
+    .editor-grid li.size-2x1,
+    .editor-grid li.size-3x1 { grid-column: auto; }
+
+    .editor-actions { flex-direction: column; }
+
+    .editor-actions .btn-primary,
+    .editor-actions .btn-ghost { width: 100%; }
+}
+
+/* ---- Chart glyph miniatures ---- */
+
+.module-glyph {
+    display: block;
+    flex: none;
+    color: var(--fgv-blue-sky);
+}
+
+.module-glyph svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Gallery thumbnails: glyph above a tiny label. */
+.layout-thumb > span {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 10px 8px 8px;
+}
+
+.layout-thumb .module-glyph {
+    height: 30px;
+    width: 100%;
+    max-width: 96px;
+    margin: 0 auto;
+}
+
+.thumb-label {
+    font-size: 0.62rem;
+    text-align: center;
+    color: var(--fgv-gray-med);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Inventory tray: glyph above the module name. */
+.editor-tray li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.editor-tray .module-glyph {
+    height: 26px;
+    width: 72px;
+}
+
+/* Page cards in the editor: small glyph at the left of the label. */
+.editor-grid .module-glyph {
+    height: 20px;
+    width: 40px;
+}
+
+/* Arrow hinting that the preview opens elsewhere. */
+.ext-arrow {
+    margin-left: 6px;
+    font-size: 0.9em;
+    line-height: 1;
+}
+
+/* ---- Inventory search + scroll ---- */
+
+#tray-search {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--dk-border-strong);
+    background: var(--dk-surface-2);
+    color: var(--dk-text-strong);
+    font-size: 0.85rem;
+}
+
+#tray-search:focus {
+    outline: 2px solid var(--fgv-blue-light);
+    outline-offset: 1px;
+}
+
+/* The inventory scrolls instead of growing with the catalog. */
+.editor-tray {
+    max-height: 330px;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+}
+
+.editor-tray.is-filtered-empty::after {
+    content: "Nenhum item corresponde à busca";
+    font-size: 0.75rem;
+    color: var(--fgv-gray-med);
+}
+
+/* ---- Mandatory filter bar strip ---- */
+
+.editor-filters-strip {
     display: flex;
     align-items: center;
-    gap: 12px;
-    min-width: 0;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--dk-border);
+    border-radius: 8px;
+    background: var(--dk-surface-2);
+    color: var(--fgv-gray-med);
+    font-size: 0.78rem;
+    cursor: default;
 }
 
-.module-info strong {
-    color: var(--dk-text-strong);
-    font-size: 0.95rem;
+.editor-filters-strip svg {
+    width: 88px;
+    height: 14px;
+    flex: none;
 }
 
-.module-status {
-    padding: 2px 10px;
+.strip-badge {
+    margin-left: auto;
+    padding: 2px 8px;
     border-radius: 999px;
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    white-space: nowrap;
-}
-
-.module-status.is-production {
-    background: rgba(0, 225, 172, 0.14);
-    color: var(--fgv-vib-green);
-}
-
-.module-status.is-development {
-    background: rgba(240, 191, 120, 0.14);
-    color: var(--fgv-aux-yellow);
-}
-
-.module-status.is-retired {
     background: rgba(148, 163, 184, 0.14);
-    color: var(--dk-text-muted, #94a3b8);
 }
 
-/* Toggle: a role="switch" button; aria-checked drives the visual state. */
-.module-toggle {
-    flex: none;
-    width: 46px;
+/* ---- Blank spacer visuals ---- */
+
+.thumb-filters {
+    grid-column: 1 / -1;
     height: 26px;
-    padding: 0;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
     border: 1px solid var(--dk-border-strong);
-    border-radius: 999px;
+    border-radius: 5px;
     background: var(--dk-surface-2);
-    cursor: pointer;
-    position: relative;
-    transition: background 0.15s ease;
+    color: var(--fgv-gray-med);
 }
 
-.module-toggle::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--fgv-gray-light);
-    transition: transform 0.15s ease, background 0.15s ease;
+.thumb-filters svg {
+    width: 110px;
+    height: 14px;
 }
 
-.module-toggle[aria-checked="true"] {
-    background: var(--fgv-blue-light);
-    border-color: var(--fgv-blue-light);
+.layout-thumb > .is-blank {
+    border-style: dashed;
+    background: transparent;
+    min-height: 34px;
 }
 
-.module-toggle[aria-checked="true"]::after {
-    transform: translateX(20px);
-    background: var(--fgv-white);
+.editor-grid li.is-blank {
+    border-style: dashed;
+    background: transparent;
 }
 
-.module-toggle:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
+.editor-grid li.is-blank .editor-card-label {
+    color: var(--fgv-gray-med);
 }
-
-.module-toggle:focus-visible {
-    outline: 2px solid var(--fgv-vib-cyan);
-    outline-offset: 2px;
-}
-
-.admin-feedback {
-    min-height: 1.2em;
-    font-size: 0.9rem;
-    color: var(--fgv-vib-green);
-}
-
-.admin-feedback.is-error { color: #ef4444; }
-
-.admin-footer { font-size: 0.85rem; }

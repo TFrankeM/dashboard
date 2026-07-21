@@ -2795,3 +2795,61 @@ html[data-theme="dark"] .cbx-custom-range input.date-input:focus { border-color:
 /* Metrics row reflow when feature flags remove cards (set by js/flags.js). */
 .main-content[data-module-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .main-content[data-module-count="1"] { grid-template-columns: minmax(0, 1fr); }
+
+/* ---- Layout composition (saved layouts, see js/layout.js) ---- */
+
+/* The evolution and newsstand sections live inside the page grid
+   (.main-content): full-width rows in the static page, regular grid items in a
+   custom layout. The grid's padding/gap replaces their standalone padding. */
+.main-content > .evolution-section,
+.main-content > .newsstand-section {
+    grid-column: 1 / -1;
+    padding: 0;
+    /* 20px grid gap + 10px = the 30px of breathing room the sections had */
+    margin-top: 10px;
+}
+
+/* Custom layout active: equal-thirds columns (6-col base so half-row splits
+   stay expressible), spans driven by data-size. Same specificity as the
+   static-grid rules above — source order decides. */
+.main-content[data-layout-mode="custom"] {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.main-content[data-layout-mode="custom"] > [data-module] {
+    grid-column: span 2;
+    margin-top: 0;
+}
+
+.main-content[data-layout-mode="custom"] > [data-size="2x1"] { grid-column: span 4; }
+.main-content[data-layout-mode="custom"] > [data-size="3x1"] { grid-column: 1 / -1; }
+
+/* Cards stretch to their row, so a metric card placed beside a taller
+   full-width-card (indicator + evolution in "compacto") shares its height. */
+.main-content[data-layout-mode="custom"] > .metric-card {
+    height: auto;
+    min-height: 320px;
+}
+
+@media (max-width: 1024px) {
+    .main-content[data-layout-mode="custom"] {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .main-content[data-layout-mode="custom"] > [data-module] {
+        grid-column: auto;
+    }
+}
+
+/* Blank spacer cards from saved layouts: reserve the area, show nothing. On
+   single-column widths an empty block is just a hole, so it collapses away. */
+.main-content[data-layout-mode="custom"] > .layout-blank {
+    min-height: 320px;
+    background: transparent;
+}
+
+@media (max-width: 1024px) {
+    .main-content[data-layout-mode="custom"] > .layout-blank {
+        display: none;
+    }
+}

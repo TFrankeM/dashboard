@@ -32,14 +32,15 @@ function addPreviewBadge(el, status) {
     el.prepend(badge);
 }
 
-// Drop nav dots whose target section no longer exists, and module groups
-// (e.g. the metrics row) left without any module.
-function pruneEmptyContainers() {
+// Drop nav dots whose target section no longer exists, and module groups left
+// without any module. Exported because layout.js re-syncs after composing.
+export function syncModuleChrome() {
     document.querySelectorAll("[data-module-group]").forEach(group => {
         const remaining = group.querySelectorAll("[data-module]").length;
-        if (remaining === 0) group.remove();
-        // Lets the grid reflow to the surviving cards (see dashboard.css).
-        else group.dataset.moduleCount = remaining;
+        if (remaining === 0) return group.remove();
+        // Metric cards drive the column count of the static grid (see
+        // dashboard.css); full-width sections span all columns regardless.
+        group.dataset.moduleCount = group.querySelectorAll(".metric-card[data-module]").length;
     });
     document.querySelectorAll(".side-nav .nav-dot").forEach(dot => {
         const target = (dot.getAttribute("href") || "").slice(1);
@@ -65,5 +66,5 @@ export async function initModuleFlags() {
         if (lab) addPreviewBadge(el, mod.status);
         else el.remove();
     }
-    if (!lab) pruneEmptyContainers();
+    if (!lab) syncModuleChrome();
 }

@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { authorized } from "./_lib/auth.js";
 import { MODULE_IDS } from "./_lib/modules.js";
 import { getStore, resolveFlags } from "./_lib/flags-store.js";
 
@@ -6,18 +6,6 @@ import { getStore, resolveFlags } from "./_lib/flags-store.js";
 //      Public: the dashboard needs it to decide which modules to mount.
 // PATCH /api/flags { id, enabled }  -> same shape, after the update.
 //      Requires Authorization: Bearer <FLAGS_ADMIN_TOKEN>.
-
-function authorized(request) {
-    const secret = process.env.FLAGS_ADMIN_TOKEN;
-    if (!secret) return false;
-    const header = request.headers.authorization || "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-    // Hashing both sides gives equal-length buffers, keeping the comparison
-    // constant-time regardless of what the client sent.
-    const a = createHash("sha256").update(token).digest();
-    const b = createHash("sha256").update(secret).digest();
-    return timingSafeEqual(a, b);
-}
 
 async function state(store) {
     return {
