@@ -3,6 +3,7 @@ import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawThermome
 
 import { DICTIONARY } from "./i18n.js";
 import { initModuleFlags } from "./flags.js";
+import { initLayoutComposition } from "./layout.js";
 
 // Global state variables
 let CURRENT_LANG = "pt-BR";
@@ -1912,7 +1913,9 @@ function redrawCharts() {
 
 document.addEventListener("DOMContentLoaded", async function () {
     // Disabled modules must leave the DOM before anything below queries it.
-    await initModuleFlags();
+    // An applied layout is authoritative about which cards exist; the flags
+    // only shape the static page (and lab mode).
+    if (!await initLayoutComposition()) await initModuleFlags();
     applyUrlState();
     initLanguageSelector();
     initThemeToggle();

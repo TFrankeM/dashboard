@@ -13,7 +13,7 @@ import { MODULES, flagKey } from "./modules.js";
 
 const DEV_STORE_URL = new URL("../../.dev-flags.json", import.meta.url);
 
-function parseEdgeConfig(connectionString) {
+export function parseEdgeConfig(connectionString) {
     // Format: https://edge-config.vercel.com/<id>?token=<read-token>
     const url = new URL(connectionString);
     const id = url.pathname.replaceAll("/", "");
