@@ -1,9 +1,9 @@
 # Feature flags dos módulos do dashboard
 
-Cada gráfico/card do dashboard é um **módulo** com uma flag liga/desliga. O site
-oficial mostra só os módulos ligados; o **modo laboratório** mostra tudo,
-inclusive o que está em desenvolvimento. Promover um módulo a produção é um
-clique no painel de administração — sem branch, sem deploy.
+Cada gráfico/card do dashboard é um **módulo** com uma flag liga/desliga. A
+página estática mostra só os módulos ligados; um **layout ativo** (ver
+`/api/layouts` e o editor do `admin.html`) é autoritativo e ignora as flags —
+elas só moldam a página na forma estática.
 
 ## Peças
 
@@ -13,7 +13,7 @@ clique no painel de administração — sem branch, sem deploy.
 | `api/_lib/flags-store.js` | Backends de armazenamento (Edge Config, arquivo local, padrões) |
 | `api/flags.js` | Endpoint: `GET` público, `PATCH` autenticado |
 | `js/flags.js` | Aplica as flags na carga do dashboard (remove módulos desligados) |
-| `admin.html` + `js/admin.js` + `css/admin.css` | Painel com os toggles |
+| `admin.html` + `js/admin.js` + `css/admin.css` | Painel de administração (galeria e editor de layouts) |
 
 O `dashboard.html` marca cada card com `data-module="<id>"`; contêineres que
 devem sumir quando ficam vazios (a fileira de métricas) têm `data-module-group`.
@@ -21,15 +21,16 @@ Bolinhas da side-nav apontando para seções removidas somem junto.
 
 ## Fluxos
 
-- **Produção (Marlos):** `dashboard.html` → módulos desligados são removidos do
-  DOM antes de qualquer gráfico inicializar.
-- **Laboratório:** `dashboard.html?lab=1` → nada é removido; módulos desligados
-  aparecem com contorno tracejado e selo "Em desenvolvimento".
-- **Promover/despromover:** `admin.html` → colar o token → clicar no toggle.
-  Vale no próximo reload da página (propagação do Edge Config: segundos).
+- **Produção:** `dashboard.html` → sem layout ativo, módulos desligados são
+  removidos do DOM antes de qualquer gráfico inicializar.
+- **Promover/despromover:** `PATCH /api/flags` autenticado (os toggles saíram
+  do painel; um layout que inclua o módulo também o exibe, pois o layout ativo
+  é autoritativo). Vale no próximo reload (propagação do Edge Config: segundos).
 - **Adicionar módulo novo:** registrar em `api/_lib/modules.js` com
   `defaultEnabled: false` e `status: "development"`, marcar o card com
-  `data-module`. Ele nasce invisível em produção e visível no lab.
+  `data-module` e registrar piso/preset em `api/_lib/layouts.js`. Ele nasce
+  invisível em produção e pode ser conferido com dados reais via um layout de
+  teste (prévia `?layout=<slug>` ou a prévia de rascunho do editor).
 
 ## Configuração na Vercel (uma vez)
 

@@ -59,7 +59,7 @@
                            placeholder="Buscar por nome…" aria-label="Buscar item do inventário">
                     <ul class="editor-tray" id="editor-tray"></ul>
                 </aside>
-                <div>
+                <div class="editor-page-pane">
                     <h3>Página</h3>
                     <div class="editor-filters-strip" title="A barra de filtros é obrigatória e fica sempre no topo">
                         <svg viewBox="0 0 64 12" aria-hidden="true">
@@ -71,15 +71,22 @@
                         <span>Barra de filtros</span>
                         <span class="strip-badge">fixa no topo</span>
                     </div>
-                    <ul class="editor-grid" id="editor-grid"></ul>
-                    <p class="admin-hint">Clique ou arraste um item do inventário para a página.
-                       Arraste para reordenar; o botão de largura alterna 1x → 2x → 3x
-                       (terços da página). A caixa em branco reserva uma área vazia e
-                       pode ser usada mais de uma vez.</p>
+                    <div class="editor-canvas" id="editor-canvas"
+                         aria-label="Página: grade de 24 colunas"></div>
+                    <p class="admin-hint">Clique num item do inventário para colocá-lo no
+                       primeiro espaço livre, ou arraste-o direto para a posição desejada.
+                       Arraste um card para reposicionar e use as alças das bordas
+                       (esquerda, direita, base e canto) para esticar — cada gráfico tem
+                       um tamanho mínimo de legibilidade, mas nenhum máximo. Soltar sobre
+                       outro card é inválido (contorno vermelho). Áreas sem card ficam
+                       simplesmente vazias no dashboard. A prévia abre o rascunho em outra
+                       aba sem salvar nada.</p>
                 </div>
             </div>
             <div class="editor-actions">
                 <button type="button" id="editor-save" class="btn-primary">Salvar layout</button>
+                <button type="button" id="editor-preview" class="btn-ghost">Prévia
+                    <span class="ext-arrow" aria-hidden="true">↗</span></button>
                 <button type="button" id="editor-cancel" class="btn-ghost">Cancelar</button>
             </div>
         </section>

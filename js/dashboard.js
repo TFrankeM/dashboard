@@ -1914,7 +1914,7 @@ function redrawCharts() {
 document.addEventListener("DOMContentLoaded", async function () {
     // Disabled modules must leave the DOM before anything below queries it.
     // An applied layout is authoritative about which cards exist; the flags
-    // only shape the static page (and lab mode).
+    // only shape the static page.
     if (!await initLayoutComposition()) await initModuleFlags();
     applyUrlState();
     initLanguageSelector();

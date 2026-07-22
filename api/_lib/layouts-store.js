@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { parseEdgeConfig } from "./flags-store.js";
-import { BUILTIN_LAYOUTS } from "./layouts.js";
+import { BUILTIN_LAYOUTS, normalizeLayoutCards } from "./layouts.js";
 
 // Layout storage, same backend split as flags-store.js: Edge Config in the
 // cloud, a local JSON file when developing without EDGE_CONFIG, read-only
@@ -92,12 +92,15 @@ export function getLayoutStore() {
 
 // Builtins merged with the store's custom layouts (builtins win on slug
 // collision); an active slug pointing at a missing layout resolves to null.
+// Cards normalize to 24-column coordinates here, so layouts saved by the
+// earlier span-based and 12-column editors keep working without a migration
+// pass (the stored "grid" marker tells the shapes apart).
 export async function resolveLayouts(store) {
     const { custom, active } = await store.read();
     const library = {};
     for (const [slug, layout] of Object.entries(custom ?? {})) {
         if (slug in BUILTIN_LAYOUTS) continue;
-        library[slug] = { label: layout.label ?? slug, cards: layout.cards ?? [] };
+        library[slug] = { label: layout.label ?? slug, cards: normalizeLayoutCards(layout.cards ?? [], layout.grid) };
     }
     Object.assign(library, BUILTIN_LAYOUTS);
     return { library, active: active && library[active] ? active : null };

@@ -1,6 +1,9 @@
-// Admin panel: gallery + drag-and-drop editor for the page layouts
-// (/api/layouts). Nothing renders before the admin token is validated against
-// the server; the token lives in memory only — closing the tab forgets it.
+// Admin panel: gallery + free-placement editor for the page layouts
+// (/api/layouts). Cards live on a 12-column grid as {id, x, y, w, h}; the
+// editor lets them be dropped anywhere, moved and stretched (drop on another
+// card is invalid), with per-module minimum sizes mirrored from the API.
+// Nothing renders before the admin token is validated against the server; the
+// token lives in memory only — closing the tab forgets it.
 
 const LAYOUTS_ENDPOINT = "/api/layouts";
 
@@ -18,7 +21,7 @@ const editorTitleEl = document.getElementById("editor-title");
 const editorLabelEl = document.getElementById("editor-label");
 const editorSlugEl = document.getElementById("editor-slug");
 const editorTrayEl = document.getElementById("editor-tray");
-const editorGridEl = document.getElementById("editor-grid");
+const canvasEl = document.getElementById("editor-canvas");
 
 const SOURCE_LABELS = {
     "edge-config": "Edge Config (produção)",
@@ -26,14 +29,22 @@ const SOURCE_LABELS = {
     "defaults": "padrões do código (somente leitura)",
 };
 
-const MODULE_LABELS = {
-    "grades-histogram": "Distribuição de notas",
-    "news-volume": "Quantidade de notícias",
-    "gauge-thermometer": "Indicador (termômetro)",
-    "gauge-speedometer": "Indicador (acelerador)",
-    "evolution": "Evolução temporal",
-    "newsstand": "Notícias do ponto",
-    "blank": "Caixa em branco",
+// Grid contract — keep in sync with api/_lib/layouts.js (the API is the
+// authority; these mirrors only drive the editor UX).
+const GRID_COLS = 24;
+const MAX_CARD_H = 12;
+const MAX_ROWS = 80;
+const CANVAS_MIN_ROWS = 12;
+const CANVAS_SPARE_ROWS = 3;
+const DRAG_THRESHOLD_PX = 6;
+
+const MODULE_META = {
+    "grades-histogram":  { label: "Distribuição de notas",  min: { w: 6, h: 4 },  preset: { w: 8, h: 4 } },
+    "news-volume":       { label: "Quantidade de notícias", min: { w: 6, h: 4 },  preset: { w: 8, h: 4 } },
+    "gauge-thermometer": { label: "Indicador (termômetro)", min: { w: 4, h: 4 },  preset: { w: 8, h: 4 } },
+    "gauge-speedometer": { label: "Indicador (acelerador)", min: { w: 6, h: 4 },  preset: { w: 8, h: 4 } },
+    "evolution":         { label: "Evolução temporal",      min: { w: 12, h: 4 }, preset: { w: 24, h: 6 } },
+    "newsstand":         { label: "Notícias do ponto",      min: { w: 16, h: 6 }, preset: { w: 24, h: 8 } },
 };
 
 // Hand-drawn miniatures of each chart type: instant, theme-aware and never
@@ -98,11 +109,6 @@ const FILTERS_STRIP_SVG = `<svg viewBox="0 0 64 12" aria-hidden="true">
     <rect x="49" y="3" width="12" height="6" rx="2" fill="none" stroke="currentColor" opacity="0.55"/>
 </svg>`;
 
-MODULE_GLYPHS["blank"] = `<svg viewBox="0 0 64 32" aria-hidden="true">
-    <rect x="2" y="2" width="60" height="28" rx="4" fill="none" stroke="currentColor"
-          stroke-width="1.4" stroke-dasharray="5 4" opacity="0.55"/>
-</svg>`;
-
 function moduleGlyph(id) {
     const glyph = document.createElement("span");
     glyph.className = "module-glyph";
@@ -110,7 +116,6 @@ function moduleGlyph(id) {
     return glyph;
 }
 
-const SIZES = ["1x1", "2x1", "3x1"];
 const BUILTIN_ORDER = ["padrao", "compacto"];
 
 let token = null;
@@ -120,7 +125,19 @@ let draft = null;
 let feedbackTimer = null;
 
 function moduleLabel(id) {
-    return MODULE_LABELS[id] || id;
+    return MODULE_META[id]?.label || id;
+}
+
+function moduleMin(id) {
+    return MODULE_META[id]?.min ?? { w: 1, h: 1 };
+}
+
+function modulePreset(id) {
+    return MODULE_META[id]?.preset ?? { w: 8, h: 4 };
+}
+
+function clamp(value, lo, hi) {
+    return Math.min(Math.max(value, lo), hi);
 }
 
 function feedback(message, isError = false) {
@@ -246,29 +263,36 @@ function armedButton(label, confirmLabel, onConfirm, className = "btn-ghost") {
     return btn;
 }
 
+function placedCards(cards) {
+    return (cards ?? []).filter(card =>
+        card && [card.x, card.y, card.w, card.h].every(Number.isInteger));
+}
+
 function layoutThumb(cards) {
     const thumb = document.createElement("div");
     thumb.className = "layout-thumb";
     // Every layout starts with the mandatory filter bar.
     const filters = document.createElement("span");
-    filters.className = "thumb-filters size-3x1";
+    filters.className = "thumb-filters";
     filters.title = "Barra de filtros (fixa)";
     filters.innerHTML = FILTERS_STRIP_SVG;
-    thumb.append(filters);
-    for (const card of cards) {
+
+    const grid = document.createElement("div");
+    grid.className = "thumb-grid";
+    for (const card of placedCards(cards)) {
         const cell = document.createElement("span");
-        cell.className = `size-${card.size}`;
-        if (card.id === "blank") {
-            cell.classList.add("is-blank");
-            thumb.append(cell);
-            continue;
+        cell.className = "thumb-cell";
+        cell.style.gridArea = `${card.y} / ${card.x} / span ${card.h} / span ${card.w}`;
+        cell.append(moduleGlyph(card.id));
+        if (card.w >= 8) {
+            const label = document.createElement("span");
+            label.className = "thumb-label";
+            label.textContent = moduleLabel(card.id).replace("Indicador ", "");
+            cell.append(label);
         }
-        const label = document.createElement("span");
-        label.className = "thumb-label";
-        label.textContent = moduleLabel(card.id).replace("Indicador ", "");
-        cell.append(moduleGlyph(card.id), label);
-        thumb.append(cell);
+        grid.append(cell);
     }
+    thumb.append(filters, grid);
     return thumb;
 }
 
@@ -357,7 +381,7 @@ function renderGallery() {
         galleryCard(slug, layout, { active, writable })));
 }
 
-/* ---- Layout editor (drag-and-drop + click fallbacks) ---- */
+/* ---- Layout editor: free placement on the 12-column canvas ---- */
 
 function slugify(label) {
     return label.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -366,7 +390,10 @@ function slugify(label) {
 }
 
 function openEditor({ slug = null, label = "", cards = [] } = {}) {
-    draft = { fixedSlug: slug, cards: cards.map(c => ({ id: c.id, size: c.size })) };
+    draft = {
+        fixedSlug: slug,
+        cards: placedCards(cards).map(c => ({ id: c.id, x: c.x, y: c.y, w: c.w, h: c.h })),
+    };
     editorTitleEl.textContent = slug ? `Editar "${slug}"` : "Novo layout";
     editorLabelEl.value = label;
     trayQuery = "";
@@ -386,25 +413,249 @@ function draftSlug() {
     return draft.fixedSlug || slugify(editorLabelEl.value.trim());
 }
 
-function addToDraft(id) {
-    draft.cards.push({ id, size: "1x1" });
-    renderEditor();
+function overlaps(a, b) {
+    return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }
 
-function moveInDraft(from, to) {
-    const [card] = draft.cards.splice(from, 1);
-    draft.cards.splice(to, 0, card);
-    renderEditor();
+function collides(rect, exceptIndex = -1) {
+    return draft.cards.some((card, index) => index !== exceptIndex && overlaps(rect, card));
 }
 
-function handleEditorDrop(data, targetIndex) {
-    if (data.startsWith("add:")) {
-        addToDraft(data.slice(4));
-    } else if (data.startsWith("move:")) {
-        const from = Number(data.slice(5));
-        if (!Number.isInteger(from) || from === targetIndex) return;
-        moveInDraft(from, from < targetIndex ? targetIndex - 1 : targetIndex);
+function firstFit(w, h) {
+    for (let y = 1; y <= MAX_ROWS - h + 1; y++) {
+        for (let x = 1; x <= GRID_COLS - w + 1; x++) {
+            if (!collides({ x, y, w, h })) return { x, y };
+        }
     }
+    return null;
+}
+
+function addAtFirstFit(id) {
+    const { w, h } = modulePreset(id);
+    const spot = firstFit(w, h);
+    if (!spot) return feedback("Sem espaço livre para este gráfico.", true);
+    draft.cards.push({ id, x: spot.x, y: spot.y, w, h });
+    renderEditor();
+}
+
+function canvasRows() {
+    const extent = Math.max(0, ...draft.cards.map(c => c.y + c.h - 1));
+    return Math.min(MAX_ROWS, Math.max(CANVAS_MIN_ROWS, extent + CANVAS_SPARE_ROWS));
+}
+
+/* Pointer-driven drag state: adding from the tray, moving a placed card or
+   resizing via the edge handles. The ghost previews the landing area; red
+   means the drop is invalid (over another card) and will be rejected. */
+let drag = null;
+let ghostEl = null;
+
+function cellGeom() {
+    const cells = canvasEl.querySelectorAll(".canvas-cell");
+    if (cells.length <= GRID_COLS) return null;
+    const a = cells[0].getBoundingClientRect();
+    return {
+        left: a.left,
+        top: a.top,
+        colPitch: cells[1].getBoundingClientRect().left - a.left,
+        rowPitch: cells[GRID_COLS].getBoundingClientRect().top - a.top,
+    };
+}
+
+function cellFromPoint(clientX, clientY) {
+    const geom = cellGeom();
+    if (!geom) return null;
+    const rect = canvasEl.getBoundingClientRect();
+    return {
+        inside: clientX >= rect.left && clientX <= rect.right &&
+                clientY >= rect.top && clientY <= rect.bottom,
+        col: clamp(Math.floor((clientX - geom.left) / geom.colPitch) + 1, 1, GRID_COLS),
+        row: clamp(Math.floor((clientY - geom.top) / geom.rowPitch) + 1, 1, canvasRows()),
+    };
+}
+
+function showGhost(gx, gy, gw, gh, valid) {
+    if (!ghostEl) {
+        ghostEl = document.createElement("div");
+        ghostEl.className = "editor-ghost";
+        canvasEl.append(ghostEl);
+    }
+    ghostEl.style.gridArea = `${gy} / ${gx} / span ${gh} / span ${gw}`;
+    ghostEl.textContent = `${gw}×${gh}`;
+    ghostEl.classList.toggle("is-invalid", !valid);
+}
+
+function clearGhost() {
+    ghostEl?.remove();
+    ghostEl = null;
+}
+
+function beginDrag(event, spec) {
+    if (drag) return;
+    drag = {
+        ...spec,
+        el: event.currentTarget,
+        sx: event.clientX,
+        sy: event.clientY,
+        active: spec.active ?? false,
+        gx: null, gy: null, gw: spec.w, gh: spec.h,
+        valid: false,
+    };
+    drag.el.setPointerCapture(event.pointerId);
+    drag.el.addEventListener("pointermove", onDragMove);
+    drag.el.addEventListener("pointerup", onDragEnd, { once: true });
+    drag.el.addEventListener("pointercancel", onDragCancel, { once: true });
+    event.preventDefault();
+}
+
+function onDragMove(event) {
+    if (!drag) return;
+    if (!drag.active) {
+        if (Math.hypot(event.clientX - drag.sx, event.clientY - drag.sy) < DRAG_THRESHOLD_PX) return;
+        drag.active = true;
+        document.body.classList.add("is-dragging");
+        if (drag.kind === "move") drag.cardEl?.classList.add("is-moving");
+    }
+    const pt = cellFromPoint(event.clientX, event.clientY);
+    if (!pt) return;
+    if (!pt.inside && drag.kind !== "resize") {
+        drag.gx = null;
+        drag.valid = false;
+        clearGhost();
+        return;
+    }
+    const rows = canvasRows();
+    if (drag.kind === "add" || drag.kind === "move") {
+        const grabDX = drag.grabDX ?? Math.floor(drag.w / 2);
+        const grabDY = drag.grabDY ?? 0;
+        drag.gx = clamp(pt.col - grabDX, 1, GRID_COLS - drag.w + 1);
+        drag.gy = clamp(pt.row - grabDY, 1, Math.max(1, rows - drag.h + 1));
+        drag.gw = drag.w;
+        drag.gh = drag.h;
+    } else { // resize
+        const card = draft.cards[drag.index];
+        const min = moduleMin(card.id);
+        let gx = card.x, gw = card.w;
+        if (drag.dir.includes("e")) {
+            gw = clamp(pt.col - card.x + 1, min.w, GRID_COLS - card.x + 1);
+        } else if (drag.dir.includes("w")) {
+            // Left edge moves; the right edge stays anchored.
+            const right = card.x + card.w;
+            gx = clamp(pt.col, 1, right - min.w);
+            gw = right - gx;
+        }
+        drag.gx = gx;
+        drag.gy = card.y;
+        drag.gw = gw;
+        drag.gh = drag.dir.includes("s")
+            ? clamp(pt.row - card.y + 1, min.h, MAX_CARD_H)
+            : card.h;
+    }
+    drag.valid = !collides(
+        { x: drag.gx, y: drag.gy, w: drag.gw, h: drag.gh },
+        drag.kind === "add" ? -1 : drag.index);
+    showGhost(drag.gx, drag.gy, drag.gw, drag.gh, drag.valid);
+}
+
+function endDragCleanup() {
+    document.body.classList.remove("is-dragging");
+    drag?.el?.removeEventListener("pointermove", onDragMove);
+    drag?.cardEl?.classList.remove("is-moving");
+    clearGhost();
+}
+
+function onDragEnd() {
+    const d = drag;
+    endDragCleanup();
+    drag = null;
+    if (!d) return;
+    if (!d.active) {
+        // A plain click (no real drag) on a tray item still adds the module.
+        if (d.kind === "add") addAtFirstFit(d.id);
+        return;
+    }
+    if (d.gx === null || !d.valid) return;
+    if (d.kind === "add") {
+        draft.cards.push({ id: d.id, x: d.gx, y: d.gy, w: d.gw, h: d.gh });
+    } else {
+        const card = draft.cards[d.index];
+        card.x = d.gx;
+        card.y = d.gy;
+        card.w = d.gw;
+        card.h = d.gh;
+    }
+    renderEditor();
+}
+
+function onDragCancel() {
+    endDragCleanup();
+    drag = null;
+}
+
+function canvasCard(card, index) {
+    const el = document.createElement("div");
+    el.className = "canvas-card";
+    el.style.gridArea = `${card.y} / ${card.x} / span ${card.h} / span ${card.w}`;
+    const min = moduleMin(card.id);
+    el.title = `${moduleLabel(card.id)} — arraste para mover; mínimo ${min.w}×${min.h}`;
+
+    const label = document.createElement("span");
+    label.className = "canvas-card-label";
+    label.textContent = moduleLabel(card.id);
+
+    const size = document.createElement("span");
+    size.className = "canvas-size";
+    size.textContent = `${card.w}×${card.h}`;
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "canvas-remove";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", `Remover ${moduleLabel(card.id)}`);
+    remove.addEventListener("click", () => {
+        draft.cards.splice(index, 1);
+        renderEditor();
+    });
+
+    el.append(moduleGlyph(card.id), label, size, remove);
+    for (const dir of ["w", "e", "s", "se"]) {
+        const handle = document.createElement("span");
+        handle.className = `rz rz-${dir}`;
+        handle.addEventListener("pointerdown", event => {
+            event.stopPropagation();
+            beginDrag(event, { kind: "resize", index, dir, active: true, w: card.w, h: card.h });
+        });
+        el.append(handle);
+    }
+
+    el.addEventListener("pointerdown", event => {
+        if (event.target.closest(".canvas-remove, .rz")) return;
+        const pt = cellFromPoint(event.clientX, event.clientY);
+        beginDrag(event, {
+            kind: "move",
+            index,
+            w: card.w,
+            h: card.h,
+            cardEl: el,
+            grabDX: pt ? clamp(pt.col - card.x, 0, card.w - 1) : 0,
+            grabDY: pt ? clamp(pt.row - card.y, 0, card.h - 1) : 0,
+        });
+    });
+    return el;
+}
+
+function renderCanvas() {
+    const rows = canvasRows();
+    const cells = [];
+    for (let r = 1; r <= rows; r++) {
+        for (let c = 1; c <= GRID_COLS; c++) {
+            const cell = document.createElement("div");
+            cell.className = "canvas-cell";
+            cell.style.gridArea = `${r} / ${c}`;
+            cells.push(cell);
+        }
+    }
+    ghostEl = null; // replaced along with everything else
+    canvasEl.replaceChildren(...cells, ...draft.cards.map(canvasCard));
 }
 
 const traySearchEl = document.getElementById("tray-search");
@@ -424,68 +675,32 @@ function renderEditor() {
 
     const used = new Set(draft.cards.map(c => c.id));
     const query = normalizeSearch(trayQuery.trim());
-    const available = Object.keys(MODULE_LABELS)
-        .filter(id => id === "blank" || !used.has(id))
+    const available = Object.keys(MODULE_META)
+        .filter(id => !used.has(id))
         .filter(id => !query || normalizeSearch(moduleLabel(id)).includes(query));
     editorTrayEl.classList.toggle("is-filtered-empty", available.length === 0);
     editorTrayEl.replaceChildren(...available.map(id => {
         const li = document.createElement("li");
+        const preset = modulePreset(id);
         const label = document.createElement("span");
         label.textContent = moduleLabel(id);
         li.append(moduleGlyph(id), label);
-        li.draggable = true;
-        li.title = "Clique ou arraste para a página";
-        li.addEventListener("click", () => addToDraft(id));
-        li.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", `add:${id}`));
-        return li;
-    }));
-
-    editorGridEl.replaceChildren(...draft.cards.map((card, index) => {
-        const li = document.createElement("li");
-        li.className = `size-${card.size}` + (card.id === "blank" ? " is-blank" : "");
-        li.draggable = true;
-
-        const label = document.createElement("span");
-        label.className = "editor-card-label";
-        label.textContent = moduleLabel(card.id);
-
-        const size = document.createElement("button");
-        size.type = "button";
-        size.className = "editor-size";
-        size.textContent = card.size.replace("x1", "x");
-        size.title = "Alternar largura (terços da página)";
-        size.addEventListener("click", () => {
-            card.size = SIZES[(SIZES.indexOf(card.size) + 1) % SIZES.length];
-            renderEditor();
-        });
-
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "editor-remove";
-        remove.textContent = "×";
-        remove.setAttribute("aria-label", `Remover ${moduleLabel(card.id)}`);
-        remove.addEventListener("click", () => {
-            draft.cards.splice(index, 1);
-            renderEditor();
-        });
-
-        li.append(moduleGlyph(card.id), label, size, remove);
-        li.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", `move:${index}`));
-        li.addEventListener("dragover", e => e.preventDefault());
-        li.addEventListener("drop", e => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleEditorDrop(e.dataTransfer.getData("text/plain"), index);
+        li.title = `Clique ou arraste para a página (entra com ${preset.w}×${preset.h})`;
+        li.tabIndex = 0;
+        li.addEventListener("pointerdown", event =>
+            beginDrag(event, { kind: "add", id, w: preset.w, h: preset.h }));
+        li.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                addAtFirstFit(id);
+            }
         });
         return li;
     }));
+
+    renderCanvas();
 }
 
-editorGridEl.addEventListener("dragover", e => e.preventDefault());
-editorGridEl.addEventListener("drop", e => {
-    e.preventDefault();
-    if (draft) handleEditorDrop(e.dataTransfer.getData("text/plain"), draft.cards.length);
-});
 editorLabelEl.addEventListener("input", () => {
     if (draft) editorSlugEl.textContent = draftSlug() || "—";
 });
@@ -501,8 +716,21 @@ document.getElementById("editor-save").addEventListener("click", async () => {
     if (!draft.fixedSlug && layoutState?.layouts[slug]) {
         return feedback(`Já existe um layout "${slug}"; escolha outro nome.`, true);
     }
-    const ok = await layoutRequest("PUT", { slug, label, cards: draft.cards }, `Layout "${label}" salvo.`);
+    const ok = await layoutRequest("PUT", { slug, label, cards: draft.cards, grid: GRID_COLS },
+        `Layout "${label}" salvo.`);
     if (ok) closeEditor();
+});
+
+// Preview the unsaved draft: the cards travel to the dashboard inside the URL
+// (?draft=base64url JSON), so nothing touches the library until "Salvar".
+document.getElementById("editor-preview").addEventListener("click", () => {
+    if (!draft?.cards.length) {
+        return feedback("Adicione ao menos um gráfico para ver a prévia.", true);
+    }
+    const json = JSON.stringify(draft.cards);
+    const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json)))
+        .replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+    window.open(`dashboard.html?draft=${b64}`, "_blank", "noopener");
 });
 
 /* ---- Boot ---- */

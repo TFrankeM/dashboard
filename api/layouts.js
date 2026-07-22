@@ -1,5 +1,5 @@
 import { authorized } from "./_lib/auth.js";
-import { BUILTIN_LAYOUTS, validateLayoutInput, normalizeCards } from "./_lib/layouts.js";
+import { BUILTIN_LAYOUTS, GRID_COLS, validateLayoutInput, normalizeLayoutCards } from "./_lib/layouts.js";
 import { getLayoutStore, resolveLayouts } from "./_lib/layouts-store.js";
 
 // GET    /api/layouts                          -> current state (public)
@@ -58,12 +58,17 @@ export default async function handler(request, response) {
 
     try {
         if (request.method === "PUT") {
-            const { slug, label, cards } = request.body ?? {};
-            const problem = validateLayoutInput(slug, label, cards);
+            const { slug, label, cards, grid } = request.body ?? {};
+            // Accepts older card shapes too (span-based, or coordinates
+            // without grid: 24 = the 12-column era): normalize converts
+            // everything to the current grid, then validation runs on the
+            // result. Stored layouts are stamped with the current grid.
+            const normalized = normalizeLayoutCards(cards, grid);
+            const problem = validateLayoutInput(slug, label, normalized);
             if (problem) return response.status(400).json({ error: problem });
 
             const { custom } = await store.read();
-            custom[slug] = { label: (label ?? slug).trim(), cards: normalizeCards(cards) };
+            custom[slug] = { label: (label ?? slug).trim(), cards: normalized, grid: GRID_COLS };
             if (JSON.stringify(custom).length > MAX_LIBRARY_BYTES) {
                 return response.status(413).json({ error: "Layout library is full; delete a layout first." });
             }

@@ -2770,28 +2770,6 @@ html[data-theme="dark"] .cbx-custom-range input.date-input:focus { border-color:
     bottom: 0;
 }
 
-/* Feature flags: lab preview of disabled modules */
-.module-preview {
-    position: relative;
-    outline: 2px dashed var(--fgv-blue-light, #008BC9);
-    outline-offset: 4px;
-}
-
-.module-badge {
-    position: absolute;
-    top: -12px;
-    left: 16px;
-    z-index: 20;
-    padding: 2px 10px;
-    border-radius: 999px;
-    background: var(--fgv-blue-light, #008BC9);
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
 /* Metrics row reflow when feature flags remove cards (set by js/flags.js). */
 .main-content[data-module-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .main-content[data-module-count="1"] { grid-template-columns: minmax(0, 1fr); }
@@ -2809,47 +2787,59 @@ html[data-theme="dark"] .cbx-custom-range input.date-input:focus { border-color:
     margin-top: 10px;
 }
 
-/* Custom layout active: equal-thirds columns (6-col base so half-row splits
-   stay expressible), spans driven by data-size. Same specificity as the
+/* Custom layout active. Mobile-first: a single column in reading order (the
+   renderer sorts the DOM by row, then column). Same specificity as the
    static-grid rules above — source order decides. */
 .main-content[data-layout-mode="custom"] {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .main-content[data-layout-mode="custom"] > [data-module] {
-    grid-column: span 2;
+    grid-column: auto;
     margin-top: 0;
+    min-width: 0;
 }
 
-.main-content[data-layout-mode="custom"] > [data-size="2x1"] { grid-column: span 4; }
-.main-content[data-layout-mode="custom"] > [data-size="3x1"] { grid-column: 1 / -1; }
-
-/* Cards stretch to their row, so a metric card placed beside a taller
-   full-width-card (indicator + evolution in "compacto") shares its height. */
-.main-content[data-layout-mode="custom"] > .metric-card {
-    height: auto;
-    min-height: 320px;
-}
-
-@media (max-width: 1024px) {
+/* Desktop: free placement on a 24-column grid. Cards carry their area in
+   --gx/--gy/--gw/--gh (set by js/layout.js); the fixed 65px row unit keeps
+   every card height deterministic (h=4 -> 320px, the static metric-card
+   height), which the anti-blink fixed-height mechanism relies on. */
+@media (min-width: 1025px) {
     .main-content[data-layout-mode="custom"] {
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: repeat(24, minmax(0, 1fr));
+        grid-auto-rows: 65px;
     }
 
     .main-content[data-layout-mode="custom"] > [data-module] {
-        grid-column: auto;
+        grid-column: var(--gx, 1) / span var(--gw, 8);
+        grid-row: var(--gy, auto) / span var(--gh, 4);
+        min-height: 0;
     }
-}
 
-/* Blank spacer cards from saved layouts: reserve the area, show nothing. On
-   single-column widths an empty block is just a hole, so it collapses away. */
-.main-content[data-layout-mode="custom"] > .layout-blank {
-    min-height: 320px;
-    background: transparent;
-}
+    /* The grid area now sets the card height; the flex innards fill it. */
+    .main-content[data-layout-mode="custom"] > .metric-card {
+        height: auto;
+        min-height: 0;
+    }
 
-@media (max-width: 1024px) {
-    .main-content[data-layout-mode="custom"] > .layout-blank {
-        display: none;
+    .main-content[data-layout-mode="custom"] > .evolution-section > .card,
+    .main-content[data-layout-mode="custom"] > .newsstand-section > .card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    .main-content[data-layout-mode="custom"] > .evolution-section .line-chart-container {
+        flex: 1 1 auto;
+        height: auto;
+        min-height: 0;
+    }
+
+    /* Newsstand content longer than its box scrolls inside the card. */
+    .main-content[data-layout-mode="custom"] > .newsstand-section .newsstand-grid {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
     }
 }

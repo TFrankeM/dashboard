@@ -262,31 +262,70 @@ a { color: var(--fgv-blue-sky); }
     color: var(--fgv-vib-green);
 }
 
-/* Miniature of the page grid: same 6-column/span model as the dashboard. */
+/* Miniature of the page: mandatory filter strip on top, then the same
+   12-column coordinate grid as the dashboard, rows compressed to 20px. */
 .layout-thumb {
     flex: 1;
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 4px;
+}
+
+.thumb-filters {
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--dk-border-strong);
+    border-radius: 5px;
+    background: var(--dk-surface-2);
+    color: var(--fgv-gray-med);
+}
+
+.thumb-filters svg {
+    width: 110px;
+    height: 14px;
+}
+
+.thumb-grid {
+    display: grid;
+    grid-template-columns: repeat(24, 1fr);
+    grid-auto-rows: 10px;
+    gap: 3px;
     align-content: start;
 }
 
-.layout-thumb > span {
-    grid-column: span 2;
-    padding: 10px 4px;
+.thumb-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 3px 4px;
     border: 1px solid var(--dk-border-strong);
     border-radius: 6px;
     background: var(--dk-surface-2);
-    font-size: 0.66rem;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.thumb-cell .module-glyph {
+    flex: 0 1 auto;
+    height: 24px;
+    max-height: 60%;
+    width: 80%;
+    max-width: 96px;
+}
+
+.thumb-label {
+    font-size: 0.6rem;
     text-align: center;
-    color: var(--dk-text-body);
+    color: var(--fgv-gray-med);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
 }
-
-.layout-thumb .size-2x1 { grid-column: span 4; }
-.layout-thumb .size-3x1 { grid-column: 1 / -1; }
 
 .layout-actions {
     display: flex;
@@ -381,13 +420,20 @@ a { color: var(--fgv-blue-sky); }
 .editor-tray {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 0 4px 0 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    max-height: 420px;
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .editor-tray li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
     padding: 12px;
     border: 1px dashed var(--dk-border-strong);
     border-radius: 8px;
@@ -396,6 +442,8 @@ a { color: var(--fgv-blue-sky); }
     text-align: center;
     color: var(--dk-text-body);
     cursor: grab;
+    user-select: none;
+    touch-action: none;
     transition: border-color 0.15s ease, color 0.15s ease;
 }
 
@@ -410,69 +458,184 @@ a { color: var(--fgv-blue-sky); }
     color: var(--fgv-gray-med);
 }
 
-.editor-grid {
-    list-style: none;
-    margin: 0;
-    padding: 12px;
+.editor-tray.is-filtered-empty::after {
+    content: "Nenhum item corresponde à busca";
+    font-size: 0.75rem;
+    color: var(--fgv-gray-med);
+}
+
+/* The page pane scrolls sideways on narrow screens instead of squashing the
+   12-column canvas beyond recognition. */
+.editor-page-pane {
+    min-width: 0;
+    overflow-x: auto;
+}
+
+/* ---- Placement canvas ---- */
+
+.editor-canvas {
+    position: relative;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
-    min-height: 80px;
+    grid-template-columns: repeat(24, 1fr);
+    grid-auto-rows: 24px;
+    gap: 4px;
+    padding: 8px;
+    min-width: 720px;
     border: 1px dashed var(--dk-border-strong);
     border-radius: 10px;
 }
 
-.editor-grid:empty::after {
-    content: "Clique ou arraste gráficos do inventário para cá";
-    grid-column: 1 / -1;
-    align-self: center;
-    text-align: center;
-    font-size: 0.82rem;
-    color: var(--fgv-gray-med);
+.canvas-cell {
+    border: 1px dashed color-mix(in srgb, var(--dk-border) 60%, transparent);
+    border-radius: 3px;
+    background: rgba(148, 163, 184, 0.04);
+    pointer-events: none;
 }
 
-.editor-grid li {
-    grid-column: span 2;
+.canvas-card {
+    position: relative;
+    z-index: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 12px;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 10px;
     border: 1px solid var(--dk-border-strong);
     border-radius: 8px;
     background: var(--dk-surface-2);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     cursor: grab;
+    user-select: none;
+    touch-action: none;
+    overflow: hidden;
+    min-width: 0;
+    min-height: 0;
 }
 
-.editor-grid li.size-2x1 { grid-column: span 4; }
-.editor-grid li.size-3x1 { grid-column: 1 / -1; }
+.canvas-card:hover { border-color: var(--fgv-blue-light); }
 
-.editor-card-label {
-    flex: 1;
-    min-width: 0;
+.canvas-card.is-moving { opacity: 0.35; }
+
+body.is-dragging { cursor: grabbing; }
+body.is-dragging .canvas-card,
+body.is-dragging .editor-tray li { cursor: grabbing; }
+
+.canvas-card .module-glyph {
+    height: 22px;
+    width: 48px;
+    flex: none;
+}
+
+.canvas-card-label {
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--dk-text-strong);
 }
 
-.editor-size,
-.editor-remove {
-    flex: none;
-    padding: 3px 9px;
+.canvas-size {
+    position: absolute;
+    left: 6px;
+    bottom: 4px;
+    font-size: 0.64rem;
+    color: var(--fgv-gray-med);
+}
+
+.canvas-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
     border-radius: 6px;
-    border: 1px solid var(--dk-border-strong);
-    background: var(--dk-surface);
-    color: var(--dk-text-body);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--fgv-gray-med);
     font-family: inherit;
-    font-size: 0.72rem;
+    font-size: 0.9rem;
+    line-height: 1;
     cursor: pointer;
 }
 
-.editor-size:hover,
-.editor-remove:hover {
-    border-color: var(--fgv-blue-light);
-    color: var(--dk-text-strong);
+.canvas-remove:hover {
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+}
+
+/* Resize handles: appear on hover, one per stretch direction. */
+.rz {
+    position: absolute;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    touch-action: none;
+}
+
+.canvas-card:hover .rz { opacity: 1; }
+
+.rz-e {
+    top: 25%;
+    right: -1px;
+    width: 10px;
+    height: 50%;
+    cursor: ew-resize;
+    border-right: 3px solid var(--fgv-blue-light);
+    border-radius: 2px;
+}
+
+.rz-w {
+    top: 25%;
+    left: -1px;
+    width: 10px;
+    height: 50%;
+    cursor: ew-resize;
+    border-left: 3px solid var(--fgv-blue-light);
+    border-radius: 2px;
+}
+
+.rz-s {
+    left: 25%;
+    bottom: -1px;
+    width: 50%;
+    height: 10px;
+    cursor: ns-resize;
+    border-bottom: 3px solid var(--fgv-blue-light);
+    border-radius: 2px;
+}
+
+.rz-se {
+    right: -1px;
+    bottom: -1px;
+    width: 14px;
+    height: 14px;
+    cursor: nwse-resize;
+    border-right: 3px solid var(--fgv-blue-light);
+    border-bottom: 3px solid var(--fgv-blue-light);
+    border-radius: 0 0 6px 0;
+}
+
+/* Landing preview: green = free cells, red = the drop would overlap. */
+.editor-ghost {
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--fgv-vib-green);
+    border-radius: 8px;
+    background: rgba(0, 225, 172, 0.12);
+    color: var(--fgv-vib-green);
+    font-size: 0.75rem;
+    font-weight: 700;
+    pointer-events: none;
+}
+
+.editor-ghost.is-invalid {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.14);
+    color: #ef4444;
 }
 
 .editor-actions {
@@ -523,6 +686,7 @@ a { color: var(--fgv-blue-sky); }
     .editor-tray {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        max-height: 260px;
     }
 }
 
@@ -539,13 +703,6 @@ a { color: var(--fgv-blue-sky); }
     .layout-gallery { grid-template-columns: 1fr; }
 
     .layout-add { min-height: 120px; }
-
-    /* Editing on a phone: one card per row, spans off. */
-    .editor-grid { grid-template-columns: 1fr; }
-
-    .editor-grid li,
-    .editor-grid li.size-2x1,
-    .editor-grid li.size-3x1 { grid-column: auto; }
 
     .editor-actions { flex-direction: column; }
 
@@ -567,48 +724,10 @@ a { color: var(--fgv-blue-sky); }
     height: 100%;
 }
 
-/* Gallery thumbnails: glyph above a tiny label. */
-.layout-thumb > span {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    padding: 10px 8px 8px;
-}
-
-.layout-thumb .module-glyph {
-    height: 30px;
-    width: 100%;
-    max-width: 96px;
-    margin: 0 auto;
-}
-
-.thumb-label {
-    font-size: 0.62rem;
-    text-align: center;
-    color: var(--fgv-gray-med);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 /* Inventory tray: glyph above the module name. */
-.editor-tray li {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
 .editor-tray .module-glyph {
     height: 26px;
     width: 72px;
-}
-
-/* Page cards in the editor: small glyph at the left of the label. */
-.editor-grid .module-glyph {
-    height: 20px;
-    width: 40px;
 }
 
 /* Arrow hinting that the preview opens elsewhere. */
@@ -618,7 +737,7 @@ a { color: var(--fgv-blue-sky); }
     line-height: 1;
 }
 
-/* ---- Inventory search + scroll ---- */
+/* ---- Inventory search ---- */
 
 #tray-search {
     width: 100%;
@@ -636,20 +755,6 @@ a { color: var(--fgv-blue-sky); }
     outline-offset: 1px;
 }
 
-/* The inventory scrolls instead of growing with the catalog. */
-.editor-tray {
-    max-height: 330px;
-    overflow-y: auto;
-    padding-right: 4px;
-    scrollbar-width: thin;
-}
-
-.editor-tray.is-filtered-empty::after {
-    content: "Nenhum item corresponde à busca";
-    font-size: 0.75rem;
-    color: var(--fgv-gray-med);
-}
-
 /* ---- Mandatory filter bar strip ---- */
 
 .editor-filters-strip {
@@ -664,6 +769,7 @@ a { color: var(--fgv-blue-sky); }
     color: var(--fgv-gray-med);
     font-size: 0.78rem;
     cursor: default;
+    min-width: 720px;
 }
 
 .editor-filters-strip svg {
@@ -681,40 +787,4 @@ a { color: var(--fgv-blue-sky); }
     text-transform: uppercase;
     letter-spacing: 0.05em;
     background: rgba(148, 163, 184, 0.14);
-}
-
-/* ---- Blank spacer visuals ---- */
-
-.thumb-filters {
-    grid-column: 1 / -1;
-    height: 26px;
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center;
-    justify-content: center;
-    padding: 0 !important;
-    border: 1px solid var(--dk-border-strong);
-    border-radius: 5px;
-    background: var(--dk-surface-2);
-    color: var(--fgv-gray-med);
-}
-
-.thumb-filters svg {
-    width: 110px;
-    height: 14px;
-}
-
-.layout-thumb > .is-blank {
-    border-style: dashed;
-    background: transparent;
-    min-height: 34px;
-}
-
-.editor-grid li.is-blank {
-    border-style: dashed;
-    background: transparent;
-}
-
-.editor-grid li.is-blank .editor-card-label {
-    color: var(--fgv-gray-med);
 }
