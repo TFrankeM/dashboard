@@ -210,6 +210,11 @@
                     <span class="chips-caption" data-i18n="chips_caption">Camadas ativas</span>
                     <div class="layer-chips" id="layer-chips"></div>
                     <span class="hand-hint" id="hand-hint" hidden data-i18n="hand_hint">Mesa vazia — ajuste os seletores e clique + Camada</span>
+                    <!-- First-time tip: shown once there are 2+ chips, gone after the first merge -->
+                    <span class="gesture-hint" id="merge-hint" hidden>
+                        <span data-i18n="merge_hint">Dica: arraste uma ficha sobre outra para mesclar as linhas em uma só · a ★ escolhe a camada dos gráficos de apoio (notas, notícias e indicador atual)</span>
+                        <button type="button" id="merge-hint-close" data-i18n-label="hint_dismiss" aria-label="Dispensar dica">✕</button>
+                    </span>
                 </div>
             </div>
         </section>

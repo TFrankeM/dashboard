@@ -287,6 +287,10 @@ async function fetchOptionsFromDB(targetType, filterValue) {
 
 const LANG_STORAGE_KEY = "iibex_lang";
 const THEME_STORAGE_KEY = "iibex_theme";
+// First-time discovery hints: each key flips to "1" once the user performs
+// the gesture, and its hint/nudge never shows again.
+const HINT_MERGE_KEY = "iibex_hint_merge_done";
+const HINT_LEAF_KEY = "iibex_hint_leaf_done";
 
 function updateThemeToggleAria() {
     const btn = document.getElementById("theme-toggle");
@@ -898,6 +902,15 @@ function setupFilterListeners() {
     const addLayerBtn = document.getElementById("btn-add-layer");
     if (addLayerBtn) {
         addLayerBtn.addEventListener("click", addLayerFromBuilder);
+    }
+
+    const mergeHintClose = document.getElementById("merge-hint-close");
+    if (mergeHintClose) {
+        mergeHintClose.addEventListener("click", () => {
+            localStorage.setItem(HINT_MERGE_KEY, "1");
+            const hint = document.getElementById("merge-hint");
+            if (hint) hint.hidden = true;
+        });
     }
 
     const aggregationInput = document.getElementById("aggregation");
@@ -1694,6 +1707,9 @@ function closeNewsDrawer() {
 // Newsstand: 3-column newspaper view of the clicked point's news.
 const newsstand = { neg: [], neu: [], pos: [] };
 const newsstandIdx = { neg: 0, neu: 0, pos: 0 };
+// One page-curl nudge per load (first bucket with 2+ sheets), retired for
+// good once the user turns a page anywhere (HINT_LEAF_KEY).
+let leafNudgeShown = false;
 let newsstandSortDesc = true;
 
 const bucketOf = grade => { const g = Math.round(Number(grade)); return g <= 3 ? "neg" : g === 4 ? "neu" : "pos"; };
@@ -1806,6 +1822,18 @@ function renderSheet(bucket, animate = true, dir = 0) {
     const paint = () => {
         wrap.dataset.dir = dir > 0 ? "next" : dir < 0 ? "prev" : "";
         wrap.innerHTML = sheetHtml;
+        // Re-renders wipe the button, so the "shown" latch only sets when one
+        // full animation actually completed; earlier wipes just re-arm it.
+        if (!animate && list.length > 1 && !leafNudgeShown
+            && localStorage.getItem(HINT_LEAF_KEY) !== "1"
+            && !document.querySelector(".news-turn.leaf-nudge")) {
+            const turnBtn = wrap.querySelector(".news-turn.next");
+            if (turnBtn) {
+                turnBtn.classList.add("leaf-nudge");
+                turnBtn.addEventListener("animationend",
+                    () => { leafNudgeShown = true; }, { once: true });
+            }
+        }
         if (postit) {
             postit.classList.remove("postit-peel");
             postit.innerHTML = postitHtml;
@@ -1830,6 +1858,7 @@ function renderSheet(bucket, animate = true, dir = 0) {
 function stepSheet(bucket, delta) {
     const list = newsstand[bucket];
     if (list.length < 2) return;
+    localStorage.setItem(HINT_LEAF_KEY, "1");   // gesture learned: retire the nudge
     newsstandIdx[bucket] = (newsstandIdx[bucket] + delta + list.length) % list.length;
     renderSheet(bucket, true, delta);
 }
@@ -2164,6 +2193,7 @@ function mergeLayers(srcIndex, dstIndex) {
     pendingState.principalIndex = p === srcIndex
         ? (srcIndex < dstIndex ? dstIndex - 1 : dstIndex)
         : p > srcIndex ? p - 1 : p;
+    localStorage.setItem(HINT_MERGE_KEY, "1");   // gesture learned: retire the tip
     applyFilters();
 }
 
@@ -2235,6 +2265,10 @@ function renderLayerChips() {
     const applied = layersUpToDate();
     const hint = document.getElementById("hand-hint");
     if (hint) hint.hidden = layers.length > 0;
+    // Merge/★ tip: appears the moment the gesture becomes possible (2+ chips
+    // on the table), gone for good after the first merge or a manual dismiss.
+    const mergeHint = document.getElementById("merge-hint");
+    if (mergeHint) mergeHint.hidden = layers.length < 2 || localStorage.getItem(HINT_MERGE_KEY) === "1";
     updateHandButton();
 
     box.replaceChildren(...layers.map((layer, i) => {
@@ -2247,6 +2281,14 @@ function renderLayerChips() {
             + (loadingLayerKeys.has(meta.key) ? " is-loading" : "");
         chip.style.setProperty("--layer-color", seriesColor(meta.colorKey, null, i));
         chip.draggable = true;
+
+        // Grip dots: the visual cue that the chip is draggable (merge gesture).
+        const grip = document.createElement("span");
+        grip.className = "layer-chip-grip";
+        grip.textContent = "⠿";
+        grip.title = t("chip_drag_tip");
+        grip.setAttribute("aria-hidden", "true");
+        chip.append(grip);
 
         if (loadingLayerKeys.has(meta.key)) {
             const spin = document.createElement("span");
@@ -2288,8 +2330,10 @@ function renderLayerChips() {
         const star = document.createElement("button");
         star.type = "button";
         star.className = "layer-chip-star";
-        star.textContent = (pendingState.principalIndex ?? 0) === i ? "★" : "☆";
-        star.title = t("layer_principal_tip");
+        const isPrincipal = (pendingState.principalIndex ?? 0) === i;
+        star.textContent = isPrincipal ? "★" : "☆";
+        star.title = t(isPrincipal ? "layer_principal_tip" : "layer_make_principal_tip");
+        star.setAttribute("aria-label", star.title);
         star.addEventListener("click", () => setPrincipalLayer(i));
         chip.append(star);
 
