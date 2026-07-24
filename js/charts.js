@@ -932,6 +932,167 @@ const verticalLinePlugin = {
 };
 
 
+const POLITICAL_COLORS = {
+    "Democratas": "#2563eb",
+    "Republicanos": "#dc2626",
+    "Independentes": "#d97706"
+};
+
+// Fixed colour per category (keyed by the stable slug, not the translated
+// label or array position). This way a series keeps its colour when other
+// categories are added/removed, so comparisons stay readable across changes.
+const CATEGORY_COLORS = {
+    include_all:                        "#003A79",
+    politica:                           "#1f77b4",
+    economia_negocios_financas:         "#2ca02c",
+    conflito_guerra_paz:                "#d62728",
+    saude:                              "#e7298a",
+    educacao:                           "#17becf",
+    ciencia_tecnologia:                 "#9467bd",
+    esporte:                            "#bcbd22",
+    crime_lei_justica:                  "#8c564b",
+    meio_ambiente:                      "#31a354",
+    desastres_acidentes_emergencias:    "#ff7f0e",
+    interesse_humano:                   "#ffbb78",
+    sociedade:                          "#756bb1",
+    trabalho:                           "#00a0b0",
+    meteorologia:                       "#7fc7ff",
+    religiao_crencas:                   "#bd9e39",
+    estilo_vida_lazer:                  "#fb9a99",
+    artes_cultura_entretenimento_midia: "#c71585",
+    nao_informado:                      "#7f7f7f"
+};
+
+// Fallback palette for non-category series (entities, mixed triples, anything
+// without a fixed colour). Picked by a hash of the series key so it is stable.
+const FALLBACK_COLORS = [
+    "#1e40af", "#16a34a", "#9333ea", "#0891b2", "#db2777", "#d97706", "#dc2626"
+];
+const stableColor = key => {
+    let h = 0;
+    const s = String(key || "");
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return FALLBACK_COLORS[h % FALLBACK_COLORS.length];
+};
+
+// Blend a #rrggbb colour toward white: the fixed palette was picked for light
+// backgrounds and reads too dark on the navy theme.
+function lightenHex(hex, k) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+    const c = i => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - k) + 255 * k)
+        .toString(16).padStart(2, "0");
+    return `#${c(1)}${c(3)}${c(5)}`;
+}
+
+// Dark-theme layer palette, by chip position: five clearly distinct hues
+// (sky, green, amber, coral, lilac — the approved demo palette). The
+// category-keyed palette drowns on navy: too many near-blues.
+const DARK_SLOT_COLORS = ["#73BFE8", "#00E1AC", "#F5B041", "#F87171", "#C4A3F9"];
+
+// Colour of a line series, shared with the layer chips in the filter bar so a
+// chip and its line always match. In dark mode, a layer slot (chip position)
+// picks from the distinct palette; without one, the light palette lightened.
+export function seriesColor(key, label, slot) {
+    if (isDarkTheme() && Number.isInteger(slot)) {
+        return DARK_SLOT_COLORS[slot % DARK_SLOT_COLORS.length];
+    }
+    const base = (key === "include_all" ? chartUI().line : null)
+        || CATEGORY_COLORS[key]
+        || POLITICAL_COLORS[label]
+        || stableColor(key || label);
+    return isDarkTheme() ? lightenHex(base, 0.28) : base;
+}
+
+// Dims every line but one (hover on a chip/legend); null falls back to the
+// PINNED key (chip label click), and to no highlight when nothing is pinned.
+let linePinnedKey = null;
+
+export function setLinePinnedKey(key) {
+    linePinnedKey = key;
+    setLineSeriesHighlight(null);
+}
+
+export function setLineSeriesHighlight(key) {
+    if (!lineInstance) return;
+    const target = key ?? linePinnedKey;
+    lineInstance.data.datasets.forEach((ds, i) => {
+        const base = seriesColor(ds.colorKey || ds.key, ds.label, ds.colorSlot ?? i);
+        const dimmed = target !== null && ds.key !== target;
+        ds.borderColor = dimmed ? base + "33" : base;
+        ds.borderWidth = target !== null && ds.key === target ? 3
+            : ds.principal && target === null ? 2.5 : 1.25;
+    });
+    lineInstance.update("none");
+}
+
+// Moves the principal (★) mark to another series without redrawing data:
+// thicker line + starred legend label.
+export function setLinePrincipal(key) {
+    if (!lineInstance) return;
+    lineInstance.data.datasets.forEach(ds => {
+        ds.principal = ds.key === key;
+        ds.borderWidth = ds.principal ? 3 : 2;
+    });
+    lineInstance.update("none");
+}
+
+const escapeTooltipHtml = s => String(s).replace(/[&<>"']/g,
+    m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+
+// Rich HTML tooltip in the demo's style — date header, one row per series
+// with its colour dot, label on the left and the value right-aligned (bold
+// grade, muted news count). The canvas tooltip cannot mix alignments/fonts.
+function lineExternalTooltip(context, texts) {
+    const { chart, tooltip } = context;
+    const parent = chart.canvas.parentNode;
+    let el = parent.querySelector(".line-tooltip");
+    if (!el) {
+        el = document.createElement("div");
+        el.className = "line-tooltip";
+        parent.appendChild(el);
+    }
+    if (tooltip.opacity === 0) {
+        el.classList.remove("show");
+        return;
+    }
+
+    const locale = texts.locale || "pt-BR";
+    const title = (tooltip.title && tooltip.title[0]) || "";
+    const rows = (tooltip.dataPoints || []).map(dp => {
+        const ds = dp.dataset;
+        const raw = dp.raw || {};
+        const dot = seriesColor(ds.colorKey || ds.key, ds.label, ds.colorSlot);
+        let value;
+        if (raw.y == null) {
+            value = `<span class="lt-off">—</span>`;
+        } else {
+            const grade = Number(raw.y).toLocaleString(locale, {
+                minimumFractionDigits: 2, maximumFractionDigits: 2,
+            });
+            const count = Number(raw.count || 0);
+            const unit = count === 1
+                ? (texts.newsUnitSingular || "notícia")
+                : (texts.newsUnitPlural || "notícias");
+            value = `<span class="lt-grade">${grade}</span>` +
+                `<span class="lt-cnt"> · ${count.toLocaleString(locale)} ${unit}</span>`;
+        }
+        const star = ds.principal ? ` <span class="lt-star">★</span>` : "";
+        return `<div class="lt-row"><span class="lt-dot" style="background:${dot}"></span>` +
+            `<span class="lt-label">${escapeTooltipHtml(ds.label || "")}${star}</span>` +
+            `<span class="lt-val">${value}</span></div>`;
+    }).join("");
+    el.innerHTML = `<div class="lt-date">${escapeTooltipHtml(title)}</div>${rows}`;
+    el.classList.add("show");
+
+    // Beside the caret, flipped and clamped so it never leaves the card.
+    const tw = el.offsetWidth, th = el.offsetHeight;
+    let left = tooltip.caretX + 14;
+    if (left + tw > parent.clientWidth - 6) left = tooltip.caretX - tw - 14;
+    const top = Math.min(Math.max(6, tooltip.caretY - th / 2), parent.clientHeight - th - 6);
+    el.style.left = `${Math.max(6, left)}px`;
+    el.style.top = `${top}px`;
+}
+
 export function drawLineChart(canvasElement, labels, datasets, onPointClicked, texts = {}) {
     if (canvasElement.parentElement) {
         canvasElement.parentElement.classList.remove("skeleton");
@@ -954,68 +1115,27 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
     
     const smallScreen = isSmallScreen();
 
-    const POLITICAL_COLORS = {
-        "Democratas": "#2563eb",
-        "Republicanos": "#dc2626",
-        "Independentes": "#d97706"
-        };
-
-    // Fixed colour per category (keyed by the stable slug, not the translated
-    // label or array position). This way a series keeps its colour when other
-    // categories are added/removed, so comparisons stay readable across changes.
-    const CATEGORY_COLORS = {
-        include_all:                        "#003A79",
-        politica:                           "#1f77b4",
-        economia_negocios_financas:         "#2ca02c",
-        conflito_guerra_paz:                "#d62728",
-        saude:                              "#e7298a",
-        educacao:                           "#17becf",
-        ciencia_tecnologia:                 "#9467bd",
-        esporte:                            "#bcbd22",
-        crime_lei_justica:                  "#8c564b",
-        meio_ambiente:                      "#31a354",
-        desastres_acidentes_emergencias:    "#ff7f0e",
-        interesse_humano:                   "#ffbb78",
-        sociedade:                          "#756bb1",
-        trabalho:                           "#00a0b0",
-        meteorologia:                       "#7fc7ff",
-        religiao_crencas:                   "#bd9e39",
-        estilo_vida_lazer:                  "#fb9a99",
-        artes_cultura_entretenimento_midia: "#c71585",
-        nao_informado:                      "#7f7f7f"
-    };
-
-    // Fallback palette for non-category series (entities, alignments without a
-    // fixed colour). Picked by a hash of the series key so it is also stable.
-    const FALLBACK_COLORS = [
-        "#1e40af", "#16a34a", "#9333ea", "#0891b2", "#db2777", "#d97706", "#dc2626"
-    ];
-    const stableColor = key => {
-        let h = 0;
-        const s = String(key || "");
-        for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-        return FALLBACK_COLORS[h % FALLBACK_COLORS.length];
-    };
-
     const dataArray = Array.isArray(datasets) ? datasets : [datasets];
 
     const ui = chartUI();
     applyChartDefaults();
 
     const styledDatasets = dataArray.map((ds, index) => {
-        // ds.key is the stable slug (category/entity); ds.label is translated.
-        // The all-in-one series uses the theme line color (dark blue is unreadable on navy).
-        const color = (ds.key === "include_all" ? ui.line : null)
-            || CATEGORY_COLORS[ds.key]
-            || POLITICAL_COLORS[ds.label]
-            || stableColor(ds.key || ds.label);
+        // ds.key is the stable identity; ds.colorKey overrides the colour for
+        // merged groups (they keep their drop-target's colour); ds.label is
+        // translated; ds.principal marks the ★ layer feeding the widgets.
+        const color = seriesColor(ds.colorKey || ds.key, ds.label, ds.colorSlot ?? index);
 
         return {
             label: ds.label,
+            key: ds.key,
+            colorKey: ds.colorKey,
+            colorSlot: ds.colorSlot ?? index,
+            principal: !!ds.principal,
             data: ds.data,
             borderColor: color,
-            backgroundColor: color.replace("1)", "0.1)"), 
-            borderWidth: 1,
+            backgroundColor: color.replace("1)", "0.1)"),
+            borderWidth: ds.principal && dataArray.length > 1 ? 3 : 2,
             pointRadius: 0,
             pointHoverRadius: 3,    // aumenta o ponto ao passar o mouse
             tension: 0.3,           // suaviza linha
@@ -1089,6 +1209,13 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                     const firstPoint = points[0];
                     const index = firstPoint.index;
 
+                    // Which LINE was clicked (nearest dataset): the newsstand
+                    // loads that layer's news, not the global selection's.
+                    const nearest = lineInstance.getElementsAtEventForMode(e, "nearest", { intersect: false }, true)[0];
+                    const datasetKey = nearest
+                        ? lineInstance.data.datasets[nearest.datasetIndex]?.key
+                        : null;
+
                     // dimensions and position of the canvas on the user's screen
                     const rect = lineInstance.canvas.getBoundingClientRect();
                     // X position of the vertical line clicked day
@@ -1100,14 +1227,22 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                         y: rect.top + chartAreaTop
                     };
 
-                    onPointClicked(index, e, popupCoords);
+                    onPointClicked(index, e, popupCoords, datasetKey);
                 }
             },
             plugins: {
                 legend: {
-                    display: true,
+                    // A lone default series ("Todas") explains nothing — hide it.
+                    display: !(dataArray.length === 1 && dataArray[0].key === "include_all"),
                     position: "top",
                     onClick: (e) => { e.stopPropagation(); },
+                    // Hovering a legend entry spotlights its line, same gesture
+                    // as hovering the layer chip in the filter bar.
+                    onHover: (e, item, legend) => {
+                        const ds = legend.chart.data.datasets[item.datasetIndex];
+                        if (ds) setLineSeriesHighlight(ds.key);
+                    },
+                    onLeave: () => setLineSeriesHighlight(null),
                     labels: {
                         usePointStyle: true,
                         pointStyle: "rectRounded",   // filled, rounded colour chip
@@ -1122,33 +1257,25 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                             items.forEach(item => {
                                 const ds = chart.data.datasets[item.datasetIndex];
                                 if (ds && typeof ds.borderColor === "string") item.fillStyle = ds.borderColor;
+                                // ★ marks the principal layer (feeds the widgets).
+                                if (ds && ds.principal && chart.data.datasets.length > 1) {
+                                    item.text = `★ ${item.text}`;
+                                }
                             });
                             return items;
                         }
                     }
                 },
                 tooltip: {
-                    ...tooltipTheme(),
-                    titleFont: { size: 13, weight: "bold" },
-                    bodyFont: { size: 12 },
-                    bodySpacing: 4,
+                    // Rendered as HTML (see lineExternalTooltip): the demo's
+                    // layout with mixed alignment and typography.
+                    enabled: false,
+                    external: (context) => lineExternalTooltip(context, texts),
                     callbacks: {
                         title: (tooltipItems) => {
                             const index = tooltipItems[0].dataIndex;
                             return texts.originalDates ? texts.originalDates[index] : tooltipItems[0].label;
                         },
-                        label: (context) => {
-                            // context.raw := { x: date, y: grade, count: number }
-                            const row = context.raw;
-                            const grade = row && row.y != null ? row.y.toFixed(2) : "N/A";
-                            const count = row && row.count != null ? row.count : "N/A";
-                            const label = context.dataset.label || "";
-                            return [
-                                label,
-                                `${texts.tooltipGrade || "Nota média"}: ${grade}`,
-                                `${texts.tooltipNews || "Qtd. notícias"}: ${count}`
-                            ];
-                        }
                     }
                 },
                 zoom: { 
@@ -1175,10 +1302,12 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
         lineInstance.data.datasets = styledDatasets;
         lineInstance.options = config.options;
         lineInstance.update(animationsEnabled && !REDUCED_MOTION ? undefined : "none");
+        if (linePinnedKey) setLineSeriesHighlight(null);   // re-assert the pin
         return;
     }
     if (lineInstance) lineInstance.destroy();
     lineInstance = new Chart(ctx, config);
+    if (linePinnedKey) setLineSeriesHighlight(null);
 }
 
 export function resetLineChartZoom() {

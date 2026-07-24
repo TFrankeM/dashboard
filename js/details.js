@@ -821,12 +821,24 @@ function updateFilterSummary(urlParams) {
     const filterSummary = document.getElementById("filter-summary");
     if (!filterSummary) return;
 
+    // A merged-layer link describes its triples; otherwise the flat entities.
+    const combos = urlParams.getAll("combo");
+    if (combos.length) {
+        const tSlot = v => tEntity(!v || v === "all" ? "include_all" : v);
+        filterSummary.textContent = combos.map(raw => {
+            const [ev, ed, cat] = raw.split("|");
+            const catStr = DICTIONARY[CURRENT_LANG].category_options?.[cat] || tSlot(cat);
+            return `${tSlot(ev)} → ${tSlot(ed)} · ${catStr}`;
+        }).join("  +  ");
+        return;
+    }
+
     const evaluatorEntities = urlParams.getAll("evaluatorEntity");
     const evaluatorEntitiesStr = evaluatorEntities.length > 0 ? evaluatorEntities.map(tEntity).join(", ") : t("not_specified");
 
     const evaluatedEntities = urlParams.getAll("evaluatedEntity");
     const evaluatedEntitiesStr = evaluatedEntities.length > 0 ? evaluatedEntities.map(tEntity).join(", ") : t("not_specified");
-    
+
     filterSummary.textContent = `${t("evaluatorEntity")}: ${evaluatorEntitiesStr} | ${t("evaluatedEntity")}: ${evaluatedEntitiesStr}`;
 }
 
@@ -879,6 +891,9 @@ async function fetchData(urlParams) {
         evaluated: urlParams.getAll("evaluatedEntity"),
         category: urlParams.getAll("category"),
         politicalAlignment: urlParams.getAll("politicalAlignment"),
+        // Merged layer deep-link: repeated ev|ed|cat combos ORed server-side
+        // (they take precedence over the flat params above).
+        combo: urlParams.getAll("combo"),
     };
     try {
         const responseData = await fetchDetailsData(filters);

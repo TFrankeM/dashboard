@@ -51,6 +51,12 @@ function buildApiUrl(filters, widgetType) {
         }
     };
 
+    // Merged layer: repeated ev|ed|cat combos, ORed (deduplicated) server-side.
+    if (filters.combo) {
+        (Array.isArray(filters.combo) ? filters.combo : [filters.combo])
+            .forEach(c => url_params.append("combo", c));
+    };
+
     // Filters for details section
     if (filters.limit !== undefined && filters.limit !== null) {
         url_params.append("limit", filters.limit);

@@ -1,5 +1,5 @@
 import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships, fetchDetailsData, fetchStats } from "./api_adapter.js";
-import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawThermometerChart, drawLineChart, clearLineChartSelection, setChartsAnimation } from "./charts.js";
+import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawThermometerChart, drawLineChart, clearLineChartSelection, setChartsAnimation, seriesColor, setLineSeriesHighlight, setLinePinnedKey, setLinePrincipal } from "./charts.js";
 
 import { DICTIONARY } from "./i18n.js";
 import { initModuleFlags } from "./flags.js";
@@ -67,9 +67,16 @@ const DEFAULT_CONFIG = {
     periodValue: "sem1_2025",
     customStartDate: "2025-01-01",
     customEndDate: "2025-06-30",
+    // The three selects hold single values and edit the ACTIVE layer chip.
     evaluatorEntity: ["argentina"],
     evaluatedEntity: ["brasil"],
     category: ["include_all"],
+    // Layers: one line per layer. A layer holds 1+ triples
+    // evaluator→evaluated·category (2+ = merged group, drawn as the
+    // deduplicated union). The principal (★) layer feeds the single-value
+    // widgets. Period/aggregation are global.
+    layers: [{ triples: [{ ev: "argentina", ed: "brasil", cat: "include_all" }] }],
+    principalIndex: 0,
     aggregation: 3
 };
 let appState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -167,6 +174,9 @@ function translateUI() {
         const isOpen = filtersWrapper.classList.contains("open");
         mobileFilterText.textContent = isOpen ? t("btn_hide_filters") : t("btn_show_filters");
     }
+
+    // Layer chips carry translated entity/category names and titles.
+    if (Array.isArray(pendingState?.layers)) renderLayerChips();
 
     // imgs
     document.querySelectorAll("[data-i18n-img]").forEach(el => {
@@ -299,6 +309,7 @@ function initThemeToggle() {
         localStorage.setItem(THEME_STORAGE_KEY, toDark ? "dark" : "light");
         updateThemeToggleAria();
         redrawCharts();   // charts re-read chartUI() on draw
+        renderLayerChips();   // chip colours are theme-aware too
     });
 }
 
@@ -699,7 +710,7 @@ async function initializeFilters() {
         const evalEl = document.getElementById("evaluatorEntity");
         if (evalEl) {
             choicesEvaluatorEntity = buildCheckboxFilter(evalEl, {
-                translate: tEntity, max: 5, searchKey: "placeholder_search",
+                translate: tEntity, single: true, searchKey: "placeholder_search",
                 icon: "eye", nameKey: "label_evaluatorEntity"
             });
             const initialEvaluatorEntities = await fetchOptionsFromDB("evaluator", []);
@@ -710,7 +721,7 @@ async function initializeFilters() {
         const evaluatedEl = document.getElementById("evaluatedEntity");
         if (evaluatedEl) {
             choicesEvaluatedEntity = buildCheckboxFilter(evaluatedEl, {
-                translate: tEntity, max: 5, searchKey: "placeholder_search",
+                translate: tEntity, single: true, searchKey: "placeholder_search",
                 icon: "target", nameKey: "label_evaluatedEntity"
             });
             const initialEvaluated = await fetchOptionsFromDB("evaluated", appState.evaluatorEntity);
@@ -743,7 +754,7 @@ async function initializeFilters() {
         const catEl = document.getElementById("category");
         if (catEl) {
             choicesCategory = buildCheckboxFilter(catEl, {
-                translate: tCategory, max: 5, searchKey: "category_search",
+                translate: tCategory, single: true, searchKey: "category_search",
                 values: CATEGORIESLIST.map(s => ({ value: s })),
                 icon: "tags", nameKey: "label_category"
             });
@@ -754,6 +765,7 @@ async function initializeFilters() {
         setupFilterListeners();
     }
 
+    renderLayerChips();
     translateUI();
     updateToggleVisual(pendingState.isDynamic);
     checkApplyButtonState();
@@ -805,11 +817,8 @@ function setupFilterListeners() {
         }
 
         pendingState[key] = val;
-        
-        if (isMulti) {
-            enforceMultiSelectConstraints(key);
-        }
-
+        // The triple selects are the free-floating hand: editing them costs
+        // nothing until "+ Camada" plays the combination onto the table.
         checkApplyButtonState();
     };
 
@@ -830,7 +839,8 @@ function setupFilterListeners() {
                 choicesEvaluatedEntity.setChoiceByValue(validSelection);
             }
 
-            pendingState.evaluatedEntity = choicesEvaluatedEntity.getValue(true); 
+            pendingState.evaluatedEntity = choicesEvaluatedEntity.getValue(true);
+            checkApplyButtonState();
         });
     }
 
@@ -852,6 +862,7 @@ function setupFilterListeners() {
             }
 
             pendingState.evaluatorEntity = choicesEvaluatorEntity.getValue(true);
+            checkApplyButtonState();
         });
     }
 
@@ -882,6 +893,11 @@ function setupFilterListeners() {
     const categorySelect = document.getElementById("category");
     if (categorySelect) {
         categorySelect.addEventListener("change", () => onFilterChange('category', choicesCategory, true));
+    }
+
+    const addLayerBtn = document.getElementById("btn-add-layer");
+    if (addLayerBtn) {
+        addLayerBtn.addEventListener("click", addLayerFromBuilder);
     }
 
     const aggregationInput = document.getElementById("aggregation");
@@ -947,48 +963,43 @@ function setupFilterListeners() {
     }
 }
 
-function enforceMultiSelectConstraints(changedKey) {
-    const keys = ["evaluatorEntity", "evaluatedEntity", "category"];
-    const changedVal = pendingState[changedKey];
+/* Auto-apply: there is no Apply button anymore. Discrete gestures (+ Camada,
+   ✕, ✎, mescla, ★) apply immediately; the global controls (mode, period,
+   aggregation) debounce briefly so a spinner spree costs one refetch. The
+   name survives because every global-control handler already calls it. */
+let autoApplyTimer = null;
 
-    if (Array.isArray(changedVal) && changedVal.length > 1) {
-        keys.forEach(k => {
-            if (k !== changedKey) {
-                const otherVal = pendingState[k];
-                if (Array.isArray(otherVal) && (otherVal.length > 1 || otherVal.length === 0)) {
-                    // Force to 1 selection if it had more, or keep empty/1
-                    const first = otherVal.length > 0 ? [otherVal[0]] : [];
-                    pendingState[k] = first;
-                    
-                    const instance = k === "evaluatorEntity" ? choicesEvaluatorEntity : (k === "evaluatedEntity" ? choicesEvaluatedEntity : choicesCategory);
-                    if (instance) {
-                        instance.removeActiveItems();
-                        if (first.length > 0) instance.setChoiceByValue(first);
-                    }
-                }
-            }
-        });
-    }
+function globalsDiffer() {
+    const pick = s => JSON.stringify({
+        isDynamic: s.isDynamic,
+        periodValue: s.periodValue,
+        customStartDate: s.customStartDate,
+        customEndDate: s.customEndDate,
+        aggregation: parseFloat(s.aggregation),
+    });
+    return pick(appState) !== pick(pendingState);
 }
 
 function checkApplyButtonState() {
-    const normalize = (s) => {
-        const copy = JSON.parse(JSON.stringify(s));
-        if(Array.isArray(copy.evaluatorEntity)) copy.evaluatorEntity.sort();
-        if(Array.isArray(copy.evaluatedEntity)) copy.evaluatedEntity.sort();
-        if(Array.isArray(copy.category)) copy.category.sort();
-        copy.aggregation = parseFloat(copy.aggregation);
-
-        return JSON.stringify(copy);
-    };
-
-    const isDifferent = normalize(appState) !== normalize(pendingState);
-    const btnApply = document.getElementById("btn-apply");
-
-    if (btnApply) {
-        btnApply.classList.toggle("disabled", !isDifferent);
-        btnApply.disabled = !isDifferent;
+    updateHandButton();
+    if (globalsDiffer()) {
+        clearTimeout(autoApplyTimer);
+        autoApplyTimer = setTimeout(applyFilters, 600);
     }
+}
+
+// "+ Camada" is the only gate left: it disables when the hand repeats a chip
+// already on the table, or when the table is full.
+function updateHandButton() {
+    const btn = document.getElementById("btn-add-layer");
+    if (!btn || !pendingState.layers) return;
+    const hand = builderTriple();
+    const triples = allTriples(normalizedLayers(pendingState));
+    const dup = triples.some(t3 => sameTriple(t3, hand));
+    const full = triples.length >= MAX_LAYERS;
+    btn.disabled = dup || full;
+    // Default title matters when the label collapses to icon-only (narrow desktop).
+    btn.title = dup ? t("hand_dup_hint") : full ? `${t("btn_add_layer")} — 5/5` : t("btn_add_layer");
 }
 
 // Reflect the applied filters in the URL so the current view is shareable and
@@ -1001,9 +1012,9 @@ function syncUrlWithState() {
         p.set("start", appState.customStartDate);
         p.set("end", appState.customEndDate);
     }
-    (appState.evaluatorEntity || []).forEach(v => p.append("evaluator", v));
-    (appState.evaluatedEntity || []).forEach(v => p.append("evaluated", v));
-    (appState.category || []).forEach(v => p.append("category", v));
+    normalizedLayers(appState).forEach(layer =>
+        p.append("layer", layer.triples.map(t3 => `${t3.ev}~${t3.ed}~${t3.cat}`).join(",")));
+    if ((appState.principalIndex ?? 0) !== 0) p.set("principal", appState.principalIndex);
     p.set("agg", appState.aggregation);
     history.replaceState(null, "", `${location.pathname}?${p.toString()}`);
 }
@@ -1011,7 +1022,7 @@ function syncUrlWithState() {
 // Restore filters from a shared/refreshed URL before the widgets initialize.
 function applyUrlState() {
     const p = new URLSearchParams(window.location.search);
-    if (!p.has("period") && !p.has("evaluator") && !p.has("mode")) return;
+    if (!p.has("period") && !p.has("evaluator") && !p.has("mode") && !p.has("layer")) return;
     const st = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     if (p.get("mode") === "dynamic") st.isDynamic = true;
     const period = p.get("period");
@@ -1040,8 +1051,55 @@ function applyUrlState() {
     if (urlCats.length) st.category = urlCats;
     const agg = parseFloat(p.get("agg"));
     if (!isNaN(agg) && agg >= 0.25) st.aggregation = agg;
+
+    // Layers: ?layer=ev~ed~cat, comma-joining the triples of a merged group
+    // ("all" = no filter on that slot); or triples derived from the old flat
+    // multi-select params so shared URLs keep drawing the same lines.
+    const layerParams = p.getAll("layer").slice(0, MAX_LAYERS);
+    if (layerParams.length) {
+        st.layers = layerParams.map(raw => ({
+            triples: raw.split(",").slice(0, MAX_LAYERS).map(part => {
+                const [ev, ed, cat] = part.split("~");
+                return {
+                    ev: ev && ev !== "all" ? ev : INCLUDE_ALL,
+                    ed: ed && ed !== "all" ? ed : INCLUDE_ALL,
+                    cat: cat && CATEGORIESLIST.includes(cat) ? cat : INCLUDE_ALL,
+                };
+            }),
+        }));
+    } else {
+        st.layers = deriveTriplesFromFlat(st);
+    }
+    const principal = parseInt(p.get("principal"), 10);
+    st.principalIndex = Number.isInteger(principal) && principal >= 0 && principal < st.layers.length
+        ? principal : 0;
+    // The selects open editing the principal layer's (first) triple.
+    const pt3 = st.layers[st.principalIndex].triples[0];
+    st.evaluatorEntity = pt3.ev === INCLUDE_ALL ? [] : [pt3.ev];
+    st.evaluatedEntity = pt3.ed === INCLUDE_ALL ? [] : [pt3.ed];
+    st.category = [pt3.cat];
+
     appState = JSON.parse(JSON.stringify(st));
     pendingState = JSON.parse(JSON.stringify(st));
+}
+
+// Old flat URLs (and the pre-layer series modes): several categories → one
+// triple per category ("Todas" first); several evaluators → one per evaluator.
+function deriveTriplesFromFlat(st) {
+    const evaluators = (st.evaluatorEntity || []).filter(Boolean);
+    const evaluateds = (st.evaluatedEntity || []).filter(Boolean);
+    const cats = (st.category || []).filter(Boolean);
+    const ed = evaluateds[0] || INCLUDE_ALL;
+    if (evaluators.length > 1) {
+        const cat = cats.length === 1 ? cats[0] : INCLUDE_ALL;
+        return evaluators.map(ev => ({ triples: [{ ev, ed, cat }] }));
+    }
+    const ev = evaluators[0] || INCLUDE_ALL;
+    const catList = cats.length ? cats : [INCLUDE_ALL];
+    const ordered = catList.includes(INCLUDE_ALL)
+        ? [INCLUDE_ALL, ...catList.filter(c => c !== INCLUDE_ALL)]
+        : catList;
+    return ordered.map(cat => ({ triples: [{ ev, ed, cat }] }));
 }
 
 // Back to the default view: reset the pending selection, rebuild the entity
@@ -1049,6 +1107,9 @@ function applyUrlState() {
 async function resetFilters() {
     pendingState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
     periodByMode = { static: null, dynamic: null };
+    pinnedLayerKey = null;
+    setLinePinnedKey(null);
+    renderLayerChips();
 
     if (choicesEvaluatorEntity) {
         const evaluatorOpts = await fetchOptionsFromDB("evaluator", []);
@@ -1080,21 +1141,20 @@ function updateModeLed() {
 }
 
 function applyFilters() {
+    clearTimeout(autoApplyTimer);
+    // Empty table (the only chip was picked up into the hand): the charts
+    // FREEZE as they are — no fetch, no blanking — until "+ Camada" plays a
+    // layer back. The chips row shows the hint meanwhile.
+    if (!pendingState.layers || !pendingState.layers.length) {
+        renderLayerChips();
+        return;
+    }
     appState = JSON.parse(JSON.stringify(pendingState));
-    checkApplyButtonState();
+    mirrorPrincipalIntoFlat(appState);
+    updateHandButton();
     syncUrlWithState();
     updateModeLed();
     updateDashboard();
-
-    const filtersWrapper = document.getElementById("filters-wrapper");
-    const mobileFilterBtn = document.getElementById("mobile-filter-toggle");
-    const mobileFilterText = document.getElementById("mobile-filter-text");
-
-    if (window.innerWidth < 1024 && filtersWrapper && filtersWrapper.classList.contains("open")) {
-        filtersWrapper.classList.remove("open");
-        if (mobileFilterBtn) mobileFilterBtn.classList.remove("expanded");
-        if (mobileFilterText) mobileFilterText.textContent = t("btn_show_filters");
-    }
 
     if (appState.isDynamic) {
         if (pollingInterval) clearInterval(pollingInterval);
@@ -1423,8 +1483,19 @@ function processAndUpdateLineChart(apiData) {
         return date.toLocaleString(CURRENT_LANG, options);
     });
 
-    const datasets = Array.from(allSeries).map(labelName => {
-        const seriesRows = apiData.filter(row => row.series_label === labelName);
+    // Datasets follow the applied layer order (chip order = legend order).
+    // A layer whose fetch came back empty still gets a legend entry, labelled
+    // "(sem avaliações no período)", instead of silently vanishing. The
+    // fallback path rebuilds metas from the rows (safety for stale caches).
+    const metas = currentLayerMeta.length
+        ? currentLayerMeta
+        : Array.from(allSeries).map(key => {
+            const [ev, ed, cat] = key.includes("~") ? key.split("~") : [null, null, null];
+            return { key, triples: [{ ev, ed, cat }], principal: false };
+        });
+
+    const datasets = metas.map(meta => {
+        const seriesRows = apiData.filter(row => row.series_label === meta.key);
         const dataMap = new Map();
 
         seriesRows.forEach(row => {
@@ -1450,21 +1521,26 @@ function processAndUpdateLineChart(apiData) {
             };
         });
 
-        // series_label is either an entity slug (multi-evaluator mode) or a category
-        // slug (multi-category mode); check both dictionaries directly rather than
-        // via tEntity/tCategory's own prettySlug fallback, which would always differ
-        // from labelName and mask a real category_options hit (e.g. "include_all").
-        const dict = DICTIONARY[CURRENT_LANG];
-        const translatedLabel = dict.entity_options[labelName] || dict.category_options[labelName] || prettySlug(labelName);
-        // key = stable slug for colour mapping; label = translated display text
-        return { label: translatedLabel, key: labelName, data: alignedData };
+        let label = layerDisplayLabel(meta);
+        if (!seriesRows.length) label = `${label} (${t("layer_no_data")})`;
+        // key = stable identity; colorKey/colorSlot = colour identity (dark
+        // theme picks a distinct hue per chip position); label = display text
+        return {
+            label, key: meta.key, colorKey: meta.colorKey, colorSlot: metas.indexOf(meta),
+            principal: meta.principal, data: alignedData,
+        };
     });
 
     const confirmPopup = document.getElementById("chart-popup");
     const popupDateSpan = document.getElementById("popup-date");
 
     // Load a point's news into the newsstand WITHOUT moving the viewport.
-    const selectPoint = (index) => {
+    // datasetKey identifies the clicked LINE, whose layer the news follow;
+    // without one (initial selection) they follow the ★ principal layer.
+    const selectPoint = (index, datasetKey) => {
+        currentClickedLayer = datasetKey
+            ? currentLayerMeta.find(m => m.key === datasetKey) || null
+            : null;
         const startDateObj = new Date(sortedDates[index]);
         const aggHours = parseFloat(appState.aggregation) || 24;
         currentClickedDate = {
@@ -1476,15 +1552,15 @@ function processAndUpdateLineChart(apiData) {
     };
 
     // User clicked a point: load it AND bring the news below the chart into view.
-    const handlePointClick = (index) => {
-        selectPoint(index);
+    const handlePointClick = (index, event, popupCoords, datasetKey) => {
+        selectPoint(index, datasetKey);
         document.getElementById("newsstand")?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
     drawLineChart(lineChartCanvas, axisLabels, datasets, handlePointClick, {
         yAxisTitle: t("chart_line_y_axis_title"),
-        tooltipGrade: t("chart_line_tooltip_avg"),
-        tooltipNews: t("chart_line_tooltip_count"),
+        newsUnitSingular: t("unit_singular"),
+        newsUnitPlural: t("unit_plural"),
         originalDates: tooltipDates,
         axisDates: sortedDates.map(d => new Date(d).getTime()),
         aggHours: agg,
@@ -1519,15 +1595,25 @@ function safeUrl(u) {
     return /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
 }
 
-// Reuse the current filters to deep-link into the full details table
+// Deep-link into the full details table with the CLICKED layer's filters
+// (a merged group travels as repeated combo=ev|ed|cat params).
 function detailsUrlParams() {
     const p = new URLSearchParams();
     p.append("startDate", currentClickedDate.startDate);
     p.append("endDate", currentClickedDate.endDate);
     p.append("aggregation", appState.aggregation);
-    p.append("evaluatorEntity", appState.evaluatorEntity);
-    p.append("evaluatedEntity", appState.evaluatedEntity);
-    (appState.category || []).forEach(c => p.append("category", c));
+    const meta = clickedLayerMeta();
+    if (meta?.combos) {
+        meta.combos.forEach(c => p.append("combo", c));
+    } else if (meta) {
+        meta.ev.forEach(v => p.append("evaluatorEntity", v));
+        meta.ed.forEach(v => p.append("evaluatedEntity", v));
+        p.append("category", meta.cat);
+    } else {
+        (appState.evaluatorEntity || []).forEach(v => p.append("evaluatorEntity", v));
+        (appState.evaluatedEntity || []).forEach(v => p.append("evaluatedEntity", v));
+        (appState.category || []).forEach(c => p.append("category", c));
+    }
     return p.toString();
 }
 
@@ -1564,9 +1650,7 @@ async function loadDrawerNews(sort) {
     let res;
     try {
         res = await fetchDetailsData({
-            evaluator: appState.evaluatorEntity,
-            evaluated: appState.evaluatedEntity,
-            category: appState.category,
+            ...clickedLayerApiFilters(),
             startDate: currentClickedDate.startDate,
             endDate: currentClickedDate.endDate,
             sort_by: field === "date" ? "date" : "grade",
@@ -1614,16 +1698,20 @@ let newsstandSortDesc = true;
 
 const bucketOf = grade => { const g = Math.round(Number(grade)); return g <= 3 ? "neg" : g === 4 ? "neu" : "pos"; };
 
-// "News published between X and Y, evaluated by A about B" for the newsstand card.
+// "News published between X and Y, evaluated by A about B" for the newsstand
+// card — A and B come from the clicked layer's triples.
 function newsstandDescription() {
     if (!currentClickedDate) return "";
-    const rev = Array.isArray(appState.evaluatorEntity) ? appState.evaluatorEntity : [appState.evaluatorEntity];
-    const ent = Array.isArray(appState.evaluatedEntity) ? appState.evaluatedEntity : [appState.evaluatedEntity];
+    const meta = clickedLayerMeta();
+    const triples = meta?.triples
+        || [{ ev: (appState.evaluatorEntity || [])[0], ed: (appState.evaluatedEntity || [])[0] }];
+    const evs = [...new Set(triples.map(t3 => t3.ev || INCLUDE_ALL))];
+    const eds = [...new Set(triples.map(t3 => t3.ed || INCLUDE_ALL))];
     return t("newsstand_desc")
         .replace("{start}", formatDrawerDate(currentClickedDate.startDate))
         .replace("{end}", formatDrawerDate(currentClickedDate.endDate))
-        .replace("{evaluator}", rev.map(r => tEntity(r)).join(", "))
-        .replace("{evaluated}", ent.map(e => tEntity(e)).join(", "));
+        .replace("{evaluator}", evs.map(tEntity).join(", "))
+        .replace("{evaluated}", eds.map(tEntity).join(", "));
 }
 
 async function updateNewsstand() {
@@ -1641,8 +1729,7 @@ async function updateNewsstand() {
     let res;
     try {
         res = await fetchDetailsData({
-            evaluator: appState.evaluatorEntity, evaluated: appState.evaluatedEntity,
-            category: appState.category,
+            ...clickedLayerApiFilters(),
             startDate: currentClickedDate.startDate, endDate: currentClickedDate.endDate,
             limit: 150, offset: 0
         });
@@ -1673,11 +1760,16 @@ function renderSheet(bucket, animate = true, dir = 0) {
     if (!wrap) return;
     const postit = document.getElementById(`postit-${bucket}`);
     const list = newsstand[bucket];
+    const col = wrap.closest(".newsstand-col");
     if (!list.length) {
-        wrap.innerHTML = `<p class="news-sheet-state">${t("newsstand_empty")}</p>`;
+        // No paper, no post-it: an empty newspaper reads as broken. Just a
+        // quiet note under the section head.
+        if (col) col.classList.add("is-empty");
+        wrap.innerHTML = `<p class="news-empty-note">${t(`newsstand_empty_${bucket}`)}</p>`;
         if (postit) postit.innerHTML = "";
         return;
     }
+    if (col) col.classList.remove("is-empty");
     const n = list[newsstandIdx[bucket]];
     const face = bucket === "neg" ? "frown" : bucket === "pos" ? "smile" : "meh";   // sad / indifferent / happy
     // Stacked meta: date (prominent) then category, one per line. The grade now
@@ -1794,6 +1886,498 @@ function initDrawerResize() {
     handle.addEventListener("pointercancel", stop);
 }
 
+/* ---- Layers ----------------------------------------------------------------
+   The evolution chart draws one series per LAYER: a triple evaluator →
+   evaluated · category sharing the global period/aggregation. Layers are
+   first-class state (state.layers + state.principalIndex); the ★ principal
+   one feeds the single-value widgets (histogram, volume, thermometer). */
+
+const INCLUDE_ALL = "include_all";
+const MAX_LAYERS = 5;
+
+// Tolerates the pre-group state shape ({ev,ed,cat} entries without .triples).
+function normalizedLayers(state) {
+    const raw = (Array.isArray(state.layers) && state.layers.length)
+        ? state.layers
+        : [{ triples: [{ ev: INCLUDE_ALL, ed: INCLUDE_ALL, cat: INCLUDE_ALL }] }];
+    return raw.map(l => (Array.isArray(l.triples) && l.triples.length) ? l : { triples: [l] });
+}
+
+// Stable series key per layer. When every layer is a single triple and they
+// differ along one dimension, the keys collapse to that dimension's slug,
+// preserving the pre-layer colours and labels (fixed category palette,
+// entity hashes); otherwise the full triples become the key.
+function layerKeys(layers) {
+    const allSingle = layers.every(l => l.triples.length === 1);
+    if (allSingle) {
+        const triples = layers.map(l => l.triples[0]);
+        const sameEv = triples.every(t => t.ev === triples[0].ev);
+        const sameEd = triples.every(t => t.ed === triples[0].ed);
+        const sameCat = triples.every(t => t.cat === triples[0].cat);
+        if (sameEv && sameEd) return triples.map(t => t.cat);
+        if (sameEd && sameCat) return triples.map(t => t.ev);
+    }
+    return layers.map(l => l.triples.map(t => `${t.ev}~${t.ed}~${t.cat}`).join(","));
+}
+
+// A merged group keeps the colour of its first (drop-target) triple, so the
+// line does not change colour when another layer is merged into it.
+function tripleColorKey(t3) {
+    if (t3.cat && t3.cat !== INCLUDE_ALL) return t3.cat;
+    if (t3.ev && t3.ev !== INCLUDE_ALL) return t3.ev;
+    return INCLUDE_ALL;
+}
+
+function computeLayers(state) {
+    const layers = normalizedLayers(state);
+    const keys = layerKeys(layers);
+    const principal = Math.min(Math.max(0, state.principalIndex ?? 0), layers.length - 1);
+    return layers.map((l, i) => {
+        const triples = l.triples;
+        const single = triples.length === 1;
+        const t3 = triples[0];
+        const meta = {
+            key: keys[i],
+            colorKey: single ? keys[i] : tripleColorKey(t3),
+            triples,
+            principal: i === principal,
+        };
+        if (single) {
+            meta.ev = t3.ev && t3.ev !== INCLUDE_ALL ? [t3.ev] : [];
+            meta.ed = t3.ed && t3.ed !== INCLUDE_ALL ? [t3.ed] : [];
+            meta.cat = t3.cat || INCLUDE_ALL;
+        } else {
+            meta.combos = triples.map(t => `${t.ev}|${t.ed}|${t.cat}`);
+        }
+        return meta;
+    });
+}
+
+function layerFilters(baseFilters, layer) {
+    if (layer.combos) return { ...baseFilters, combo: layer.combos };
+    return { ...baseFilters, evaluator: layer.ev, evaluated: layer.ed, category: [layer.cat] };
+}
+
+function tripleDisplayLabel(t3) {
+    return `${tEntity(t3.ev)} → ${tEntity(t3.ed)} · ${tCategory(t3.cat)}`;
+}
+
+// Translated display label for a layer: collapsed keys keep the familiar
+// single-dimension names; mixed triples and groups spell out the combination.
+function layerDisplayLabel(meta) {
+    if (meta.triples && meta.triples.length > 1) {
+        const ts = meta.triples;
+        const sameEv = ts.every(t => t.ev === ts[0].ev);
+        const sameEd = ts.every(t => t.ed === ts[0].ed);
+        if (sameEv && sameEd) {
+            return `${tEntity(ts[0].ev)} → ${tEntity(ts[0].ed)} · ${ts.map(t => tCategory(t.cat)).join(" + ")}`;
+        }
+        return ts.map(tripleDisplayLabel).join("  +  ");
+    }
+    if (!meta.key.includes("~")) {
+        const dict = DICTIONARY[CURRENT_LANG];
+        return dict.entity_options[meta.key] || dict.category_options[meta.key] || prettySlug(meta.key);
+    }
+    return tripleDisplayLabel(meta.triples ? meta.triples[0] : { ev: null, ed: null, cat: null });
+}
+
+// What the latest applied line fetch produced, for the chip badges, the
+// legend and language-switch redraws.
+let currentLayerMeta = [];
+let emptyLayerKeys = new Set();
+
+// The layer whose LINE was last clicked: the newsstand, the news drawer and
+// the details deep-link load ITS news. Null = follow the ★ principal layer
+// (page load, or a fresh apply).
+let currentClickedLayer = null;
+
+function clickedLayerMeta() {
+    return currentClickedLayer
+        || currentLayerMeta.find(m => m.principal)
+        || currentLayerMeta[0]
+        || null;
+}
+
+function clickedLayerApiFilters() {
+    const meta = clickedLayerMeta();
+    if (!meta) {
+        return {
+            evaluator: appState.evaluatorEntity,
+            evaluated: appState.evaluatedEntity,
+            category: appState.category,
+        };
+    }
+    return layerFilters({}, meta);
+}
+
+/* Session result cache: with auto-apply, re-adding a removed chip or flipping
+   between visited periods must not touch the network. Static mode only —
+   dynamic data stays fresh (it also polls). */
+const resultCache = new Map();
+const RESULT_CACHE_MAX = 60;
+
+function cacheGet(key) {
+    return appState.isDynamic ? undefined : resultCache.get(key);
+}
+function cachePut(key, value) {
+    if (appState.isDynamic || value == null) return;
+    if (resultCache.size >= RESULT_CACHE_MAX) {
+        resultCache.delete(resultCache.keys().next().value);
+    }
+    resultCache.set(key, value);
+}
+
+async function cachedWidgetFetch(name, fn, filters) {
+    const key = JSON.stringify(["w", name, filters]);
+    const hit = cacheGet(key);
+    if (hit !== undefined) return hit;
+    const value = await fn(filters);
+    cachePut(key, value);
+    return value;
+}
+
+// One request per layer, in parallel — but only for layers not in the cache,
+// so "+ Camada" costs exactly one request and "✕" costs none. Each series is
+// retagged with the layer key (stable → stable colors and labels downstream);
+// in-flight layers show a mini-spinner on their chip. rows is null only when
+// every layer failed; empty tracks layers with no evaluations.
+async function fetchLineChartLayered(baseFilters, layers) {
+    const results = await Promise.all(layers.map(async layer => {
+        const key = JSON.stringify(["line", layer.triples, baseFilters]);
+        const hit = cacheGet(key);
+        if (hit !== undefined) return hit;
+        loadingLayerKeys.add(layer.key);
+        renderLayerChips();
+        try {
+            const data = await fetchLineChartData(layerFilters(baseFilters, layer));
+            if (Array.isArray(data)) cachePut(key, data);
+            return data;
+        } finally {
+            loadingLayerKeys.delete(layer.key);
+            renderLayerChips();
+        }
+    }));
+    const rows = [];
+    const empty = [];
+    let anyOk = false;
+    results.forEach((data, i) => {
+        if (!Array.isArray(data)) return;
+        anyOk = true;
+        if (!data.length) empty.push(layers[i].key);
+        for (const row of data) rows.push({ ...row, series_label: layers[i].key });
+    });
+    return { rows: anyOk ? rows : null, empty };
+}
+
+function buildGlobalApiFilters() {
+    const apiFilters = { aggregation: appState.aggregation };
+    if (appState.isDynamic) {
+        apiFilters.period = appState.periodValue;
+        apiFilters.startDate = null;
+        apiFilters.endDate = null;
+    } else {
+        apiFilters.startDate = appState.customStartDate;
+        apiFilters.endDate = appState.customEndDate;
+        apiFilters.period = null;
+    }
+    return apiFilters;
+}
+
+/* ---- Layer chips UI: the hand and the table --------------------------------
+   The three selects are the HAND — bound to nothing; editing them costs
+   nothing. "+ Camada" has a single meaning: play the hand onto the table as a
+   new chip (applied immediately). Editing an existing simple chip = ✎ picks
+   it back into the hand (it leaves the table), adjust, play again. Clicking a
+   chip's label PINS its line's highlight. ★ = principal; ✕ = remove; drag =
+   merge. Every gesture applies on its own — the Apply button is gone. */
+
+function builderTriple() {
+    return {
+        ev: (pendingState.evaluatorEntity || [])[0] || INCLUDE_ALL,
+        ed: (pendingState.evaluatedEntity || [])[0] || INCLUDE_ALL,
+        cat: (pendingState.category || [])[0] || INCLUDE_ALL,
+    };
+}
+
+function syncSelectsToTriple(t3) {
+    pendingState.evaluatorEntity = t3.ev === INCLUDE_ALL ? [] : [t3.ev];
+    pendingState.evaluatedEntity = t3.ed === INCLUDE_ALL ? [] : [t3.ed];
+    pendingState.category = [t3.cat || INCLUDE_ALL];
+    for (const [inst, vals] of [
+        [choicesEvaluatorEntity, pendingState.evaluatorEntity],
+        [choicesEvaluatedEntity, pendingState.evaluatedEntity],
+        [choicesCategory, pendingState.category],
+    ]) {
+        if (!inst) continue;
+        inst.removeActiveItems();
+        if (vals.length) inst.setChoiceByValue(vals);
+    }
+}
+
+function sameTriple(a, b) {
+    return a.ev === b.ev && a.ed === b.ed && a.cat === b.cat;
+}
+
+function allTriples(layers) {
+    return layers.flatMap(l => l.triples);
+}
+
+function layersUpToDate() {
+    return JSON.stringify(pendingState.layers) === JSON.stringify(appState.layers);
+}
+
+// Play the hand onto the table (the button disables duplicates beforehand).
+function addLayerFromBuilder() {
+    if (allTriples(normalizedLayers(pendingState)).length >= MAX_LAYERS) return;
+    pendingState.layers.push({ triples: [builderTriple()] });
+    applyFilters();
+}
+
+function removeLayerAt(i) {
+    pendingState.layers.splice(i, 1);
+    const p = pendingState.principalIndex ?? 0;
+    if (i < p) pendingState.principalIndex = p - 1;
+    else if (i === p) pendingState.principalIndex = 0;
+    applyFilters();
+}
+
+// ✎: the chip leaves the table and its triple fills the hand. With other
+// chips remaining its line vanishes (the table is what is drawn); picking the
+// LAST chip freezes the charts instead of blanking them (see applyFilters).
+function pickUpLayer(i) {
+    const layer = pendingState.layers[i];
+    if (!layer || layer.triples.length !== 1) return; // groups: split first
+    syncSelectsToTriple(layer.triples[0]);
+    removeLayerAt(i);
+}
+
+// Drag a chip onto another: the target absorbs the source's triples and draws
+// their deduplicated union as a single line. "Separar" undoes it.
+function mergeLayers(srcIndex, dstIndex) {
+    if (srcIndex === dstIndex) return;
+    const src = pendingState.layers[srcIndex];
+    const dst = pendingState.layers[dstIndex];
+    if (!src || !dst) return;
+    dst.triples.push(...src.triples);
+    pendingState.layers.splice(srcIndex, 1);
+    const p = pendingState.principalIndex ?? 0;
+    pendingState.principalIndex = p === srcIndex
+        ? (srcIndex < dstIndex ? dstIndex - 1 : dstIndex)
+        : p > srcIndex ? p - 1 : p;
+    applyFilters();
+}
+
+function splitLayer(i) {
+    const layer = pendingState.layers[i];
+    if (!layer || layer.triples.length < 2) return;
+    const pieces = layer.triples.map(t3 => ({ triples: [t3] }));
+    pendingState.layers.splice(i, 1, ...pieces);
+    const p = pendingState.principalIndex ?? 0;
+    if (p > i) pendingState.principalIndex = p + pieces.length - 1;
+    applyFilters();
+}
+
+// Legacy consumers (newsstand, details deep-link, entity options) read the
+// flat fields; keep them mirroring the ★ principal layer (first triple when
+// it is a merged group — F4 makes those consumers group-aware).
+function mirrorPrincipalIntoFlat(state) {
+    const layer = normalizedLayers(state)[Math.min(state.principalIndex ?? 0, state.layers.length - 1)];
+    const pt3 = layer.triples[0];
+    state.evaluatorEntity = pt3.ev === INCLUDE_ALL ? [] : [pt3.ev];
+    state.evaluatedEntity = pt3.ed === INCLUDE_ALL ? [] : [pt3.ed];
+    state.category = [pt3.cat];
+}
+
+function setPrincipalLayer(i) {
+    pendingState.principalIndex = i;
+    if (layersUpToDate() && appState.principalIndex !== i) {
+        // The layer set is already applied: switching ★ only re-aims the
+        // single-value widgets — no full apply needed.
+        appState.principalIndex = i;
+        mirrorPrincipalIntoFlat(appState);
+        refreshPrincipalWidgets();
+        syncUrlWithState();
+    }
+    renderLayerChips();
+    checkApplyButtonState();
+}
+
+// Clicking a chip's label pins/unpins its line's highlight (the hover made
+// people want exactly this; picking the chip up lives on the ✎ instead).
+let pinnedLayerKey = null;
+
+function togglePinnedLayer(key) {
+    pinnedLayerKey = pinnedLayerKey === key ? null : key;
+    setLinePinnedKey(pinnedLayerKey);
+    renderLayerChips();
+}
+
+// Drops a stale pin when its layer leaves the table (called after applies).
+function reconcilePinnedLayer() {
+    if (pinnedLayerKey && !currentLayerMeta.some(m => m.key === pinnedLayerKey)) {
+        pinnedLayerKey = null;
+        setLinePinnedKey(null);
+    }
+}
+
+// Chips whose series are being fetched right now (mini-spinner on the chip).
+let loadingLayerKeys = new Set();
+
+function renderLayerChips() {
+    const box = document.getElementById("layer-chips");
+    if (!box) return;
+    // Shape-normalize WITHOUT the empty fallback: an empty table is a real,
+    // renderable state here (charts frozen, hint shown).
+    pendingState.layers = (pendingState.layers || []).map(l =>
+        (Array.isArray(l.triples) && l.triples.length) ? l : { triples: [l] });
+    const layers = pendingState.layers;
+    const metas = layers.length ? computeLayers(pendingState) : [];
+    const applied = layersUpToDate();
+    const hint = document.getElementById("hand-hint");
+    if (hint) hint.hidden = layers.length > 0;
+    updateHandButton();
+
+    box.replaceChildren(...layers.map((layer, i) => {
+        const meta = metas[i];
+        const isGroup = layer.triples.length > 1;
+        const chip = document.createElement("div");
+        chip.className = "layer-chip"
+            + ((pendingState.principalIndex ?? 0) === i ? " is-principal" : "")
+            + (pinnedLayerKey === meta.key ? " is-pinned" : "")
+            + (loadingLayerKeys.has(meta.key) ? " is-loading" : "");
+        chip.style.setProperty("--layer-color", seriesColor(meta.colorKey, null, i));
+        chip.draggable = true;
+
+        if (loadingLayerKeys.has(meta.key)) {
+            const spin = document.createElement("span");
+            spin.className = "chip-spinner";
+            chip.append(spin);
+        }
+
+        // A span, not a button: a button under the pointer suppresses the
+        // HTML5 drag that merges chips.
+        const label = document.createElement("span");
+        label.className = "layer-chip-label";
+        label.title = isGroup ? t("layer_group_tip") : t("chip_pin_tip");
+        if (isGroup) {
+            layer.triples.forEach(t3 => {
+                const row = document.createElement("span");
+                row.className = "layer-chip-row";
+                row.textContent = tripleDisplayLabel(t3);
+                label.append(row);
+            });
+        } else {
+            label.textContent = tripleDisplayLabel(layer.triples[0]);
+        }
+        label.classList.add("is-pinnable");
+        label.tabIndex = 0;
+        label.setAttribute("role", "button");
+        label.addEventListener("click", () => togglePinnedLayer(meta.key));
+        label.addEventListener("keydown", e => {
+            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); togglePinnedLayer(meta.key); }
+        });
+        chip.append(label);
+
+        if (applied && emptyLayerKeys.has(meta.key)) {
+            const nd = document.createElement("span");
+            nd.className = "layer-chip-nodata";
+            nd.textContent = t("layer_no_data");
+            chip.append(nd);
+        }
+
+        const star = document.createElement("button");
+        star.type = "button";
+        star.className = "layer-chip-star";
+        star.textContent = (pendingState.principalIndex ?? 0) === i ? "★" : "☆";
+        star.title = t("layer_principal_tip");
+        star.addEventListener("click", () => setPrincipalLayer(i));
+        chip.append(star);
+
+        if (isGroup) {
+            const split = document.createElement("button");
+            split.type = "button";
+            split.className = "layer-chip-split";
+            split.textContent = t("layer_split");
+            split.title = t("layer_split_tip");
+            split.addEventListener("click", () => splitLayer(i));
+            chip.append(split);
+        } else {
+            // ✎: pick the chip back into the hand to edit it.
+            const edit = document.createElement("button");
+            edit.type = "button";
+            edit.className = "layer-chip-edit";
+            edit.textContent = "✎";
+            edit.title = t("layer_edit_tip");
+            edit.setAttribute("aria-label", t("layer_edit_tip"));
+            edit.addEventListener("click", () => pickUpLayer(i));
+            chip.append(edit);
+        }
+
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "layer-chip-remove";
+        close.textContent = "✕";
+        close.setAttribute("aria-label", t("layer_remove"));
+        close.addEventListener("click", () => removeLayerAt(i));
+        chip.append(close);
+
+        // Drag a chip onto another to merge their lines into one union series.
+        chip.addEventListener("dragstart", e => {
+            e.dataTransfer.setData("text/plain", String(i));
+            e.dataTransfer.effectAllowed = "move";
+            chip.classList.add("is-dragging");
+        });
+        chip.addEventListener("dragend", () => chip.classList.remove("is-dragging"));
+        chip.addEventListener("dragover", e => {
+            e.preventDefault();
+            chip.classList.add("is-drop-target");
+        });
+        chip.addEventListener("dragleave", () => chip.classList.remove("is-drop-target"));
+        chip.addEventListener("drop", e => {
+            e.preventDefault();
+            chip.classList.remove("is-drop-target");
+            const src = parseInt(e.dataTransfer.getData("text/plain"), 10);
+            if (Number.isInteger(src)) mergeLayers(src, i);
+        });
+
+        // Hovering a chip spotlights its line, once the set is applied.
+        chip.addEventListener("mouseenter", () => { if (applied) setLineSeriesHighlight(meta.key); });
+        chip.addEventListener("mouseleave", () => { if (applied) setLineSeriesHighlight(null); });
+        return chip;
+    }));
+}
+
+// ★ switch on an applied layer set: refetch only the three single-value
+// widgets with the new principal's filters and restyle the line chart.
+async function refreshPrincipalWidgets() {
+    const requestId = ++dashboardRequestId;
+    animateNextDraw = true;
+    setChartsAnimation(true);
+    const apiFilters = buildGlobalApiFilters();
+    const layers = computeLayers(appState);
+    const principal = layers.find(l => l.principal);
+    const principalFilters = layerFilters(apiFilters, principal);
+    setLinePrincipal(principal.key);
+    try {
+        const results = await Promise.allSettled([
+            cachedWidgetFetch("grade", fetchGradesHistogramData, principalFilters),
+            cachedWidgetFetch("volume", fetchVolumeChartData, principalFilters),
+            cachedWidgetFetch("gauge", fetchGaugeData, principalFilters),
+        ]);
+        if (requestId !== dashboardRequestId) return;
+        const [histogramData, volumeData, gaugeVal] = results.map(res =>
+            res.status === "fulfilled" ? res.value : null);
+        currentLayerMeta = layers;
+        cachedApiData = { ...cachedApiData, histogramData, volumeData, gaugeVal };
+        if (histogramData) processAndUpdateHistogramChart(histogramData);
+        const totalNewsCount = processAndUpdateVolumeChart(volumeData);
+        processAndUpdateGaugeDisplay(gaugeVal);
+        updateEvolutionHeader(totalNewsCount);
+    } catch (err) {
+        console.error("Erro ao trocar a camada principal:", err);
+    }
+}
+
 // Monotonic id so a slow response from an older apply never overwrites a newer one.
 let dashboardRequestId = 0;
 
@@ -1815,36 +2399,31 @@ async function updateDashboard() {
         btnApply.style.cursor = "wait";
     }
 
-    const apiFilters = {
-        evaluator: appState.evaluatorEntity, 
-        evaluated: appState.evaluatedEntity, 
-        category: appState.category,
-        aggregation: appState.aggregation
-    };
-    
-    if (appState.isDynamic) {
-        apiFilters.period = appState.periodValue; 
-        apiFilters.startDate = null; 
-        apiFilters.endDate = null;
-    } else {
-        apiFilters.startDate = appState.customStartDate; 
-        apiFilters.endDate = appState.customEndDate; 
-        apiFilters.period = null;
-    }
+    const apiFilters = buildGlobalApiFilters();
+
+    // Line chart: one request per layer. Single-value widgets: the ★
+    // principal layer's filters.
+    const layers = computeLayers(appState);
+    const principalFilters = layerFilters(apiFilters, layers.find(l => l.principal));
 
     try {
         const results = await Promise.allSettled([
-            fetchGradesHistogramData(apiFilters),   
-            fetchVolumeChartData(apiFilters),       
-            fetchGaugeData(apiFilters),             
-            fetchLineChartData(apiFilters)          
+            cachedWidgetFetch("grade", fetchGradesHistogramData, principalFilters),
+            cachedWidgetFetch("volume", fetchVolumeChartData, principalFilters),
+            cachedWidgetFetch("gauge", fetchGaugeData, principalFilters),
+            fetchLineChartLayered(apiFilters, layers)
         ]);
 
         if (requestId !== dashboardRequestId) return;   // a newer apply superseded this one
 
-        const [histogramData, volumeData, gaugeVal, lineData] = results.map(res =>
+        const [histogramData, volumeData, gaugeVal, lineRes] = results.map(res =>
             res.status === "fulfilled" ? res.value : null
         );
+        const lineData = lineRes ? lineRes.rows : null;
+        currentLayerMeta = layers;
+        emptyLayerKeys = new Set(lineRes ? lineRes.empty : []);
+        reconcilePinnedLayer();
+        renderLayerChips();   // refresh the "no evaluations" badges
 
         cachedApiData = { histogramData, volumeData, gaugeVal, lineData };
 
@@ -1852,7 +2431,7 @@ async function updateDashboard() {
         const totalNewsCount = processAndUpdateVolumeChart(volumeData);
         processAndUpdateGaugeDisplay(gaugeVal);
         updateEvolutionHeader(totalNewsCount);
-        
+
         try {
             if (lineData) {
                 processAndUpdateLineChart(lineData);

@@ -1992,8 +1992,8 @@ body.drawer-resizing {
     scroll-margin-top: 152px;
     --news-body-size: 0.95rem;
     --news-leading: 1.72;
-    --news-measure: 62ch;
-    --news-row-max: 940px;
+    --news-measure: 100%;
+    --news-row-max: 1300px;
 }
 
 .newsstand-hint {
@@ -2065,7 +2065,8 @@ html[data-theme="dark"] .newsstand-grid::before {
 }
 .news-postit {
     flex: none;
-    width: 280px;
+    box-sizing: border-box;
+    width: 320px;
     align-self: flex-start;
     margin-top: 14px;
     background: #fef9c3;
@@ -2801,13 +2802,15 @@ html[data-theme="dark"] .cbx-custom-range input.date-input:focus { border-color:
 }
 
 /* Desktop: free placement on a 24-column grid. Cards carry their area in
-   --gx/--gy/--gw/--gh (set by js/layout.js); the fixed 65px row unit keeps
-   every card height deterministic (h=4 -> 320px, the static metric-card
-   height), which the anti-blink fixed-height mechanism relies on. */
+   --gx/--gy/--gw/--gh (set by js/layout.js). Rows are minmax(65px, auto):
+   chart cards contribute no intrinsic height (min-height: 0 below), so
+   their rows keep the deterministic 65px unit the anti-blink fixed-height
+   mechanism relies on (h=4 -> 320px), while content-sized cards (the
+   newsstand) grow their rows so the page scrolls instead of the card. */
 @media (min-width: 1025px) {
     .main-content[data-layout-mode="custom"] {
         grid-template-columns: repeat(24, minmax(0, 1fr));
-        grid-auto-rows: 65px;
+        grid-auto-rows: minmax(65px, auto);
     }
 
     .main-content[data-layout-mode="custom"] > [data-module] {
@@ -2836,10 +2839,448 @@ html[data-theme="dark"] .cbx-custom-range input.date-input:focus { border-color:
         min-height: 0;
     }
 
-    /* Newsstand content longer than its box scrolls inside the card. */
+    /* Newsstand shows in full: its content grows the grid rows (the card's
+       h is a floor, not a cap), so there is never an inner scrollbar. */
     .main-content[data-layout-mode="custom"] > .newsstand-section .newsstand-grid {
         flex: 1 1 auto;
-        min-height: 0;
-        overflow-y: auto;
     }
+}
+
+/* ---- Layer chips (filters bar; see renderLayerChips in js/dashboard.js) ---- */
+
+.filter-addlayer { flex: none; }
+
+.btn-add-layer {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 14px;
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.45);
+    border-radius: 4px;
+    color: #fff;
+    font-family: "Gotham", Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.btn-add-layer:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.8);
+}
+.btn-add-layer:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.layer-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* One chip per layer: colour bar = its line in the evolution chart. */
+.layer-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.30);
+    border-left: 4px solid var(--layer-color, #73BFE8);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-size: 12.5px;
+    line-height: 1.3;
+}
+
+/* Selects edit this chip. */
+.layer-chip.is-active {
+    outline: 1px dashed rgba(255, 255, 255, 0.55);
+    outline-offset: 2px;
+}
+
+/* ★ principal: golden accent, matching the star. */
+.layer-chip.is-principal {
+    border-top-color: color-mix(in srgb, var(--fgv-aux-yellow) 70%, transparent);
+    border-right-color: color-mix(in srgb, var(--fgv-aux-yellow) 70%, transparent);
+    border-bottom-color: color-mix(in srgb, var(--fgv-aux-yellow) 70%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--fgv-aux-yellow) 25%, transparent);
+}
+
+/* Two identical chips: Apply stays blocked until one changes. */
+.layer-chip.is-duplicate {
+    border-top-color: rgba(248, 113, 113, 0.8);
+    border-right-color: rgba(248, 113, 113, 0.8);
+    border-bottom-color: rgba(248, 113, 113, 0.8);
+}
+
+.layer-chip button {
+    border: none;
+    background: none;
+    padding: 0 2px;
+    font: inherit;
+    color: rgba(255, 255, 255, 0.75);
+    cursor: pointer;
+    line-height: 1;
+}
+.layer-chip button:hover { color: #fff; }
+
+.layer-chip-label { text-align: left; }
+
+.layer-chip.is-principal .layer-chip-star { color: var(--fgv-aux-yellow); }
+
+.layer-chip-nodata {
+    font-size: 11px;
+    font-weight: 700;
+    color: #FCA5A5;
+    white-space: nowrap;
+}
+
+/* ---- Merged layer chips (F3): stacked rows, drag targets, split ---- */
+
+.layer-chip[draggable="true"] { cursor: grab; user-select: none; -webkit-user-select: none; }
+.layer-chip.is-dragging { opacity: 0.45; cursor: grabbing; }
+.layer-chip.is-drop-target {
+    border-color: var(--fgv-vib-green, #00E1AC);
+    background: rgba(0, 225, 172, 0.12);
+    box-shadow: 0 0 0 2px rgba(0, 225, 172, 0.25);
+}
+
+.layer-chip-label { display: flex; flex-direction: column; gap: 1px; }
+.layer-chip-row { white-space: nowrap; }
+
+.layer-chip-split {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.layer-chip-label.is-editable { cursor: pointer; }
+.layer-chip-label.is-editable:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* "global" scope badge on the period/aggregation labels: these two apply to
+   every layer, unlike the triple selects that shape individual chips. */
+.scope-badge {
+    flex: none;
+    margin-left: 2px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: rgba(115, 191, 232, 0.18);
+    color: #9fd4f2;
+}
+
+/* The aggregation column needs room for its label plus the global badge. */
+.filter-group.filter-aggregation { flex-basis: 205px; }
+
+/* ---- Scope blocks (Global / Camada) and the layers "table" row ---- */
+
+.scope-block {
+    margin: 0;
+    padding: 6px 12px 10px;
+    border-radius: 9px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    min-inline-size: auto;   /* fieldset flex quirk */
+    align-self: flex-start;  /* hug the content, don't stretch to the row */
+}
+
+.scope-block legend {
+    padding: 0 6px;
+    margin-left: -6px;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.scope-global {
+    border: 1px solid rgba(115, 191, 232, 0.35);
+    background: rgba(115, 191, 232, 0.06);
+}
+.scope-global legend { color: #9fd4f2; }
+
+/* Dashed: the visual language the site uses for "building" (the + Camada
+   button, the hand). */
+.scope-layer {
+    border: 1px dashed rgba(255, 255, 255, 0.30);
+    background: rgba(255, 255, 255, 0.03);
+}
+.scope-layer legend { color: rgba(255, 255, 255, 0.65); }
+
+.scope-block .filter-group { flex: 0 1 auto; }
+
+.filters-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-left: auto;
+    align-self: center;
+    padding-left: 16px;
+    border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* Second line: the whole row belongs to the chips. */
+.layer-chips-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.chips-caption {
+    flex: none;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.layer-chips { margin-top: 0; }
+
+/* Charts frozen while the hand holds the only layer. */
+.hand-hint {
+    font-size: 12px;
+    color: var(--fgv-aux-yellow);
+}
+
+/* ✎ pick-up and pinned highlight */
+.layer-chip-edit { font-size: 12px; }
+
+.layer-chip .layer-chip-label.is-pinnable { cursor: pointer; }
+.layer-chip .layer-chip-label.is-pinnable:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.layer-chip.is-pinned {
+    background: rgba(255, 255, 255, 0.14);
+}
+.layer-chip.is-pinned .layer-chip-label { font-weight: 700; }
+
+/* Mini-spinner while this chip's series is being fetched. */
+.layer-chip.is-loading { border-style: dashed; }
+.chip-spinner {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex: none;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-top-color: #fff;
+    animation: chip-spin 0.8s linear infinite;
+}
+@keyframes chip-spin { to { transform: rotate(360deg); } }
+
+/* Compact sticky bar: blocks slim down, captions/legends go with the labels. */
+.sticky-filters.compact .scope-block { padding: 4px 8px 6px; }
+.sticky-filters.compact .scope-block legend,
+.sticky-filters.compact .chips-caption { display: none; }
+
+@media (max-width: 1024px) {
+    .filters-actions {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        padding-top: 10px;
+        width: 100%;
+    }
+    .scope-block { width: 100%; }
+}
+
+/* ---- Uniform filter widths ---- */
+/* The boxes stop inheriting their content's width: the three triple selects
+   and the aggregation share one fixed size; the period gets a wider fixed box
+   (custom ranges carry two datetimes). Long values — "Artes, cultura,
+   entretenimento e mídia" — ellipsize via the cbx summary refitter. */
+.scope-layer .filter-group,
+.filter-group.filter-aggregation {
+    width: 185px;
+    flex: none;
+}
+
+.scope-global .filter-group:not(.filter-aggregation) {
+    width: 235px;
+    flex: none;
+}
+
+@media (max-width: 1024px) {
+    .scope-layer .filter-group,
+    .scope-global .filter-group:not(.filter-aggregation),
+    .filter-group.filter-aggregation { width: 100%; }
+}
+
+/* ---- Filter bar: fluid single row, no wrapping above 1024px ---- */
+
+/* Round widths: aggregation at its label's minimum ("Aggregation (h)" is the
+   longest); the freed space moved into the period so a full custom range
+   ("01/01/2025 00:00 até 08/01/2025 00:00") fits written out. */
+@media (min-width: 1025px) {
+    .filters-grid { flex-wrap: nowrap; }
+    .filter-group.filter-aggregation { width: 150px; }
+    .scope-global .filter-group:not(.filter-aggregation) { width: 280px; }
+
+    /* The Camada block stretches to fill the row; its boxes grow equally, so
+       the gap between the block and the actions never sits empty. */
+    .scope-layer { flex: 1 1 auto; }
+    .scope-layer .filter-group { width: auto; flex: 1 1 185px; min-width: 185px; }
+    .scope-layer .filter-group.filter-addlayer { flex: 0 0 auto; min-width: 0; }
+    .filters-actions { flex: none; }
+}
+
+/* Mid widths: the actions stack as a column INSIDE the same row — the row
+   itself never wraps and never invades the active-layers line. */
+@media (min-width: 1025px) and (max-width: 1549px) {
+    .filters-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+    .filters-actions .btn-clear-filters { justify-content: center; }
+    .scope-global .filter-group:not(.filter-aggregation) { width: 260px; }
+    /* Basis 150 for comfort, but shrinkable to 120 so the + Camada button
+       never spills out of the block between ~1250 and ~1410px. */
+    .scope-layer .filter-group { flex-basis: 150px; min-width: 120px; }
+}
+
+/* Narrow desktop: everything tightens and "+ Camada" goes icon-only. */
+@media (min-width: 1025px) and (max-width: 1249px) {
+    .sticky-filters { padding-left: 10px; padding-right: 10px; }
+    .filters-grid { gap: 6px; }
+    .scope-block { padding-left: 8px; padding-right: 8px; gap: 6px; }
+    .filters-actions { padding-left: 6px; }
+    .toggle-container { gap: 5px; }
+    .scope-global .filter-group:not(.filter-aggregation) { width: 165px; }
+    .filter-group.filter-aggregation { width: 145px; }
+    .scope-layer .filter-group { flex-basis: 120px; min-width: 100px; }
+    .btn-add-layer span { display: none; }
+}
+
+/* Stacked blocks below the grid breakpoint, but Limpar + Modo share ONE line. */
+@media (max-width: 1024px) {
+    .filters-actions {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+    }
+    .filters-actions .filter-group.filter-mode {
+        width: auto;
+        flex: none;
+        min-height: 0;
+    }
+}
+
+/* No INTERNAL two-storey folding either: above the grid breakpoint the blocks
+   keep one row each; the ellipsised boxes absorb the squeeze instead. */
+@media (min-width: 1025px) {
+    .scope-block { flex-wrap: nowrap; }
+    .scope-global { flex: none; }
+}
+
+@media (min-width: 1025px) and (max-width: 1249px) {
+    .scope-layer .filter-group { flex: 1 1 120px; min-width: 110px; }
+    .filters-actions { gap: 4px; }
+}
+
+/* Fieldsets refuse to shrink below min-content by default; free them so the
+   flexible Camada block can actually absorb the squeeze. */
+@media (min-width: 1025px) {
+    .scope-block { min-width: 0; min-inline-size: 0; }
+}
+
+@media (min-width: 1025px) and (max-width: 1249px) {
+    .toggle-container .info-icon { display: none; }
+    .toggle-container .toggle-label { font-size: 12px; }
+}
+
+/* ---- Rich evolution tooltip (demo style; see lineExternalTooltip) ---- */
+
+.line-tooltip {
+    position: absolute;
+    z-index: 30;
+    pointer-events: none;
+    min-width: 200px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 58, 121, 0.25);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+    font-size: 12px;
+    color: #2A4361;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+.line-tooltip.show { opacity: 1; }
+
+.lt-date {
+    font-weight: 700;
+    color: #122A47;
+    margin-bottom: 5px;
+}
+.lt-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 1px 0;
+    white-space: nowrap;
+}
+.lt-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.lt-label { color: #5C748F; }
+.lt-val { margin-left: auto; padding-left: 16px; font-variant-numeric: tabular-nums; }
+.lt-grade { font-weight: 700; color: #122A47; }
+.lt-cnt { color: #5C748F; font-size: 11px; }
+.lt-star { color: #C99A17; font-size: 11px; }
+.lt-off { color: #5C748F; }
+
+html[data-theme="dark"] .line-tooltip {
+    background: rgba(16, 35, 56, 0.97);
+    border-color: rgba(115, 191, 232, 0.45);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+    color: #B9C9D9;
+}
+html[data-theme="dark"] .lt-date { color: #E8F0F7; }
+html[data-theme="dark"] .lt-label { color: #9FB3C8; }
+html[data-theme="dark"] .lt-grade { color: #F0F6FC; }
+html[data-theme="dark"] .lt-cnt { color: #7E93AB; }
+html[data-theme="dark"] .lt-star { color: #F0C24B; }
+html[data-theme="dark"] .lt-off { color: #7E93AB; }
+
+
+/* ---- Empty newsstand bucket: no ghost paper, just a quiet note ---- */
+.newsstand-col.is-empty .news-sheet-wrap {
+    background: transparent;
+    min-height: 0;
+    padding: 10px 4px;
+}
+.newsstand-col.is-empty .news-sheet-wrap::before,
+.newsstand-col.is-empty .news-sheet-wrap::after {
+    display: none;
+}
+.newsstand-col.is-empty .news-postit { display: none; }
+
+.news-empty-note {
+    margin: 4px 0 0;
+    font-size: 0.88rem;
+    font-style: italic;
+    color: #94a3b8;
+}
+
+
+/* Narrower screens get the slimmer post-it back (the paper keeps the rest);
+   below 769px the stacked-column mobile rules above take over (width: auto).
+   The 1400px row cap only bites on screens wide enough to afford it. */
+@media (min-width: 769px) and (max-width: 1042px) {
+    .news-postit { width: 300px; }
 }

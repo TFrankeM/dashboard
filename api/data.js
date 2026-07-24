@@ -114,7 +114,7 @@ async function rollupCategoryFilter(query, f) {
 
 async function getGradesChartData(request) {
     const q = request.query;
-    if (!(q.startDate && q.endDate) || !(await rollupReady())) return getGradesChartDataRaw(request);
+    if (!(q.startDate && q.endDate) || q.combo || !(await rollupReady())) return getGradesChartDataRaw(request);
     const f = rollupBase(q);
     if (!(await rollupCategoryFilter(q, f))) return getGradesChartDataRaw(request);
     const text = `
@@ -130,7 +130,7 @@ async function getGradesChartData(request) {
 
 async function getVolumeChartData(request) {
     const plan = planTimeBin(request.query);
-    if (!plan.useRollup || !(await rollupReady())) { request.query.aggregation = plan.intervalHours; return getVolumeChartDataRaw(request); }
+    if (!plan.useRollup || request.query.combo || !(await rollupReady())) { request.query.aggregation = plan.intervalHours; return getVolumeChartDataRaw(request); }
     const f = rollupBase(request.query);
     if (!(await rollupCategoryFilter(request.query, f))) { request.query.aggregation = plan.intervalHours; return getVolumeChartDataRaw(request); }
     f.params.push(`${plan.intervalHours} hours`);
@@ -145,7 +145,7 @@ async function getVolumeChartData(request) {
 
 async function getGaugeData(request) {
     const q = request.query;
-    if (!(q.startDate && q.endDate) || !(await rollupReady())) return getGaugeDataRaw(request);
+    if (!(q.startDate && q.endDate) || q.combo || !(await rollupReady())) return getGaugeDataRaw(request);
     const f = rollupBase(q);
     if (!(await rollupCategoryFilter(q, f))) return getGaugeDataRaw(request);
     const text = `SELECT SUM(r.grade_sum)/NULLIF(SUM(r.grade_count),0) AS average_grade ${f.from} ${f.where()}`;
@@ -156,7 +156,7 @@ async function getGaugeData(request) {
 async function getLineChartData(request) {
     const q = request.query;
     const plan = planTimeBin(q);
-    if (!plan.useRollup || !(await rollupReady())) { q.aggregation = plan.intervalHours; return getLineChartDataRaw(request); }
+    if (!plan.useRollup || q.combo || !(await rollupReady())) { q.aggregation = plan.intervalHours; return getLineChartDataRaw(request); }
 
     const multiCat = await hasNewsCategory();
     const categories = toArray(q.category);
@@ -230,7 +230,27 @@ async function getSiteStats() {
     } catch { return {}; }
 }
 
-// RAW path (fallback): dynamic mode and sub-hour ranges. Aggregates live.
+// A merged layer arrives as repeated combo=ev|ed|cat params ("all" or
+// "include_all" = no filter on that slot). The union of the combos is ORed in
+// a single WHERE, so a news matching two combos still counts once — the
+// rollup cannot express that, which is why combos always ride the raw path.
+function parseCombos(query) {
+    const raw = toArray(query.combo);
+    const open = v => !v || v === "all" || v === "include_all";
+    const combos = raw.map(entry => {
+        const [ev, ed, cat] = String(entry).split("|");
+        return {
+            ev: open(ev) ? null : ev,
+            ed: open(ed) ? null : ed,
+            cat: open(cat) ? null : cat,
+        };
+    });
+    // A fully open combo makes the union universal: no filter at all.
+    const universal = combos.some(c => !c.ev && !c.ed && !c.cat);
+    return { active: raw.length > 0, combos: universal ? [] : combos.filter(c => c.ev || c.ed || c.cat) };
+}
+
+// RAW path (fallback): dynamic mode, sub-hour ranges and combo unions.
 // N:N category filtering uses EXISTS over news_category (no row duplication);
 // the 'category_series' dimension joins every membership (per-category series);
 // 'category_primary' joins only rank 1 (the primary category, for display).
@@ -239,7 +259,37 @@ function buildDynamicSQL(query, requiredDimensions = [], multiCat = false) {
     const conditions = [];
     const joins = new Set(requiredDimensions);
     const { evaluator, evaluated, category, period, startDate, endDate } = query;
+    const { active: comboActive, combos } = parseCombos(query);
 
+    if (comboActive) {
+        // Union of triples; the flat evaluator/evaluated/category params are
+        // ignored (a client sends one or the other, never both).
+        if (combos.some(c => c.ev)) joins.add("te_evaluator");
+        if (combos.some(c => c.ed)) joins.add("te_evaluated");
+        if (!multiCat && combos.some(c => c.cat)) joins.add("category_primary");
+        const parts = combos.map(c => {
+            const sub = [];
+            if (c.ev) {
+                params.push([c.ev]);
+                sub.push(`te_evaluator.slug = ANY($${params.length})`);
+            }
+            if (c.ed) {
+                params.push([c.ed]);
+                sub.push(`te_evaluated.slug = ANY($${params.length})`);
+            }
+            if (c.cat) {
+                params.push(catValues([c.cat]));
+                if (multiCat) {
+                    sub.push(`EXISTS (SELECT 1 FROM news_category ncf JOIN category cf ON cf.id = ncf.category_id
+                    WHERE ncf.news_id = na.id AND cf.slug = ANY($${params.length}))`);
+                } else {
+                    sub.push(`c.slug = ANY($${params.length})`);
+                }
+            }
+            return `(${sub.join(" AND ")})`;
+        });
+        if (parts.length) conditions.push(`(${parts.join(" OR ")})`);
+    } else {
     if (evaluator) {
         joins.add("te_evaluator");
         const evaluators = toArray(evaluator);
@@ -270,6 +320,7 @@ function buildDynamicSQL(query, requiredDimensions = [], multiCat = false) {
                 conditions.push(`c.slug = ANY($${params.length})`);
             }
         }
+    }
     }
 
     if (period && period.toLowerCase().startsWith("last")) {
@@ -369,6 +420,15 @@ async function getLineChartDataRaw(request) {
         return rows;
     }
 
+    // A combo union is a single merged series; the client retags it with the
+    // layer key, so the label here is just a placeholder.
+    if (request.query.combo) {
+        return runSeries({
+            dims: [],
+            selectClause: ", 'combo' AS series_label",
+            groupClause: "",
+        });
+    }
     if (isMultiEvaluator) {
         return runSeries({
             dims: ["te_evaluator"],
