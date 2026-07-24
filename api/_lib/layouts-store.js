@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { parseEdgeConfig } from "./flags-store.js";
-import { BUILTIN_LAYOUTS, normalizeLayoutCards } from "./layouts.js";
+import { SEED_LAYOUTS, normalizeLayoutCards } from "./layouts.js";
 
 // Layout storage, same backend split as flags-store.js: Edge Config in the
 // cloud, a local JSON file when developing without EDGE_CONFIG, read-only
@@ -90,18 +90,27 @@ export function getLayoutStore() {
     return defaultsStore;
 }
 
-// Builtins merged with the store's custom layouts (builtins win on slug
-// collision); an active slug pointing at a missing layout resolves to null.
-// Cards normalize to 24-column coordinates here, so layouts saved by the
-// earlier span-based and 12-column editors keep working without a migration
-// pass (the stored "grid" marker tells the shapes apart).
+// The store is the authority: its entries WIN over the code seeds, which only
+// fill slugs the store has never written (editing a seed materializes it; a
+// { deleted: true } tombstone keeps a deleted seed gone). An active slug
+// pointing at a missing layout resolves to null. Cards normalize to
+// 24-column coordinates here, so layouts saved by the earlier span-based and
+// 12-column editors keep working without a migration pass (the stored "grid"
+// marker tells the shapes apart).
 export async function resolveLayouts(store) {
     const { custom, active } = await store.read();
     const library = {};
-    for (const [slug, layout] of Object.entries(custom ?? {})) {
-        if (slug in BUILTIN_LAYOUTS) continue;
-        library[slug] = { label: layout.label ?? slug, cards: normalizeLayoutCards(layout.cards ?? [], layout.grid) };
+    for (const [slug, seed] of Object.entries(SEED_LAYOUTS)) {
+        if (custom && slug in custom) continue;   // materialized or tombstoned
+        library[slug] = { label: seed.label, favorite: !!seed.favorite, cards: seed.cards };
     }
-    Object.assign(library, BUILTIN_LAYOUTS);
+    for (const [slug, layout] of Object.entries(custom ?? {})) {
+        if (layout && layout.deleted) continue;   // tombstoned seed
+        library[slug] = {
+            label: layout.label ?? slug,
+            favorite: !!layout.favorite,
+            cards: normalizeLayoutCards(layout.cards ?? [], layout.grid),
+        };
+    }
     return { library, active: active && library[active] ? active : null };
 }

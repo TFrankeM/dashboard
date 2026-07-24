@@ -788,3 +788,18 @@ body.is-dragging .editor-tray li { cursor: grabbing; }
     letter-spacing: 0.05em;
     background: rgba(148, 163, 184, 0.14);
 }
+
+/* ---- Favorite star on gallery cards ---- */
+.layout-fav {
+    flex: none;
+    padding: 0 4px;
+    border: none;
+    background: none;
+    font-size: 1.05rem;
+    line-height: 1;
+    color: var(--fgv-gray-med);
+    cursor: pointer;
+}
+.layout-fav:hover { color: var(--fgv-aux-yellow); }
+.layout-fav.is-fav { color: var(--fgv-aux-yellow); }
+.layout-fav:disabled { opacity: 0.5; cursor: not-allowed; }

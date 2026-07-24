@@ -35,7 +35,7 @@ const GRID_COLS = 24;
 const MAX_CARD_H = 12;
 const MAX_ROWS = 80;
 const CANVAS_MIN_ROWS = 12;
-const CANVAS_SPARE_ROWS = 3;
+const CANVAS_SPARE_ROWS = 2;
 const DRAG_THRESHOLD_PX = 6;
 
 const MODULE_META = {
@@ -116,8 +116,6 @@ function moduleGlyph(id) {
     return glyph;
 }
 
-const BUILTIN_ORDER = ["padrao", "compacto"];
-
 let token = null;
 let layoutState = null;
 let busy = false;
@@ -150,10 +148,14 @@ function feedback(message, isError = false) {
 
 function renderMeta() {
     if (!layoutState) return;
-    const { source, writable, degraded } = layoutState;
+    const { source, writable, degraded, active, layouts } = layoutState;
+    const liveLabel = active && layouts?.[active]
+        ? `"${layouts[active].label || active}"`
+        : "página estática";
     metaEl.textContent = `Fonte: ${SOURCE_LABELS[source] || source}` +
         (degraded ? " — indisponível" : "") +
-        (writable ? "" : " — somente leitura");
+        (writable ? "" : " — somente leitura") +
+        ` · No ar: ${liveLabel}`;
 }
 
 /* ---- Auth gate ---- */
@@ -296,15 +298,32 @@ function layoutThumb(cards) {
     return thumb;
 }
 
+function toggleFavorite(slug) {
+    const layout = layoutState.layouts[slug];
+    const value = !layout.favorite;
+    return layoutRequest("PATCH", { favorite: { slug, value } },
+        value ? `"${layout.label || slug}" favoritado.` : `"${layout.label || slug}" desfavoritado.`);
+}
+
 function galleryCard(slug, layout, { active, writable }) {
-    // With nothing active the page renders exactly the "padrao" layout.
-    const isLive = active === slug || (active === null && slug === "padrao");
+    const isLive = active === slug;
 
     const card = document.createElement("article");
     card.className = "layout-card" + (isLive ? " is-live" : "");
 
     const head = document.createElement("div");
     head.className = "layout-card-head";
+
+    // ★ favorito: fica nas primeiras posições da galeria.
+    const fav = document.createElement("button");
+    fav.type = "button";
+    fav.className = "layout-fav" + (layout.favorite ? " is-fav" : "");
+    fav.textContent = layout.favorite ? "★" : "☆";
+    fav.title = layout.favorite ? "Remover dos favoritos" : "Favoritar (aparece primeiro)";
+    fav.disabled = !writable || busy;
+    fav.addEventListener("click", () => toggleFavorite(slug));
+    head.append(fav);
+
     const name = document.createElement("h3");
     name.textContent = layout.label || slug;
     head.append(name);
@@ -313,12 +332,6 @@ function galleryCard(slug, layout, { active, writable }) {
         live.className = "layout-badge is-live";
         live.textContent = "no ar";
         head.append(live);
-    }
-    if (layout.builtin) {
-        const builtin = document.createElement("span");
-        builtin.className = "layout-badge";
-        builtin.textContent = "embutido";
-        head.append(builtin);
     }
 
     const actions = document.createElement("div");
@@ -335,14 +348,14 @@ function galleryCard(slug, layout, { active, writable }) {
     arrow.textContent = "↗";
     preview.append(arrow);
     actions.append(preview);
-    if (!layout.builtin) {
-        actions.append(plainButton("Editar", () => openEditor({ slug, label: layout.label, cards: layout.cards })));
-    }
+    actions.append(plainButton("Editar", () => openEditor({
+        slug, label: layout.label, cards: layout.cards, favorite: layout.favorite,
+    })));
     actions.append(plainButton("Duplicar", () => openEditor({ cards: layout.cards })));
     if (!isLive && writable) {
         actions.append(armedButton("Ativar", "Confirmar? Muda o site no ar", () => setActiveLayout(slug), "btn-primary"));
     }
-    if (!layout.builtin && writable && !isLive) {
+    if (writable && !isLive) {
         actions.append(armedButton("Excluir", "Confirmar exclusão?", () => deleteLayout(slug), "btn-danger"));
     }
 
@@ -365,20 +378,20 @@ function renderGallery() {
     add.append(plus, addLabel);
     add.addEventListener("click", () => openEditor());
 
-    // Order: live layout first, then the builtins, then customs by creation
+    // Order: live layout first, then favorites, then the rest by creation
     // order (the library object keeps insertion order; editing an existing
     // slug does not move it, only brand-new layouts append at the end).
-    const liveSlug = layouts[active] ? active : "padrao";
-    const order = [liveSlug];
-    for (const slug of BUILTIN_ORDER) {
-        if (slug !== liveSlug && layouts[slug]) order.push(slug);
+    const slugs = Object.keys(layouts);
+    const order = [];
+    if (active && layouts[active]) order.push(active);
+    for (const slug of slugs) {
+        if (!order.includes(slug) && layouts[slug].favorite) order.push(slug);
     }
-    for (const slug of Object.keys(layouts)) {
-        if (slug !== liveSlug && !BUILTIN_ORDER.includes(slug)) order.push(slug);
+    for (const slug of slugs) {
+        if (!order.includes(slug)) order.push(slug);
     }
-    const entries = order.map(slug => [slug, layouts[slug]]);
-    galleryEl.replaceChildren(add, ...entries.map(([slug, layout]) =>
-        galleryCard(slug, layout, { active, writable })));
+    galleryEl.replaceChildren(add, ...order.map(slug =>
+        galleryCard(slug, layouts[slug], { active, writable })));
 }
 
 /* ---- Layout editor: free placement on the 12-column canvas ---- */
@@ -389,9 +402,10 @@ function slugify(label) {
         .replace(/^-+|-+$/g, "").slice(0, 32) || null;
 }
 
-function openEditor({ slug = null, label = "", cards = [] } = {}) {
+function openEditor({ slug = null, label = "", cards = [], favorite = false } = {}) {
     draft = {
         fixedSlug: slug,
+        favorite,
         cards: placedCards(cards).map(c => ({ id: c.id, x: c.x, y: c.y, w: c.w, h: c.h })),
     };
     editorTitleEl.textContent = slug ? `Editar "${slug}"` : "Novo layout";
@@ -443,6 +457,26 @@ function canvasRows() {
     return Math.min(MAX_ROWS, Math.max(CANVAS_MIN_ROWS, extent + CANVAS_SPARE_ROWS));
 }
 
+// Rows currently rendered on the canvas. Dragging toward the bottom edge
+// grows this live (new cell rows appear under the pointer) WITHOUT rebuilding
+// the canvas — a rebuild would destroy the pointer-captured element and kill
+// the drag. renderEditor() shrinks it back to extent + spare after the drop.
+let canvasRowCount = 0;
+
+function growCanvasRows(target) {
+    target = Math.min(MAX_ROWS, target);
+    if (target <= canvasRowCount) return;
+    for (let r = canvasRowCount + 1; r <= target; r++) {
+        for (let c = 1; c <= GRID_COLS; c++) {
+            const cell = document.createElement("div");
+            cell.className = "canvas-cell";
+            cell.style.gridArea = `${r} / ${c}`;
+            canvasEl.append(cell);
+        }
+    }
+    canvasRowCount = target;
+}
+
 /* Pointer-driven drag state: adding from the tray, moving a placed card or
    resizing via the edge handles. The ghost previews the landing area; red
    means the drop is invalid (over another card) and will be rejected. */
@@ -469,7 +503,7 @@ function cellFromPoint(clientX, clientY) {
         inside: clientX >= rect.left && clientX <= rect.right &&
                 clientY >= rect.top && clientY <= rect.bottom,
         col: clamp(Math.floor((clientX - geom.left) / geom.colPitch) + 1, 1, GRID_COLS),
-        row: clamp(Math.floor((clientY - geom.top) / geom.rowPitch) + 1, 1, canvasRows()),
+        row: clamp(Math.floor((clientY - geom.top) / geom.rowPitch) + 1, 1, canvasRowCount || canvasRows()),
     };
 }
 
@@ -523,7 +557,12 @@ function onDragMove(event) {
         clearGhost();
         return;
     }
-    const rows = canvasRows();
+    // Nearing the bottom edge? Grow the canvas under the pointer, so a tall
+    // card can be dropped past the current last row without dropping first.
+    if (pt.row + (drag.gh || drag.h || 1) - 1 >= canvasRowCount - 1) {
+        growCanvasRows(canvasRowCount + 2);
+    }
+    const rows = canvasRowCount || canvasRows();
     if (drag.kind === "add" || drag.kind === "move") {
         const grabDX = drag.grabDX ?? Math.floor(drag.w / 2);
         const grabDY = drag.grabDY ?? 0;
@@ -645,6 +684,7 @@ function canvasCard(card, index) {
 
 function renderCanvas() {
     const rows = canvasRows();
+    canvasRowCount = rows;
     const cells = [];
     for (let r = 1; r <= rows; r++) {
         for (let c = 1; c <= GRID_COLS; c++) {
@@ -716,7 +756,8 @@ document.getElementById("editor-save").addEventListener("click", async () => {
     if (!draft.fixedSlug && layoutState?.layouts[slug]) {
         return feedback(`Já existe um layout "${slug}"; escolha outro nome.`, true);
     }
-    const ok = await layoutRequest("PUT", { slug, label, cards: draft.cards, grid: GRID_COLS },
+    const ok = await layoutRequest("PUT",
+        { slug, label, cards: draft.cards, grid: GRID_COLS, favorite: draft.favorite },
         `Layout "${label}" salvo.`);
     if (ok) closeEditor();
 });

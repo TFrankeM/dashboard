@@ -4,11 +4,12 @@
 // the card height deterministically (h=4 -> 320px, the static metric-card
 // height) — the anti-blink fixed-height mechanism depends on that.
 //
-// Built-in layouts ship with the code and cannot be edited; custom layouts
-// live in the layout store (see layouts-store.js) and are merged over these
-// by slug. Two older stored shapes convert on read: the span-based flow
-// editor ("1x1"/"2x1"/"3x1") and the short-lived 12-column coordinate grid
-// (coordinates without a grid marker). Writes stamp grid: 24.
+// Every layout is an ordinary, editable entry in the layout store (see
+// layouts-store.js); SEED_LAYOUTS below only fill the gaps until the store
+// has its own entry for their slug. Two older stored shapes convert on read:
+// the span-based flow editor ("1x1"/"2x1"/"3x1") and the short-lived
+// 12-column coordinate grid (coordinates without a grid marker). Writes
+// stamp grid: 24.
 
 import { MODULE_IDS } from "./modules.js";
 
@@ -35,15 +36,16 @@ export function moduleSizes(id) {
     return MODULE_SIZES[id] ?? FALLBACK_SIZES;
 }
 
-export const BUILTIN_LAYOUTS = {
-    // The page exactly as authored in dashboard.html (legacy 1:1.5:1 metrics
-    // row). "static" means activating it performs no recomposition at all —
-    // it is also what the dashboard falls back to when the store is down.
-    // The cards below only feed the admin thumbnails.
+// Seed layouts: ordinary, EDITABLE grid layouts that ship with the code. They
+// appear in the library only while the store has no entry for their slug —
+// editing one materializes it in the store (and it evolves from there);
+// deleting one leaves a tombstone so it stays gone. Both start favorited.
+export const SEED_LAYOUTS = {
+    // Grid rendition of the classic page: three metric cards, then the
+    // evolution chart, then the newsstand.
     padrao: {
         label: "Padrão",
-        builtin: true,
-        static: true,
+        favorite: true,
         cards: [
             { id: "grades-histogram", x: 1, y: 1, w: 8, h: 4 },
             { id: "news-volume", x: 9, y: 1, w: 8, h: 4 },
@@ -55,7 +57,7 @@ export const BUILTIN_LAYOUTS = {
     // Indicator beside the evolution chart, no histogram/volume cards.
     compacto: {
         label: "Compacto",
-        builtin: true,
+        favorite: true,
         cards: [
             { id: "evolution", x: 1, y: 1, w: 16, h: 6 },
             { id: "gauge-thermometer", x: 17, y: 1, w: 8, h: 6 },
@@ -125,7 +127,6 @@ export function validateLayoutInput(slug, label, cards) {
     if (typeof slug !== "string" || !SLUG_RE.test(slug)) {
         return "slug must match [a-z0-9][a-z0-9-]{0,31}";
     }
-    if (slug in BUILTIN_LAYOUTS) return "builtin layouts cannot be modified";
     if (label !== undefined && (typeof label !== "string" || !label.trim() || label.trim().length > 40)) {
         return "label must be a non-empty string of up to 40 characters";
     }
