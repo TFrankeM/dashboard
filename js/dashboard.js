@@ -64,9 +64,9 @@ const INFO_TIPPY_OPTS = {
 
 const DEFAULT_CONFIG = {
     isDynamic: false,
-    periodValue: "sem1_2025",
+    periodValue: "year_2025",
     customStartDate: "2025-01-01",
-    customEndDate: "2025-06-30",
+    customEndDate: "2025-12-31",
     // The three selects hold single values and edit the ACTIVE layer chip.
     evaluatorEntity: ["argentina"],
     evaluatedEntity: ["brasil"],

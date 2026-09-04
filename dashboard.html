@@ -52,7 +52,7 @@
     <nav class="side-nav">
         <a href="#top" class="nav-dot active" data-label="Filtros" data-i18n-label="nav_filters"></a>
         <a href="#metrics" class="nav-dot" data-label="Métricas principais" data-i18n-label="nav_metrics"></a>
-        <a href="#evolution" class="nav-dot" data-label="Evolução temporal" data-i18n-label="nav_evolution"></a>
+        <a href="#evolution" class="nav-dot" data-label="FGV IIBEX" data-i18n-label="nav_evolution"></a>
         <a href="#newsstand" class="nav-dot" data-label="Notícias do ponto" data-i18n-label="nav_newsstand"></a>
     </nav>
 
@@ -71,12 +71,15 @@
                 <div class="brand-title">
                     <div>
                         <h1 data-i18n="app_title">FGV IIBEx</h1>
-                        <span class="subtitle" data-i18n="app_subtitle">Indicador da Imagem do Brasil no Exterior</span>
+                        <span class="subtitle" data-i18n="app_subtitle">indicador da imagem do brasil projetada pela mídia digital estrangeira</span>
                     </div>
                 </div>
 
                 <!-- Language dropdown + theme switch -->
                 <div class="header-actions">
+                    <a href="https://github.com/mcl-rio" target="_blank" rel="noopener noreferrer" id="repo-link" class="header-btn" data-i18n-title="header_repo" title="Repositório de dados" aria-label="Repositório de dados">
+                        <i data-lucide="database" class="icon-repo"></i>
+                    </a>
                     <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Ativar modo escuro">
                         <i data-lucide="sun" class="icon-sun"></i>
                         <i data-lucide="moon" class="icon-moon"></i>
@@ -114,7 +117,6 @@
             <div id="filters-wrapper" class="filters-collapse">
                 <div class="filters-grid">
                     <fieldset class="scope-block scope-global">
-                        <legend data-i18n="scope_global">Global</legend>
                     <div class="filter-group">
                         <span class="filter-label">
                             <span data-i18n="label_period">Período</span>
@@ -146,7 +148,6 @@
                     </fieldset>
 
                     <fieldset class="scope-block scope-layer">
-                        <legend data-i18n="scope_layer">Camada</legend>
                     <div class="filter-group">
                         <span class="filter-label">
                             <span data-i18n="label_evaluatorEntity">Ente avaliador</span>
@@ -188,8 +189,8 @@
 
                     <div class="filter-group filter-addlayer">
                         <button type="button" class="btn-add-layer" id="btn-add-layer">
-                            <i data-lucide="layers" class="icon-sm"></i>
-                            <span data-i18n="btn_add_layer">+ Camada</span>
+                            <i data-lucide="plus" class="icon-sm"></i>
+                            <span data-i18n="btn_add_layer">Comparar</span>
                         </button>
                     </div>
 
@@ -207,12 +208,12 @@
 
                 <!-- Second line: the layers "table" (chips), full width -->
                 <div class="layer-chips-row">
-                    <span class="chips-caption" data-i18n="chips_caption">Camadas ativas</span>
+                    <span class="chips-caption" data-i18n="chips_caption">Comparações</span>
                     <div class="layer-chips" id="layer-chips"></div>
-                    <span class="hand-hint" id="hand-hint" hidden data-i18n="hand_hint">Mesa vazia — ajuste os seletores e clique + Camada</span>
+                    <span class="hand-hint" id="hand-hint" hidden data-i18n="hand_hint">Mesa vazia — ajuste os seletores e clique Comparar</span>
                     <!-- First-time tip: shown once there are 2+ chips, gone after the first merge -->
                     <span class="gesture-hint" id="merge-hint" hidden>
-                        <span data-i18n="merge_hint">Dica: arraste uma ficha sobre outra para mesclar as linhas em uma só · a ★ escolhe a camada dos gráficos de apoio (notas, notícias e indicador atual)</span>
+                        <span data-i18n="merge_hint">Dica: arraste uma ficha sobre outra para mesclar as linhas em uma só</span>
                         <button type="button" id="merge-hint-close" data-i18n-label="hint_dismiss" aria-label="Dispensar dica">✕</button>
                     </span>
                 </div>
@@ -222,7 +223,7 @@
         <!-- Executive summary -->
         <main class="main-content" id="metrics" data-module-group>
             <!-- Container left: grades histogram -->
-             <div class="card metric-card hud-corners" data-module="grades-histogram">
+            <div class="card metric-card hud-corners" data-module="grades-histogram">
                 <div class="card-header">
                     <div>    
                         <div class="card-header-title-group">
@@ -325,14 +326,14 @@
                     </div>
                 </div>
             </div>
-        
+        </main>
         <!-- Container evolução temporal -->
         <section class="evolution-section" id="evolution" data-module="evolution">
             <div class="card full-width-card hud-corners">
                 <div class="card-header-row">
                     <div>
                         <div class="card-header-title-group">
-                            <h3 id="evolution-title">Evolução temporal</h3>
+                            <h3 id="evolution-title">FGV IIBEX</h3>
                             <span class="info-icon" data-i18n-tooltip="tooltip_evolution">?</span>
                         </div>
                         <p class="evolution-entities" id="evolution-entities"></p>

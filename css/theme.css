@@ -132,7 +132,8 @@ html[data-theme="dark"] .btn-outline:focus-visible {
 html[data-theme="dark"] ::-webkit-scrollbar-track { background: var(--dk-bg-0); }
 html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--dk-surface-2); }
 
-.theme-toggle {
+.theme-toggle,
+.header-btn {
     position: relative;
     width: 38px;
     height: 38px;
@@ -145,32 +146,46 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--dk-surface
     border-radius: 4px;
     color: var(--fgv-blue-dark);
     cursor: pointer;
+    text-decoration: none;
     transition: border-color 0.2s ease, background-color 0.3s ease, color 0.3s ease;
 }
-.theme-toggle:hover { border-color: var(--fgv-blue-dark); }
-.theme-toggle:focus-visible { outline: 2px solid var(--fgv-blue-light); outline-offset: 2px; }
+.theme-toggle:hover,
+.header-btn:hover { border-color: var(--fgv-blue-dark); color: var(--fgv-blue-navy); }
+.theme-toggle:focus-visible,
+.header-btn:focus-visible { outline: 2px solid var(--fgv-blue-light); outline-offset: 2px; }
 .theme-toggle svg {
     position: absolute;
     width: 18px;
     height: 18px;
     transition: opacity 0.25s ease, transform 0.35s ease;
 }
+.header-btn svg {
+    width: 18px;
+    height: 18px;
+}
 /* Sun/moon morph: the inactive icon rotates away and fades out. */
 .theme-toggle .icon-sun { opacity: 0; transform: rotate(90deg) scale(0.6); }
 .theme-toggle .icon-moon { opacity: 1; transform: rotate(0) scale(1); }
-html[data-theme="dark"] .theme-toggle {
+html[data-theme="dark"] .theme-toggle,
+html[data-theme="dark"] .header-btn {
     background: var(--dk-surface);
     border-color: var(--dk-border);
+    color: var(--fgv-blue-light);
+}
+html[data-theme="dark"] .theme-toggle {
     color: var(--fgv-aux-yellow);
 }
-html[data-theme="dark"] .theme-toggle:hover { border-color: var(--dk-border-strong); }
-html[data-theme="dark"] .theme-toggle:focus-visible { outline-color: var(--fgv-vib-cyan-dark); }
+html[data-theme="dark"] .theme-toggle:hover,
+html[data-theme="dark"] .header-btn:hover { border-color: var(--dk-border-strong); color: #fff; }
+html[data-theme="dark"] .theme-toggle:focus-visible,
+html[data-theme="dark"] .header-btn:focus-visible { outline-color: var(--fgv-vib-cyan-dark); }
 html[data-theme="dark"] .theme-toggle .icon-sun { opacity: 1; transform: rotate(0) scale(1); }
 html[data-theme="dark"] .theme-toggle .icon-moon { opacity: 0; transform: rotate(-90deg) scale(0.6); }
 
 /* Slimmer header control on small phones so the actions group fits. */
 @media (max-width: 480px) {
-    .theme-toggle {
+    .theme-toggle,
+    .header-btn {
         width: 34px;
         height: 34px;
     }
