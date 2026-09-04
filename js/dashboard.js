@@ -65,8 +65,8 @@ const INFO_TIPPY_OPTS = {
 const DEFAULT_CONFIG = {
     isDynamic: false,
     periodValue: "year_2025",
-    customStartDate: "2025-01-01",
-    customEndDate: "2025-12-31",
+    customStartDate: "2025-01-01 00:00:00",
+    customEndDate: "2025-12-31 23:59:59",
     // The three selects hold single values and edit the ACTIVE layer chip.
     evaluatorEntity: ["argentina"],
     evaluatedEntity: ["brasil"],
@@ -87,11 +87,11 @@ let cachedApiData = {};
 const PERIODS_CONFIG = {
     // Display order: full range on top, then most recent first.
     static: [
-        { value: "all_period", start: "2024-09-01", end: "2025-12-31" },
-        { value: "year_2025", start: "2025-01-01", end: "2025-12-31" },
-        { value: "sem2_2025", start: "2025-07-01", end: "2025-12-31" },
-        { value: "sem1_2025", start: "2025-01-01", end: "2025-06-30" },
-        { value: "set_dez_2024", start: "2024-09-01", end: "2024-12-31" },
+        { value: "all_period", start: "2024-09-01 00:00:00", end: "2025-12-31 23:59:59" },
+        { value: "year_2025", start: "2025-01-01 00:00:00", end: "2025-12-31 23:59:59" },
+        { value: "sem2_2025", start: "2025-07-01 00:00:00", end: "2025-12-31 23:59:59" },
+        { value: "sem1_2025", start: "2025-01-01 00:00:00", end: "2025-06-30 23:59:59" },
+        { value: "set_dez_2024", start: "2024-09-01 00:00:00", end: "2024-12-31 23:59:59" },
         { value: "custom" }
     ],
     dynamic: [
@@ -611,8 +611,13 @@ function buildCheckboxFilter(selectEl, opts) {
     };
 }
 
-// Bare "YYYY-MM-DD" (from a preset period) -> full UTC datetime string.
-const toFullIso = date => (date && date.length === 10 ? `${date}T00:00:00.000Z` : date);
+// Bare "YYYY-MM-DD" or "YYYY-MM-DD HH:mm:ss" -> ISO string for flatpickr.
+const toFullIso = date => {
+    if (!date) return date;
+    if (date.length === 10) return `${date}T00:00:00.000Z`;
+    if (date.includes(" ")) return `${date.replace(" ", "T")}.000Z`;
+    return date;
+};
 
 // dd/mm/aaaa hh:mm a partir de um ISO UTC (tolera data sem hora)
 const fmtRangeDateTime = iso => {
