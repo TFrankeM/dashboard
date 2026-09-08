@@ -2403,6 +2403,62 @@ html[data-theme="dark"] .newsstand-grid::before {
     font-style: italic;
 }
 
+.evolution-foot {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 2px;
+    border-top: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.06));
+    margin-top: 6px;
+}
+.evolution-table-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Inter", sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-muted, #64748b);
+    background: transparent;
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: 6px;
+    padding: 5px 14px;
+    cursor: not-allowed;
+    opacity: 0.65;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.evolution-table-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+/* Highlight state when a new point is clicked (mudança de estado sutil) */
+.evolution-table-btn.has-point.highlight {
+    color: #fff;
+    background: var(--fgv-blue-light, #008BC9);
+    border-color: var(--fgv-blue-light, #008BC9);
+    cursor: pointer;
+    opacity: 1;
+    box-shadow: 0 0 0 2px rgba(0, 139, 201, 0.25);
+}
+/* Steady state once selected/clicked (estilo sutil neutro outline) */
+.evolution-table-btn.has-point {
+    color: var(--fgv-blue-dark, #003A79);
+    background: transparent;
+    border-color: var(--fgv-blue-dark, #003A79);
+    cursor: pointer;
+    opacity: 0.9;
+    box-shadow: none;
+    animation: none;
+}
+.evolution-table-btn.has-point:hover {
+    background: rgba(0, 58, 121, 0.08);
+    opacity: 1;
+    transform: translateY(-1px);
+}
+.evolution-table-btn .icon-xs {
+    width: 14px;
+    height: 14px;
+}
+
 .newsstand-foot {
     display: flex;
     justify-content: center;
@@ -2567,6 +2623,30 @@ html[data-theme="dark"] .reset-btn:hover,
 html[data-theme="dark"] .newsstand-table-btn:hover {
     background-color: var(--dk-surface-2);
     border-color: var(--dk-border-strong);
+}
+html[data-theme="dark"] .evolution-foot {
+    border-top-color: var(--dk-border);
+}
+html[data-theme="dark"] .evolution-table-btn {
+    background-color: transparent;
+    border-color: var(--dk-border);
+    color: var(--dk-text-muted);
+}
+html[data-theme="dark"] .evolution-table-btn.has-point.highlight {
+    background-color: var(--fgv-vib-cyan-dark, #00A3E0);
+    border-color: var(--fgv-vib-cyan-dark, #00A3E0);
+    color: #fff;
+    box-shadow: 0 0 0 2px rgba(0, 163, 224, 0.3);
+}
+html[data-theme="dark"] .evolution-table-btn.has-point {
+    background-color: transparent;
+    border-color: var(--fgv-vib-cyan-dark, #00A3E0);
+    color: var(--fgv-vib-cyan-dark, #00A3E0);
+    box-shadow: none;
+}
+html[data-theme="dark"] .evolution-table-btn.has-point:hover {
+    background-color: rgba(0, 163, 224, 0.12);
+    color: #fff;
 }
 html[data-theme="dark"] .chart-popup {
     background-color: var(--dk-surface);

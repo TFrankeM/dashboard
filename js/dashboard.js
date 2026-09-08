@@ -232,6 +232,7 @@ function translateUI() {
 
     // Keep the gauge "last update" footer in the current language
     renderLastUpdate();
+    updateEvolutionTableBtn(false);
 }
 
 async function fetchOptionsFromDB(targetType, filterValue) {
@@ -1552,10 +1553,10 @@ function processAndUpdateLineChart(apiData) {
     const confirmPopup = document.getElementById("chart-popup");
     const popupDateSpan = document.getElementById("popup-date");
 
-    // Load a point's news into the newsstand WITHOUT moving the viewport.
+    // Load a point's news into the newsstand and update evolution table button.
     // datasetKey identifies the clicked LINE, whose layer the news follow;
     // without one (initial selection) they follow the ★ principal layer.
-    const selectPoint = (index, datasetKey) => {
+    const selectPoint = (index, datasetKey, isUserClick = false) => {
         currentClickedLayer = datasetKey
             ? currentLayerMeta.find(m => m.key === datasetKey) || null
             : null;
@@ -1567,12 +1568,12 @@ function processAndUpdateLineChart(apiData) {
             aggregation: aggHours
         };
         updateNewsstand();
+        updateEvolutionTableBtn(isUserClick);
     };
 
-    // User clicked a point: load it AND bring the news below the chart into view.
+    // User clicked a point: highlight the button with new state (mudança de estado)
     const handlePointClick = (index, event, popupCoords, datasetKey) => {
-        selectPoint(index, datasetKey);
-        document.getElementById("newsstand")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        selectPoint(index, datasetKey, true);
     };
 
     drawLineChart(lineChartCanvas, axisLabels, datasets, handlePointClick, {
@@ -1585,8 +1586,8 @@ function processAndUpdateLineChart(apiData) {
         locale: CURRENT_LANG
     });
 
-    // Newsstand defaults to the first data point (no scroll); clicking a point changes it.
-    if (sortedDates.length) selectPoint(0);
+    // Defaults to the first data point on render (steady state, not highlighted).
+    if (sortedDates.length) selectPoint(0, null, false);
 }
 
 // News drawer: quick read of the clicked point.
@@ -1868,6 +1869,39 @@ function stepSheet(bucket, delta) {
     renderSheet(bucket, true, delta);
 }
 
+function updateEvolutionTableBtn(highlight = false) {
+    const btn = document.getElementById("evolution-table-btn");
+    const textEl = document.getElementById("evolution-table-btn-text");
+    if (!btn || !textEl) return;
+
+    if (!currentClickedDate) {
+        btn.disabled = true;
+        btn.classList.remove("has-point", "highlight");
+        textEl.textContent = t("evolution_table_btn_default");
+        return;
+    }
+
+    btn.disabled = false;
+    btn.classList.add("has-point");
+    if (highlight) {
+        btn.classList.add("highlight");
+    }
+
+    const dateStr = formatDrawerDate(currentClickedDate.startDate);
+    textEl.textContent = t("evolution_table_btn_active").replace("{date}", dateStr);
+}
+
+function initEvolutionTableBtn() {
+    const btn = document.getElementById("evolution-table-btn");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+        if (!currentClickedDate) return;
+        // User clicked the button: consume the highlight (revert to steady state)
+        btn.classList.remove("highlight");
+        window.open(`details.html?${detailsUrlParams()}`, "_blank");
+    });
+}
+
 function initNewsstand() {
     const grid = document.getElementById("newsstand-grid");
     if (grid) grid.addEventListener("click", (e) => {
@@ -1875,11 +1909,6 @@ function initNewsstand() {
         if (!col) return;
         const nav = e.target.closest("[data-nav]");
         if (nav) stepSheet(col.dataset.bucket, nav.dataset.nav === "prev" ? -1 : 1);
-    });
-    // Single, centred "open in table" action for the whole section
-    const tableBtn = document.getElementById("newsstand-table-btn");
-    if (tableBtn) tableBtn.addEventListener("click", () => {
-        if (currentClickedDate) window.open(`details.html?${detailsUrlParams()}`, "_blank");
     });
     const sortBtn = document.getElementById("newsstand-sort");
     if (sortBtn) sortBtn.addEventListener("click", () => {
@@ -2674,6 +2703,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     initNewsstand();
+    initEvolutionTableBtn();
 
     const newsDrawer = document.getElementById("news-drawer");
     if (newsDrawer) {

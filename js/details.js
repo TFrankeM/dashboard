@@ -44,8 +44,8 @@ const COLUMNS = [
     { key: "category", labelKey: "col_category", expandable: false, sortable: true },
     { key: "evaluator_entity", labelKey: "col_evaluator", expandable: false, sortable: true },
     { key: "evaluated_entity", labelKey: "col_evaluated", expandable: false, sortable: true },
+    { key: "analysis", labelKey: "col_analysis", type: "analysis", expandable: false, sortable: false },
     { key: "grade", labelKey: "col_grade", type: "number", expandable: false, sortable: true },
-    { key: "analysis", labelKey: "col_analysis", expandable: true , sortable: false },
     { key: "url", labelKey: "col_link", type: "link", expandable: false, sortable: false },
 ];
 
@@ -1139,6 +1139,9 @@ function renderTableBody(data) {
                     } else if (value > 5.5) {
                         td.style.color = "#10b981";
                     }
+                } else if (col.type === "analysis") {
+                    td.className = "col-analysis-cell";
+                    td.textContent = value || "-";
                 } else {
                     if (col.key === "category" && value) {
                         td.textContent = tCategory(value) || "-";

@@ -21,7 +21,6 @@ const CATEGORY_MAP = {
     meio_ambiente: "Meio ambiente",
     meteorologia: "Meteorologia",
     nao_informado: "Não informado",
-    outros: "Outros",
     politica: "Política",
     religiao_crencas: "Religião e crenças",
     saude: "Saúde",
