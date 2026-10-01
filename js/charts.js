@@ -888,6 +888,7 @@ const verticalLinePlugin = {
             }
             if (x === null) x = chart.scales.x.getPixelForValue(index);
             if (x === undefined || x === null) return;
+            if (chart.chartArea && (x < chart.chartArea.left || x > chart.chartArea.right)) return;
 
             ctx.save();
             ctx.beginPath();

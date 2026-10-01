@@ -1,5 +1,5 @@
 import { fetchGradesHistogramData, fetchVolumeChartData, fetchGaugeData, fetchLineChartData, fetchRelationships, fetchDetailsData, fetchStats } from "./api_adapter.js";
-import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawThermometerChart, drawLineChart, clearLineChartSelection, setChartsAnimation, seriesColor, setLineSeriesHighlight, setLinePinnedKey, setLinePrincipal } from "./charts.js";
+import { drawGradesHistogramChart, drawVolumeChart, drawGaugeChart, drawThermometerChart, drawLineChart, setChartsAnimation, seriesColor, setLineSeriesHighlight, setLinePinnedKey, setLinePrincipal } from "./charts.js";
 
 import { DICTIONARY } from "./i18n.js";
 import { initModuleFlags } from "./flags.js";
@@ -2685,7 +2685,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             confirmPopup.classList.add("hidden");
         }
         if (typeof tippy !== "undefined" && tippy.hideAll) tippy.hideAll();
-        clearLineChartSelection();   // cheap no-op when nothing is selected
     };
 
     // Coalesce scroll events to one update per frame.
