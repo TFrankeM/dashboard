@@ -1,12 +1,12 @@
 
 export const DICTIONARY = {
     "pt-BR" : {
-        main_page_title: "FGV IIBEx | Sala de Situação",
+        main_page_title: "FGV IIPEx | Sala de Situação",
         app_logo: "assets/logodint_pt.svg",
 
         // General
-        app_title: "FGV IIBEx",
-        app_subtitle: "indicador da imagem do brasil projetada pela mídia digital estrangeira",
+        app_title: "FGV IIPEx",
+        app_subtitle: "indicador da imagem de um país no exterior",
         home_link: "Voltar à tela inicial",
         header_repo: "Repositório de dados",
         mode_static: "Modo estático",
@@ -29,7 +29,7 @@ export const DICTIONARY = {
         newsstand_desc: "Notícias publicadas entre {start} e {end}, avaliadas por {evaluator} sobre {evaluated}",
         nav_filters: "Filtros",
         nav_metrics: "Métricas principais",
-        nav_evolution: "FGV IIBEX",
+        nav_evolution: "FGV IIPEX",
         nav_newsstand: "Notícias do ponto",
         bucket_neg: "Negativas",
         bucket_neu: "Neutras",
@@ -81,19 +81,19 @@ export const DICTIONARY = {
         btn_hide_filters: "Ocultar filtros",
 
         // Tooltips
-        tooltip_mode: "<b>Modo Estático</b>: calcula o FGV IIBEx no período definido. <br><b>Modo Dinâmico</b>: atualiza o FGV IIBEx a cada 30 min.",
-        tooltip_period: "Define o intervalo de tempo do FGV IIBEx. Vale para todas as camadas.",
+        tooltip_mode: "<b>Modo Estático</b>: calcula o FGV IIPEx no período definido. <br><b>Modo Dinâmico</b>: atualiza o FGV IIPEx a cada 30 min.",
+        tooltip_period: "Define o intervalo de tempo do FGV IIPEx. Vale para todas as camadas.",
         tooltip_evaluatorEntity: "País ou entidade que avalia a imagem do ente em avaliação.",
         tooltip_political: "Selecione um alinhamento para comparar até cinco categorias. Selecione até cinco alinhamentos para comparar suas visões sobre uma única categoria.",
         tooltip_evaluatedEntity: "País ou entidade que é o objeto de avaliação por parte do ente avaliador.",
         tooltip_category: "Categoria da camada ativa. Use + Camada para comparar combinações no gráfico de evolução.",
         tooltip_aggregation: "Define o intervalo em horas para agrupar os dados (ex: 0.5 para 30min, 24 para um dia). Vale para todas as camadas.",
-        tooltip_histogram: "Frequência de notícias agrupadas pela nota de 1 a 7 do IIBEx.",
+        tooltip_histogram: "Frequência de notícias agrupadas pela nota de 1 a 7 do IIPEx.",
         tooltip_volume: "Total de publicações capturadas e processadas pelo motor de análise.",
-        tooltip_gauge: "FGV IIBEx <br>Escala de 1 a 7.",
-        tooltip_gauge_dynamic: "FGV IIBEx: média dos últimos 30 minutos. <br>Escala de 1 a 7.",
-        tooltip_gauge_static: "FGV IIBEx: média do período selecionado. <br>Escala de 1 a 7.",
-        tooltip_evolution: "Evolução do FGV IIBEx.",
+        tooltip_gauge: "FGV IIPEx <br>Escala de 1 a 7.",
+        tooltip_gauge_dynamic: "FGV IIPEx: média dos últimos 30 minutos. <br>Escala de 1 a 7.",
+        tooltip_gauge_static: "FGV IIPEx: média do período selecionado. <br>Escala de 1 a 7.",
+        tooltip_evolution: "Evolução do FGV IIPEx.",
         
         // Image labels
         image_extremely_negative: "Imagem extremamente negativa",
@@ -124,7 +124,7 @@ export const DICTIONARY = {
         update_over_day: "há mais de 1 dia",
 
         // Evolution chart
-        chart_evolution_title: "FGV IIBEX",
+        chart_evolution_title: "FGV IIPEX",
         evolution_hint: "Arraste para dar zoom · Clique em um ponto para ver as notícias",
         tz_note: "Horários em UTC (Greenwich)",
         custom_range_to: "até",
@@ -160,13 +160,13 @@ export const DICTIONARY = {
         evo_date_connector: " nos ",
         evo_date_connector_static: " de ",
         evo_date_connector_static_to: " a ",
-        chart_line_y_axis_title: "FGV IIBEX",
+        chart_line_y_axis_title: "FGV IIPEX",
         chart_line_tooltip_avg: "Nota média",
         chart_line_tooltip_count: "Quantidade de notícias",
         btn_reset: "Redefinir zoom",
 
         // Popup see details
-        popup_text: "Entenda o IIBEx de ",
+        popup_text: "Entenda o IIPEx de ",
         btn_view_news: "Veja as notícias",
         btn_cancel: "Cancelar",
 
@@ -223,7 +223,7 @@ export const DICTIONARY = {
         // Details page
         details_page_title: "Detalhes das notícias",
         btn_close: "Fechar",
-        details_title_prefix: "Notícias que compõem o FGV IIBEx em ",
+        details_title_prefix: "Notícias que compõem o FGV IIPEx em ",
         loading_filters: "Carregando filtros...",
         btn_choose_columns: "Escolha as colunas visíveis",
         label_show: "Exibir:",
@@ -243,14 +243,14 @@ export const DICTIONARY = {
         col_evaluator: "Ente avaliador",
         col_evaluated: "Ente avaliado",
         col_analysis: "Análise",
-        col_grade: "Nota do IIBEx",
+        col_grade: "Nota do IIPEx",
         col_link: "Link",
         click_to_expand: "Clique para expandir",
         table_link_view: "Veja",
 
         // Landing page (index.html)
         landing_page_title: "Dado Concreto · Monitor Global",
-        landing_cta: "Acessar IIBEx",
+        landing_cta: "Acessar IIPEx",
         landing_monitoring: "Monitoramento ativo",
         landing_hint: "Clique ou aguarde",
         stat_total_news: "Notícias processadas no acervo",
@@ -269,13 +269,13 @@ export const DICTIONARY = {
         landing_footer_coverage: "COBERTURA: AGO 2024 — JAN 2026 • SISTEMA ONLINE",
     },
     "en-US": {
-        main_page_title: "FGV IIBEx | Situation Room",
+        main_page_title: "FGV IIPEx | Situation Room",
 
         app_logo: "assets/logodint_en.svg",
 
         // General
-        app_title: "FGV IIBEx",
-        app_subtitle: "Indicator of Brazil's Image Abroad",
+        app_title: "FGV IIPEx",
+        app_subtitle: "Indicator of a Country's Image Abroad",
         home_link: "Back to home screen",
         header_repo: "Data repository",
         mode_static: "Static mode",
@@ -350,19 +350,19 @@ export const DICTIONARY = {
         btn_hide_filters: "Hide filters", 
 
         // Tooltips
-        tooltip_mode: "<b>Static Mode</b>: calculates the FGV IIBEx for the defined period. <br><b>Dynamic Mode</b>: updates the FGV IIBEx every 30 minutes.",
-        tooltip_period : "Defines the time interval of the FGV IIBEx.",
+        tooltip_mode: "<b>Static Mode</b>: calculates the FGV IIPEx for the defined period. <br><b>Dynamic Mode</b>: updates the FGV IIPEx every 30 minutes.",
+        tooltip_period : "Defines the time interval of the FGV IIPEx.",
         tooltip_evaluatorEntity: "Country or entity that evaluates the image of the assessed entity.",
         tooltip_political: "Select one alignment to compare up to five categories. Select up to five alignments to compare their views on a single category.",
         tooltip_evaluatedEntity: "Country or entity that is the object of evaluation by the reviewing entity.",
         tooltip_category: "Category of the active layer. Use + Layer to compare combinations on the evolution chart.",
         tooltip_aggregation: "Defines the interval in hours to aggregate the data (e.g., 0.5 for 30 min, 24 for one day). Applies to every layer.",
-        tooltip_histogram: "Frequency of news grouped by IIBEx scores from 1 to 7.",
+        tooltip_histogram: "Frequency of news grouped by IIPEx scores from 1 to 7.",
         tooltip_volume: "Total number of publications captured and processed by the analysis engine.",
-        tooltip_gauge: "FGV IIBEx <br>Scale from 1 to 7.",
-        tooltip_gauge_dynamic: "FGV IIBEx: average of the last 30 minutes. <br>Scale from 1 to 7.",
-        tooltip_gauge_static: "FGV IIBEx: average of the selected period. <br>Scale from 1 to 7.",
-        tooltip_evolution: "Evolution of the FGV IIBEx.",
+        tooltip_gauge: "FGV IIPEx <br>Scale from 1 to 7.",
+        tooltip_gauge_dynamic: "FGV IIPEx: average of the last 30 minutes. <br>Scale from 1 to 7.",
+        tooltip_gauge_static: "FGV IIPEx: average of the selected period. <br>Scale from 1 to 7.",
+        tooltip_evolution: "Evolution of the FGV IIPEx.",
 
         // Image labels
         image_extremely_negative: "Extremely negative image",
@@ -430,13 +430,13 @@ export const DICTIONARY = {
         evo_date_connector: " in the ",
         evo_date_connector_static: " from ",
         evo_date_connector_static_to: " to ",
-        chart_line_y_axis_title: "FGV IIBEx",
+        chart_line_y_axis_title: "FGV IIPEx",
         chart_line_tooltip_avg: "Average grade",
         chart_line_tooltip_count: "News quantity",
         btn_reset: "Reset",
 
         // Popup see details
-        popup_text: "Understand the IIBEx of ",
+        popup_text: "Understand the IIPEx of ",
         btn_view_news: "View news",
         btn_cancel: "Cancel",
 
@@ -499,7 +499,7 @@ export const DICTIONARY = {
         aria_prev_page: "Previous page",
         aria_next_page: "Next page",
         btn_close: "Close",
-        details_title_prefix: "News composing the FGV IIBEx on ",
+        details_title_prefix: "News composing the FGV IIPEx on ",
         loading_filters: "Loading filters...",
         btn_choose_columns: "Choose visible columns",
         label_show: "Show:",
@@ -513,7 +513,7 @@ export const DICTIONARY = {
         col_evaluator: "Evaluator entity",
         col_evaluated: "Evaluated entity",
         col_analysis: "Analysis",
-        col_grade: "IIBEx grade",
+        col_grade: "IIPEx grade",
         col_link: "Link",
         click_to_expand: "Click to expand",
         table_link_view: "View",
@@ -539,12 +539,12 @@ export const DICTIONARY = {
         landing_footer_coverage: "COVERAGE: AUG 2024 — JAN 2026 • SYSTEM ONLINE",
     },
     "es-ES": {
-        main_page_title: "FGV IIBEx | Sala de Situación",
+        main_page_title: "FGV IIPEx | Sala de Situación",
         app_logo: "assets/logodint_es.svg",
 
         // General
-        app_title: "FGV IIBEx",
-        app_subtitle: "Indicador de la Imagen de Brasil en el Exterior",
+        app_title: "FGV IIPEx",
+        app_subtitle: "Indicador de la Imagen de un País en el Exterior",
         home_link: "Volver a la pantalla inicial",
         header_repo: "Repositorio de datos",
         mode_static: "Modo estático",
@@ -619,19 +619,19 @@ export const DICTIONARY = {
         btn_hide_filters: "Ocultar filtros",    
 
         // Tooltips
-        tooltip_mode: "<b>Modo Estático</b>: calcula el FGV IIBEx en el período definido. <br><b>Modo Dinámico</b>: actualiza el FGV IIBEx cada 30 minutos.",
-        tooltip_period: "Define el intervalo de tiempo del FGV IIBEx. Se aplica a todas las capas.",
+        tooltip_mode: "<b>Modo Estático</b>: calcula el FGV IIPEx en el período definido. <br><b>Modo Dinámico</b>: actualiza el FGV IIPEx cada 30 minutos.",
+        tooltip_period: "Define el intervalo de tiempo del FGV IIPEx. Se aplica a todas las capas.",
         tooltip_evaluatorEntity: "País o entidad que evalúa la imagen del ente evaluado.",
         tooltip_political: "Seleccione una alineación para comparar hasta cinco categorías. Seleccione hasta cinco alineaciones para comparar sus visiones sobre una sola categoría.",
         tooltip_evaluatedEntity: "País o entidad que es objeto de evaluación por parte del ente evaluador.",
         tooltip_category: "Categoría de la capa activa. Use + Capa para comparar combinaciones en el gráfico de evolución.",
         tooltip_aggregation: "Define el intervalo en horas para agrupar los datos (ej.: 0.5 para 30 min, 24 para un día). Se aplica a todas las capas.",
-        tooltip_histogram: "Frecuencia de noticias agrupadas por la puntuación del <br>IIBEx de 1 a 7.",
+        tooltip_histogram: "Frecuencia de noticias agrupadas por la puntuación del <br>IIPEx de 1 a 7.",
         tooltip_volume: "Total de publicaciones capturadas y procesadas por el motor de análisis.",
-        tooltip_gauge: "FGV IIBEx <br>Escala de 1 a 7.",
-        tooltip_gauge_dynamic: "FGV IIBEx: promedio de los últimos 30 minutos. <br>Escala de 1 a 7.",
-        tooltip_gauge_static: "FGV IIBEx: promedio del período seleccionado. <br>Escala de 1 a 7.",
-        tooltip_evolution: "Evolución del FGV IIBEx.",
+        tooltip_gauge: "FGV IIPEx <br>Escala de 1 a 7.",
+        tooltip_gauge_dynamic: "FGV IIPEx: promedio de los últimos 30 minutos. <br>Escala de 1 a 7.",
+        tooltip_gauge_static: "FGV IIPEx: promedio del período seleccionado. <br>Escala de 1 a 7.",
+        tooltip_evolution: "Evolución del FGV IIPEx.",
 
         // Image labels
         image_extremely_negative: "Imagen extremadamente negativa",
@@ -699,13 +699,13 @@ export const DICTIONARY = {
         evo_date_connector: " en los ",
         evo_date_connector_static: " de ",
         evo_date_connector_static_to: " a ",
-        chart_line_y_axis_title: "FGV IIBEx",
+        chart_line_y_axis_title: "FGV IIPEx",
         chart_line_tooltip_avg: "Nota media",
         chart_line_tooltip_count: "Cantidad de noticias",
         btn_reset: "Restablecer",
 
         // Popup see details
-        popup_text: "Entienda el IIBEx de ",
+        popup_text: "Entienda el IIPEx de ",
         btn_view_news: "Ver noticias",
         btn_cancel: "Cancelar",
 
@@ -764,7 +764,7 @@ export const DICTIONARY = {
         label_of: "de",
         aria_prev_page: "Página anterior",
         aria_next_page: "Página siguiente",
-        details_title_prefix: "Noticias que componen el FGV IIBEx el ",
+        details_title_prefix: "Noticias que componen el FGV IIPEx el ",
         loading_filters: "Cargando filtros...",
         btn_choose_columns: "Elija las columnas visibles",
         label_show: "Mostrar:",
@@ -781,7 +781,7 @@ export const DICTIONARY = {
         col_evaluator: "Entidad evaluadora",
         col_evaluated: "Entidad evaluada",
         col_analysis: "Análisis",
-        col_grade: "Nota de IIBEx",
+        col_grade: "Nota de IIPEx",
         col_link: "Enlace",
         click_to_expand: "Haga clic para expandir",
         table_link_view: "Ver",

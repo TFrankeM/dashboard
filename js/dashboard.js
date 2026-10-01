@@ -286,12 +286,12 @@ async function fetchOptionsFromDB(targetType, filterValue) {
     });
 }
 
-const LANG_STORAGE_KEY = "iibex_lang";
-const THEME_STORAGE_KEY = "iibex_theme";
+const LANG_STORAGE_KEY = "iipex_lang";
+const THEME_STORAGE_KEY = "iipex_theme";
 // First-time discovery hints: each key flips to "1" once the user performs
 // the gesture, and its hint/nudge never shows again.
-const HINT_MERGE_KEY = "iibex_hint_merge_done";
-const HINT_LEAF_KEY = "iibex_hint_leaf_done";
+const HINT_MERGE_KEY = "iipex_hint_merge_done";
+const HINT_LEAF_KEY = "iipex_hint_leaf_done";
 
 function updateThemeToggleAria() {
     const btn = document.getElementById("theme-toggle");

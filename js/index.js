@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Restore the language chosen on any page of the site.
-    const savedLang = localStorage.getItem('iibex_lang');
+    const savedLang = localStorage.getItem('iipex_lang');
     if (savedLang && savedLang !== currentLang && DICTIONARY[savedLang]) {
         currentLang = savedLang;
         if (langSwitch) {
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (lang === currentLang || !DICTIONARY[lang]) return;
 
             currentLang = lang;
-            localStorage.setItem('iibex_lang', currentLang);
+            localStorage.setItem('iipex_lang', currentLang);
             langSwitch.querySelectorAll('.lang-opt')
                 .forEach(b => b.classList.toggle('is-active', b === btn));
 

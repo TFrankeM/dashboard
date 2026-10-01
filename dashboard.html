@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title data-i18n="main_page_title">FGV IIBEx | Sala de Situação </title>
-    <meta name="description" content="Sala de situação do FGV IIBEx: indicador da imagem do Brasil no exterior a partir de notícias internacionais.">
-    <meta property="og:title" content="FGV IIBEx | Sala de Situação">
-    <meta property="og:description" content="Indicador da imagem do Brasil no exterior a partir de notícias internacionais.">
+    <title data-i18n="main_page_title">FGV IIPEx | Sala de Situação </title>
+    <meta name="description" content="Sala de situação do FGV IIPEx: indicador da imagem de um país no exterior a partir de notícias internacionais.">
+    <meta property="og:title" content="FGV IIPEx | Sala de Situação">
+    <meta property="og:description" content="Indicador da imagem de um país no exterior a partir de notícias internacionais.">
 
     <!-- FavIcon -->
     <link rel="icon" href="assets/favicon.png" type="image/png">
@@ -15,7 +15,7 @@
          default, light only when the user explicitly chose it. -->
     <script>
         try {
-            if (localStorage.getItem("iibex_theme") !== "light") {
+            if (localStorage.getItem("iipex_theme") !== "light") {
                 document.documentElement.dataset.theme = "dark";
             }
         } catch (e) {
@@ -52,7 +52,7 @@
     <nav class="side-nav">
         <a href="#top" class="nav-dot active" data-label="Filtros" data-i18n-label="nav_filters"></a>
         <a href="#metrics" class="nav-dot" data-label="Métricas principais" data-i18n-label="nav_metrics"></a>
-        <a href="#evolution" class="nav-dot" data-label="FGV IIBEX" data-i18n-label="nav_evolution"></a>
+        <a href="#evolution" class="nav-dot" data-label="FGV IIPEX" data-i18n-label="nav_evolution"></a>
         <a href="#newsstand" class="nav-dot" data-label="Notícias do ponto" data-i18n-label="nav_newsstand"></a>
     </nav>
 
@@ -70,8 +70,8 @@
                 <!-- index name -->
                 <div class="brand-title">
                     <div>
-                        <h1 data-i18n="app_title">FGV IIBEx</h1>
-                        <span class="subtitle" data-i18n="app_subtitle">indicador da imagem do brasil projetada pela mídia digital estrangeira</span>
+                        <h1 data-i18n="app_title">FGV IIPEx</h1>
+                        <span class="subtitle" data-i18n="app_subtitle">indicador da imagem de um país no exterior</span>
                     </div>
                 </div>
 
@@ -333,7 +333,7 @@
                 <div class="card-header-row">
                     <div>
                         <div class="card-header-title-group">
-                            <h3 id="evolution-title">FGV IIBEX</h3>
+                            <h3 id="evolution-title">FGV IIPEX</h3>
                             <span class="info-icon" data-i18n-tooltip="tooltip_evolution">?</span>
                         </div>
                         <p class="evolution-entities" id="evolution-entities"></p>

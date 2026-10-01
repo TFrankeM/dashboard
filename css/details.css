@@ -140,12 +140,15 @@ body {
 }
 .subtitle {
     font-family: "Gotham", "Arial", sans-serif;
-    font-size: 13px;
-    color: var(--fgv-gray-med);
+    font-size: 15px;
+    line-height: 1.35;
+    padding-top: 3px;
+    color: var(--fgv-blue-med);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
+    font-weight: 600;
     display: block; 
-    margin-top: 4px;
+    margin-top: 5px;
 }
 
 /* right actions | languages and close button */

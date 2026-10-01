@@ -1175,7 +1175,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                 y: { 
                     min: 1, 
                     max: 7,
-                    title: { display: true, text: texts.yAxisTitle || "FGV IIBEx" }
+                    title: { display: true, text: texts.yAxisTitle || "FGV IIPEx" }
                 },
                 x: {
                     grid: { display: false } ,

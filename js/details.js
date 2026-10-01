@@ -98,8 +98,8 @@ function tEntity(val) {
     return DICTIONARY[CURRENT_LANG].entity_options?.[val] || prettySlug(val);
 }
 
-const LANG_STORAGE_KEY = "iibex_lang";
-const THEME_STORAGE_KEY = "iibex_theme";
+const LANG_STORAGE_KEY = "iipex_lang";
+const THEME_STORAGE_KEY = "iipex_theme";
 
 function updateThemeToggleAria() {
     const btn = document.getElementById("theme-toggle");

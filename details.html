@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title data-i18n="details_page_title">Detalhes das notícias</title>
-    <meta name="description" content="Tabela detalhada das notícias que compõem o FGV IIBEx, com filtros por período, entidade e categoria.">
-    <meta property="og:title" content="FGV IIBEx | Detalhes das notícias">
-    <meta property="og:description" content="Notícias que compõem o indicador da imagem do Brasil no exterior.">
+    <meta name="description" content="Tabela detalhada das notícias que compõem o FGV IIPEx, com filtros por período, entidade e categoria.">
+    <meta property="og:title" content="FGV IIPEx | Detalhes das notícias">
+    <meta property="og:description" content="Notícias que compõem o indicador da imagem de um país no exterior.">
 
     <!-- FavIcon -->
     <link rel="icon" href="assets/favicon.png" type="image/png">
@@ -15,7 +15,7 @@
          default, light only when the user explicitly chose it. -->
     <script>
         try {
-            if (localStorage.getItem("iibex_theme") !== "light") {
+            if (localStorage.getItem("iipex_theme") !== "light") {
                 document.documentElement.dataset.theme = "dark";
             }
         } catch (e) {
@@ -49,8 +49,8 @@
             </div>
 
             <div class="brand-title">
-                <h1 data-i18n="app_title">FGV IIBEx</h1>
-                <span class="subtitle" data-i18n="app_subtitle">indicador da imagem do brasil projetada pela mídia digital estrangeira</span>
+                <h1 data-i18n="app_title">FGV IIPEx</h1>
+                <span class="subtitle" data-i18n="app_subtitle">indicador da imagem de um país no exterior</span>
             </div>
 
             <div class="header-actions">
@@ -77,7 +77,7 @@
     <div class="details-subheader">
         <div class="details-context">
             <h2 id="page-title">
-                <span data-i18n="details_title_prefix">Notícias que compõem o FGV IIBEx em</span> 
+                <span data-i18n="details_title_prefix">Notícias que compõem o FGV IIPEx em</span> 
                 <span id="date-span">--</span>
             </h2>
             <p id="filter-summary"><span data-i18n="loading_filters"></span></p>
