@@ -29,8 +29,32 @@ export function syncModuleChrome() {
     });
     document.querySelectorAll(".side-nav .nav-dot").forEach(dot => {
         const target = (dot.getAttribute("href") || "").slice(1);
-        if (target && !document.getElementById(target)) dot.remove();
+        if (!target) return;
+        const targetEl = document.getElementById(target);
+        if (!targetEl) {
+            dot.remove();
+            return;
+        }
+        // Section specific: #metrics represents the metric-card cluster.
+        // If no metric cards are displayed, this section's nav-dot must not appear.
+        if (target === "metrics" && targetEl.querySelectorAll(".metric-card[data-module]").length === 0) {
+            dot.remove();
+            return;
+        }
+        // If target element is itself a module container with no displayed modules
+        if (targetEl.hasAttribute("data-module") && !document.body.contains(targetEl)) {
+            dot.remove();
+            return;
+        }
     });
+
+    // If only one dot remains (e.g. only #top), hide the side-nav as navigation is meaningless
+    const remainingDots = document.querySelectorAll(".side-nav .nav-dot");
+    if (remainingDots.length <= 1) {
+        document.querySelector(".side-nav")?.classList.add("hidden");
+    } else {
+        document.querySelector(".side-nav")?.classList.remove("hidden");
+    }
 }
 
 export async function initModuleFlags() {

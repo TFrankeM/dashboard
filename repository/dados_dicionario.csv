@@ -1,0 +1,26 @@
+arquivo,coluna,tipo,descricao,exemplo
+dados/noticias_2025.csv,id_noticia,inteiro,"Identificador estável da notícia no censo da tese: número sequencial atribuído na ordem cronológica de coleta ao corpus integral (1 a 851.959, de setembro de 2024 a dezembro de 2025). As notícias de 2025 ocupam a faixa 202.514 a 851.959. É a chave de junção de todas as saídas de P2, P3 e P4.",202514
+dados/noticias_2025.csv,data_hora,texto (AAAA-MM-DD HH:MM:SS),"Data e hora de publicação informadas pela base agregadora, em UTC, sem fuso (campo datetime do processo P1, Seção 3.2).",2025-01-01 00:00:00
+dados/noticias_2025.csv,veiculo,texto,"Nome do veículo (campo source do processo P1), como registrado pela base agregadora; pode trazer o nome da seção após ' - ' (ex.: 'La Nacion - Agencias'). O nome antes do separador é a raiz usada em agregar_iipex.py para identificar veículos.",Infobae
+dados/noticias_2025.csv,manchete,texto,"Manchete da notícia (campo header do processo P1), no idioma original, com quebras de linha substituídas por espaço. Campo usado, normalizado, para identificar réplicas sindicadas (manchete e dia; Seção 3.3.6).",Brasil prevé reducir 67% de los gases de efecto invernadero
+dados/restrito/noticias_2025_texto_integral.csv,id_noticia,inteiro,Mesmo identificador de dados/noticias_2025.csv.,202514
+dados/restrito/noticias_2025_texto_integral.csv,data_hora,texto,Mesmo valor de dados/noticias_2025.csv (campo Date do prompt de P3).,2025-01-01 00:00:00
+dados/restrito/noticias_2025_texto_integral.csv,veiculo,texto,Mesmo valor de dados/noticias_2025.csv (campo Source do prompt de P3).,Infobae
+dados/restrito/noticias_2025_texto_integral.csv,manchete,texto,Manchete (campo Header/Headline dos prompts de P2 e P3).,
+dados/restrito/noticias_2025_texto_integral.csv,resumo,texto,Manchete secundária (campo Summary dos prompts de P2 e P3).,
+dados/restrito/noticias_2025_texto_integral.csv,texto,texto,Íntegra da matéria (campo Article text dos prompts de P2 e P3). Acesso mediado (Seção 3.5 da tese).,
+dados/restrito/noticias_2025_texto_integral.csv,pais,texto,País de publicação (campo Geography do prompt de P3; PAIS_DA_FONTE). 'Argentina' em todo o corpus da tese.,Argentina
+resultados/notas_2025.csv (saída de P3),id_noticia,inteiro,Identificador da notícia.,202514
+resultados/notas_2025.csv (saída de P3),nota,número (1 a 7),"Nota de impacto na imagem do Brasil atribuída pelo modelo (Tabela 12 da tese); 0 indica falha de API após três tentativas, a reprocessar.",4
+resultados/notas_2025.csv (saída de P3),analise,texto,Análise textual em português produzida pelo modelo antes da nota (Seção 3.3.2).,
+resultados/notas_2025.csv (saída de P3),modelo,texto,Identificador do modelo usado na chamada.,claude-sonnet-4@20250514
+resultados/notas_2025.csv (saída de P3),data_execucao,texto (ISO 8601),Data e hora da chamada à API (UTC).,2026-10-07T12:00:00+00:00
+resultados/categorias_2025.csv (saída de P2),id_noticia,inteiro,Identificador da notícia.,202514
+resultados/categorias_2025.csv (saída de P2),categoria1,texto,"Categoria dominante na taxonomia de 17 categorias do IPTC, em português (Tabela 10 da tese); 'Outros' para resposta fora do conjunto e 'Erro' para falha persistente. Entrada de agregar_iipex.py pela opção --categorias.",Esporte
+resultados/categorias_2025.csv (saída de P2),modelo,texto,Identificador do modelo usado na chamada.,gpt-4.1-2025-04-14
+resultados/categorias_2025.csv (saída de P2),data_execucao,texto (ISO 8601),Data e hora da chamada à API (UTC).,
+arquivo de notas de entrada de P4,id_noticia,inteiro,Chave de junção com dados/noticias_2025.csv.,202514
+arquivo de notas de entrada de P4,categoria1,texto,"Categoria dominante (de P2); pode vir no próprio arquivo de notas ou no arquivo da opção --categorias.",Esporte
+arquivo de notas de entrada de P4,categoria2,texto,"Categoria secundária, opcional; vazia quando não houver.",Sociedade
+arquivo de notas de entrada de P4,nota,número (1 a 7),Nota de P3; linhas com nota fora de 1 a 7 são excluídas e contadas.,4
+resultados/*.csv (saídas de P4),-,-,"Um arquivo por tabela ou série da tese; a correspondência está no cabeçalho de agregar_iipex.py e no Guia de Replicação, Seção 6. Datas em AAAA-MM-DD; semana_ini é a segunda-feira da semana de calendário.",

@@ -116,6 +116,7 @@ let lastUpdateInterval = null;    // keeps the "X min ago" label fresh while the
 // restores the previous choice (otherwise it falls to each mode's first default and
 // the apply button never returns to idle after a round-trip).
 let periodByMode = { static: null, dynamic: null };
+let currentTotalNews = 0;
 
 function t(key) {
     return DICTIONARY[CURRENT_LANG][key] || key;
@@ -222,10 +223,7 @@ function translateUI() {
         .forEach(c => { if (c && c.relabel) c.relabel(); });
     updatePeriodDropdown(pendingState.isDynamic);
 
-    const totalNewsEl = document.getElementById("total-news");
-    if (totalNewsEl) {
-        updateEvolutionHeader(parseInt(totalNewsEl.textContent.replace(/\D/g,'')) || 0);
-    }
+    updateEvolutionHeader();
 
     // Re-render any open newspapers so their dynamic text follows the language
     if (currentClickedDate) ["pos", "neu", "neg"].forEach(b => renderSheet(b, false));
@@ -1429,6 +1427,10 @@ function processAndUpdateGaugeDisplay(value) {
 }
 
 function updateEvolutionHeader(totalNews) {
+    if (typeof totalNews === "number" && !isNaN(totalNews)) {
+        currentTotalNews = totalNews;
+    }
+
     const evolutionTitleEl = document.getElementById("evolution-title");
     const evolutionSubtitleEl = document.getElementById("evolution-subtitle");
 
@@ -1447,7 +1449,9 @@ function updateEvolutionHeader(totalNews) {
     
     let dateStr = "";
     if (appState.isDynamic) {
-        dateStr = `nos ${PERIODS_CONFIG.dynamic.find(p => p.value === appState.periodValue)?.label?.replace("Ú", "ú") || appState.periodValue}`;
+        const periodKey = appState.periodValue;
+        const periodLabel = DICTIONARY[CURRENT_LANG]?.period_options?.[periodKey] || periodKey;
+        dateStr = `${t("evo_date_connector")}${periodLabel.toLowerCase()}`;
     } else {
         const formatDate = (isoDate) => {
             if (!isoDate) return "??";
@@ -1457,7 +1461,7 @@ function updateEvolutionHeader(totalNews) {
         dateStr = `${t("evo_date_connector_static")}${formatDate(appState.customStartDate)}${t("evo_date_connector_static_to")}${formatDate(appState.customEndDate)}`;
     }
 
-    const totalStr = totalNews ? totalNews.toLocaleString(CURRENT_LANG) : "0";
+    const totalStr = currentTotalNews ? currentTotalNews.toLocaleString(CURRENT_LANG) : "0";
     evolutionSubtitleEl.classList.remove("skeleton");
     evolutionSubtitleEl.textContent = `${t("evo_subtitle_prefix")}${dateStr} | ${t("chart_line_tooltip_count")}: ${totalStr}`;
 }
@@ -2559,13 +2563,13 @@ async function updateDashboard() {
 }
 
 function redrawCharts() {
-    if (!cachedApiData.histogramData) return;
     animateNextDraw = false;   // cosmetic redraw (theme/language): no entry animation
     setChartsAnimation(false);
-    processAndUpdateHistogramChart(cachedApiData.histogramData);
-    processAndUpdateVolumeChart(cachedApiData.volumeData);
-    processAndUpdateGaugeDisplay(cachedApiData.gaugeVal);
-    processAndUpdateLineChart(cachedApiData.lineData);
+    if (cachedApiData.histogramData) processAndUpdateHistogramChart(cachedApiData.histogramData);
+    if (cachedApiData.volumeData) processAndUpdateVolumeChart(cachedApiData.volumeData);
+    if (cachedApiData.gaugeVal !== undefined && cachedApiData.gaugeVal !== null) processAndUpdateGaugeDisplay(cachedApiData.gaugeVal);
+    if (cachedApiData.lineData) processAndUpdateLineChart(cachedApiData.lineData);
+    updateEvolutionHeader();
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -2678,7 +2682,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (scrollY >= (section.offsetTop - 100)) current = section.getAttribute("id");
         });
         navDots.forEach(dot => {
-            dot.classList.toggle("active", dot.getAttribute("href").includes(current));
+            dot.classList.toggle("active", current ? dot.getAttribute("href") === `#${current}` : dot.getAttribute("href") === "#top");
         });
 
         if (confirmPopup && !confirmPopup.classList.contains("hidden")) {

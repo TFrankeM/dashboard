@@ -1,0 +1,13 @@
+Estrato de acesso mediado (Seção 3.5 da tese)
+
+Esta pasta destina-se ao arquivo noticias_2025_texto_integral.csv, com a manchete, a manchete
+secundária e a íntegra do texto das 649.446 notícias de 2025 (colunas: id_noticia, data_hora,
+veiculo, manchete, resumo, texto, pais; ver dados/dicionario_dados.csv). Os processos P2 e P3
+leem esse arquivo, pois os modelos avaliam a notícia na íntegra.
+
+Os textos integrais são matérias jornalísticas protegidas, obtidas de bases agregadoras
+comerciais sob licenças adquiridas pela Fundação Getulio Vargas que preveem o uso e o
+armazenamento para fins acadêmicos e de pesquisa, mas não autorizam a redistribuição pública
+(Seções 2.5.1 e 3.5 da tese). O acesso é concedido a pesquisadores mediante solicitação ao autor
+(marlos.lima@fgv.br) e compromisso de uso não redistributivo. O arquivo recebido é gravado
+nesta pasta, com o nome acima, antes da execução de P2 e P3 (Guia de Replicação, Seção 5.1).

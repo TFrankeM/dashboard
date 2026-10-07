@@ -1228,6 +1228,7 @@ input:checked + .slider:before {
 /* Evolution line chart */
 .evolution-section {
     padding: 0 40px;
+    scroll-margin-top: 152px;
 }
 
 .full-width-card {

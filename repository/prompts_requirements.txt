@@ -1,0 +1,10 @@
+# Ambiente testado: Python 3.12, macOS. P4 e figuras: pandas, numpy, scipy, matplotlib.
+pandas>=2.2
+numpy>=1.26
+scipy>=1.12
+matplotlib>=3.8
+# P3: SDK da Anthropic, com os extras do Vertex AI e do Amazon Bedrock. A faixa abaixo é a usada na
+# tese; o script também aceita as versões 1.x do SDK, enviando temperature no corpo da requisição.
+anthropic[vertex,bedrock]>=0.57,<1.0
+# P2: chamadas HTTP ao endpoint chat/completions da OpenAI
+requests>=2.31

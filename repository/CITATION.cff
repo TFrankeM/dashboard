@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "Ao usar este repositório, cite a tese (preferred-citation) e o conjunto de dados."
+type: dataset
+title: "Repositório de replicação do IIPEx (Indicador da Imagem de um País no Exterior): Brasil na mídia digital argentina, 2025"
+authors:
+  - family-names: Lima
+    given-names: Marlos Correia de
+    email: marlos@marlos.com.br
+    affiliation: "Fundação Getulio Vargas, Escola de Administração de Empresas de São Paulo (FGV EAESP)"
+version: "1.0"
+date-released: "2026-10-07"
+url: "https://iipex.com.br/repositorio"
+license: "CC-BY-4.0"
+keywords:
+  - imagem-país
+  - country image
+  - agenda-setting
+  - grandes modelos de linguagem
+  - análise de sentimento
+  - Brasil
+  - Argentina
+preferred-citation:
+  type: thesis
+  title: "Uso da inteligência artificial generativa para mensurar a imagem de um país projetada pela mídia digital estrangeira: o caso do Brasil na Argentina em 2025"
+  authors:
+    - family-names: Lima
+      given-names: Marlos Correia de
+  thesis-type: "Tese (Doutorado em Administração de Empresas)"
+  institution:
+    name: "Fundação Getulio Vargas, Escola de Administração de Empresas de São Paulo"
+    city: "São Paulo"
+    country: BR
+  year: 2026
+  notes: "Orientador: Prof. Dr. Jorge Carneiro. Linha de pesquisa: Estratégia."

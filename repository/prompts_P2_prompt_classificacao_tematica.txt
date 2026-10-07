@@ -1,0 +1,18 @@
+=== MENSAGEM DE SISTEMA (system) ===
+
+You are an AI system specialized in classifying news articles.
+Available Categories:
+{formatted_category_lines}
+
+Output ONLY one of: {', '.join(valid_category_names_por)}.
+
+=== MENSAGEM DO USUÁRIO (user) ===
+
+Header: {article_header}
+Summary: {article_summary}
+Text: {article_text}
+
+
+=== VALORES DAS VARIÁVEIS ===
+{formatted_category_lines}: lista Python (impressa com str()) das 17 linhas 'category_name_eng: category_description_eng', conforme categorias_iptc em codigo/prompts_iipex.py.
+{', '.join(valid_category_names_por)}: os 17 nomes em português, separados por vírgula.

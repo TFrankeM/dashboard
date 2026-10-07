@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title data-i18n="repo_page_title">FGV IIPEx | Repositório de Dados & Replicação</title>
+    <meta name="description" content="Acervo de dados científicos, scripts Python e documentação metodológica do FGV IIPEx.">
+    <meta property="og:title" content="FGV IIPEx | Repositório de Replicação">
+    <meta property="og:description" content="Acesso direto aos dados de pesquisa, códigos-fonte e prompts do IIPEx.">
+
+    <!-- FavIcon -->
+    <link rel="icon" href="assets/favicon.png" type="image/png">
+
+    <!-- Pre-paint theme to prevent flash -->
+    <script>
+        try {
+            if (localStorage.getItem("iipex_theme") !== "light") {
+                document.documentElement.dataset.theme = "dark";
+            }
+        } catch (e) {
+            document.documentElement.dataset.theme = "dark";
+        }
+    </script>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/buttons.css">
+    <link rel="stylesheet" href="css/repository.css">
+
+    <!-- Dependencies -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@11.2.3/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js@11.2.3/public/assets/scripts/choices.min.js" defer></script>
+    <script src="https://unpkg.com/lucide@1.23.0" defer></script>
+</head>
+<body>
+
+    <!-- Header Chrome -->
+    <header class="brand-header">
+        <div class="header-content">
+            <div class="logo-wrapper">
+                <a href="index.html" class="home-link" data-i18n-title="home_link" title="Voltar à tela inicial">
+                    <img src="assets/logodint_pt.svg" alt="FGV DINT" class="logo-dint" data-i18n-img="app_logo">
+                </a>
+            </div>
+
+            <div class="brand-title">
+                <h1 data-i18n="app_title">FGV IIPEx</h1>
+                <span class="subtitle" data-i18n="app_subtitle">indicador da imagem de um país no exterior</span>
+            </div>
+
+            <div class="header-actions">
+                <a href="dashboard.html" class="btn-return" data-i18n-title="btn_dashboard" title="Painel">
+                    <i data-lucide="layout-dashboard" style="width: 16px; height: 16px;"></i>
+                    <span data-i18n="btn_dashboard">Painel</span>
+                </a>
+
+                <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Ativar modo escuro">
+                    <i data-lucide="sun" class="icon-sun"></i>
+                    <i data-lucide="moon" class="icon-moon"></i>
+                </button>
+
+                <div class="lang-dropdown-wrapper">
+                    <i data-lucide="languages" class="lang-icon"></i>
+                    <select id="language-select" class="lang-select"></select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="repo-container">
+
+        <!-- Hero Card -->
+        <section class="repo-hero">
+            <h1 class="repo-hero-title" data-i18n="repo_hero_title">Repositório de replicação do IIPEx</h1>
+
+            <!-- 3 columns: licença de uso | 15 arquivos de replicação | botão do zip -->
+            <div class="repo-hero-grid">
+                <div class="repo-stat-card">
+                    <div class="repo-stat-icon">
+                        <i data-lucide="scale" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <div class="repo-stat-info">
+                        <span class="repo-stat-val" data-i18n="repo_license_val">CC-BY 4.0</span>
+                        <span class="repo-stat-label" data-i18n="repo_stat_license">Licença de uso</span>
+                    </div>
+                </div>
+
+                <div class="repo-stat-card">
+                    <div class="repo-stat-icon">
+                        <i data-lucide="files" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <div class="repo-stat-info">
+                        <span class="repo-stat-val">15</span>
+                        <span class="repo-stat-label" data-i18n="repo_stat_files">Arquivos de replicação</span>
+                    </div>
+                </div>
+
+                <div class="repo-zip-card">
+                    <a href="repository/iipex_repositorio_completo.zip" download class="btn-download-all">
+                        <div class="btn-icon-wrapper">
+                            <i data-lucide="archive" style="width: 20px; height: 20px;"></i>
+                        </div>
+                        <div class="btn-text-group">
+                            <span class="btn-main-text" data-i18n="repo_btn_download_zip">Baixar zip</span>
+                            <span class="btn-sub-text" data-i18n="repo_btn_download_zip_sub">24 MB</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Toolbar: Category Tabs & Search -->
+        <div class="repo-toolbar">
+            <nav class="repo-tabs" aria-label="Categorias de arquivos">
+                <button type="button" class="repo-tab active" data-category="all">
+                    <span data-i18n="repo_tab_all">Todos</span>
+                    <span class="repo-tab-count">15</span>
+                </button>
+                <button type="button" class="repo-tab" data-category="data">
+                    <span data-i18n="repo_tab_data">Bases de dados</span>
+                    <span class="repo-tab-count">3</span>
+                </button>
+                <button type="button" class="repo-tab" data-category="benchmarks">
+                    <span data-i18n="repo_tab_benchmarks">Resultados & benchmarks</span>
+                    <span class="repo-tab-count">2</span>
+                </button>
+                <button type="button" class="repo-tab" data-category="scripts">
+                    <span data-i18n="repo_tab_scripts">Scripts Python</span>
+                    <span class="repo-tab-count">4</span>
+                </button>
+                <button type="button" class="repo-tab" data-category="prompts">
+                    <span data-i18n="repo_tab_prompts">Prompts de LLM</span>
+                    <span class="repo-tab-count">3</span>
+                </button>
+                <button type="button" class="repo-tab" data-category="docs">
+                    <span data-i18n="repo_tab_docs">Documentação</span>
+                    <span class="repo-tab-count">3</span>
+                </button>
+            </nav>
+
+            <div class="repo-search-wrapper">
+                <i data-lucide="search" class="repo-search-icon"></i>
+                <input type="text" id="repo-search" class="repo-search-input" placeholder="Buscar arquivo..." data-i18n-placeholder="repo_search_placeholder">
+            </div>
+        </div>
+
+        <!-- Dynamic Files List -->
+        <div id="repo-file-list" class="repo-file-list">
+            <!-- Rendered by js/repository.js -->
+        </div>
+
+    </main>
+
+    <!-- Scripts -->
+    <script type="module" src="js/repository.js"></script>
+</body>
+</html>
