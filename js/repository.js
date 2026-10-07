@@ -236,6 +236,26 @@ function translateUI() {
     updateThemeToggleAria();
 }
 
+const HOVER_CLOSE_DELAY_MS = 150;
+
+function enableHoverToChoices(choicesInstance, wrapperElement) {
+    if (!choicesInstance || !wrapperElement || !window.matchMedia("(hover: hover)").matches) return;
+
+    let timeout;
+    const open = () => {
+        clearTimeout(timeout);
+        choicesInstance.showDropdown();
+    };
+    const close = () => {
+        timeout = setTimeout(() => {
+            choicesInstance.hideDropdown();
+        }, HOVER_CLOSE_DELAY_MS);
+    };
+
+    wrapperElement.addEventListener("mouseenter", open);
+    wrapperElement.addEventListener("mouseleave", close);
+}
+
 function initLanguageSelector() {
     const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
     if (savedLang && DICTIONARY[savedLang]) {
@@ -257,24 +277,20 @@ function initLanguageSelector() {
         });
 
         const langWrapper = document.querySelector(".lang-dropdown-wrapper");
-        if (langWrapper && window.matchMedia("(hover: hover)").matches) {
-            let timeout;
-            langWrapper.addEventListener("mouseenter", () => {
-                clearTimeout(timeout);
-                choicesLanguage.showDropdown();
-            });
-            langWrapper.addEventListener("mouseleave", () => {
-                timeout = setTimeout(() => choicesLanguage.hideDropdown(), 300);
-            });
+        if (langWrapper) {
+            enableHoverToChoices(choicesLanguage, langWrapper);
         }
 
-        document.getElementById("language-select").addEventListener("change", (e) => {
-            CURRENT_LANG = e.target.value;
-            document.documentElement.lang = CURRENT_LANG;
-            localStorage.setItem(LANG_STORAGE_KEY, CURRENT_LANG);
-            translateUI();
-            renderFileList();
-        });
+        const langSelect = document.getElementById("language-select");
+        if (langSelect) {
+            langSelect.addEventListener("change", (e) => {
+                CURRENT_LANG = e.target.value;
+                document.documentElement.lang = CURRENT_LANG;
+                localStorage.setItem(LANG_STORAGE_KEY, CURRENT_LANG);
+                translateUI();
+                renderFileList();
+            });
+        }
     }
 }
 

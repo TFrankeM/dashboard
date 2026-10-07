@@ -105,10 +105,19 @@ html[data-theme="dark"] .choices__list--dropdown {
     background: var(--dk-surface) !important;
     border-color: var(--dk-border-strong) !important;
 }
+html[data-theme="dark"] .choices:hover .choices__inner,
+html[data-theme="dark"] .lang-dropdown-wrapper:hover .choices__inner {
+    border-color: var(--dk-border-strong) !important;
+}
 html[data-theme="dark"] .choices__list--dropdown .choices__item { color: var(--dk-text-body) !important; }
-html[data-theme="dark"] .choices__list--dropdown .choices__item--selectable.is-highlighted {
+html[data-theme="dark"] .choices__list--dropdown .choices__item--selectable.is-highlighted,
+html[data-theme="dark"] .choices__list--dropdown .choices__item--selectable.is-selected {
     background-color: var(--fgv-blue-med) !important;
     color: #fff !important;
+}
+html[data-theme="dark"] .choices__list--dropdown:has(.choices__item--selectable.is-highlighted) .choices__item--selectable.is-selected:not(.is-highlighted) {
+    background-color: transparent !important;
+    color: var(--dk-text-body) !important;
 }
 
 /* Shared buttons (buttons.css) */
