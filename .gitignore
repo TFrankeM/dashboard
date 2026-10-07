@@ -50,3 +50,6 @@ js/index copy.js
 .dev-flags.json
 .dev-layouts.json
 .env*
+
+# Registros internos de decisões e solicitações do chefe (registro paralelo local, não versionar no GitHub)
+docs/decisoes*.md
