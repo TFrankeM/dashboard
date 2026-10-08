@@ -1511,9 +1511,13 @@ input:checked + .slider:before {
 /* Footer */
 .dashboard-footer { 
     text-align: center; 
-    padding: 40px 0; 
-    margin-top: 40px; 
+    padding: 10px 0; 
+    margin-top: 0; 
     border-top: 1px solid var(--fgv-gray-pale); 
+}
+
+.dashboard-footer p {
+    margin: 0;
 }
 
 .link_dint_site { 
@@ -1526,7 +1530,7 @@ input:checked + .slider:before {
 .link_to_email { 
     font-size: 12px; 
     color: #9ca3af; 
-    margin-top: 5px; 
+    margin-top: 4px; 
 }
 
 

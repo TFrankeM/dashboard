@@ -44,14 +44,15 @@
             </div>
 
             <div class="brand-title">
-                <h1 data-i18n="app_title">FGV IIPEx</h1>
-                <span class="subtitle" data-i18n="app_subtitle">indicador da imagem de um país no exterior</span>
+                <div>
+                    <h1 data-i18n="app_title">FGV IIPEx</h1>
+                    <span class="subtitle" data-i18n="app_subtitle">indicador da imagem de um país no exterior</span>
+                </div>
             </div>
 
             <div class="header-actions">
-                <a href="dashboard.html" class="btn-return" data-i18n-title="btn_dashboard" title="Painel">
-                    <i data-lucide="layout-dashboard" style="width: 16px; height: 16px;"></i>
-                    <span data-i18n="btn_dashboard">Painel</span>
+                <a href="dashboard.html" id="dashboard-link" class="header-btn" data-i18n-title="btn_dashboard" title="Painel" aria-label="Painel">
+                    <i data-lucide="layout-dashboard" class="icon-repo"></i>
                 </a>
 
                 <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Ativar modo escuro">
@@ -73,41 +74,6 @@
         <!-- Hero Card -->
         <section class="repo-hero">
             <h1 class="repo-hero-title" data-i18n="repo_hero_title">Repositório de replicação do IIPEx</h1>
-
-            <!-- 3 columns: licença de uso | 15 arquivos de replicação | botão do zip -->
-            <div class="repo-hero-grid">
-                <div class="repo-stat-card">
-                    <div class="repo-stat-icon">
-                        <i data-lucide="scale" style="width: 20px; height: 20px;"></i>
-                    </div>
-                    <div class="repo-stat-info">
-                        <span class="repo-stat-val" data-i18n="repo_license_val">CC-BY 4.0</span>
-                        <span class="repo-stat-label" data-i18n="repo_stat_license">Licença de uso</span>
-                    </div>
-                </div>
-
-                <div class="repo-stat-card">
-                    <div class="repo-stat-icon">
-                        <i data-lucide="files" style="width: 20px; height: 20px;"></i>
-                    </div>
-                    <div class="repo-stat-info">
-                        <span class="repo-stat-val">15</span>
-                        <span class="repo-stat-label" data-i18n="repo_stat_files">Arquivos de replicação</span>
-                    </div>
-                </div>
-
-                <div class="repo-zip-card">
-                    <a href="repository/iipex_repositorio_completo.zip" download class="btn-download-all">
-                        <div class="btn-icon-wrapper">
-                            <i data-lucide="archive" style="width: 20px; height: 20px;"></i>
-                        </div>
-                        <div class="btn-text-group">
-                            <span class="btn-main-text" data-i18n="repo_btn_download_zip">Baixar zip</span>
-                            <span class="btn-sub-text" data-i18n="repo_btn_download_zip_sub">24 MB</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
         </section>
 
         <!-- Toolbar: Category Tabs & Search -->

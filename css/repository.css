@@ -12,18 +12,19 @@
 }
 
 .header-content {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     width: 100%;
-    gap: 20px;
+    position: relative;
+    box-sizing: border-box;
 }
 
 /* FGV DINT Logo - Left */
 .logo-wrapper {
-    justify-self: start;
     display: flex;
     align-items: center;
+    z-index: 2;
 }
 
 .logo-dint {
@@ -45,13 +46,20 @@
     transform: scale(1.03);
 }
 
-/* Brand Title - Center */
+/* Brand Title - Absolute Center relative to header/screen */
 .brand-title {
-    justify-self: center;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    z-index: 1;
+    pointer-events: auto;
+    width: max-content;
+    max-width: 60%;
 }
 
 .brand-title h1 {
@@ -74,14 +82,17 @@
     font-weight: 600;
     display: block;
     margin-top: 5px;
+    max-height: 48px;
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease, padding-top 0.25s ease;
 }
 
 /* Header Actions - Right */
 .header-actions {
-    justify-self: end;
     display: flex;
     align-items: center;
     gap: 12px;
+    z-index: 2;
 }
 
 .btn-return {
@@ -307,8 +318,8 @@ html[data-theme="dark"] .btn-return:hover {
     background: #ffffff;
     border: 1px solid var(--border-card);
     border-radius: 12px;
-    padding: 36px 36px;
-    margin-bottom: 32px;
+    padding: 24px 32px;
+    margin-bottom: 24px;
     box-shadow: 0 4px 12px rgba(0, 45, 77, 0.05);
     position: relative;
     overflow: hidden;
@@ -321,129 +332,16 @@ html[data-theme="dark"] .repo-hero {
 }
 
 .repo-hero-title {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 800;
     color: var(--fgv-blue-navy);
-    margin: 0 0 24px 0;
+    margin: 0;
     line-height: 1.2;
     letter-spacing: -0.5px;
 }
 
 html[data-theme="dark"] .repo-hero-title {
     color: var(--dk-text-strong);
-}
-
-/* Merged Hero Grid: Licença | 15 arquivos | Botão zip */
-.repo-hero-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    align-items: center;
-    gap: 24px;
-    border-top: 1px solid var(--border-card);
-    padding-top: 24px;
-}
-
-html[data-theme="dark"] .repo-hero-grid {
-    border-top-color: var(--dk-border);
-}
-
-.repo-zip-card {
-    justify-self: end;
-}
-
-.btn-download-all {
-    display: inline-flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 20px;
-    background: linear-gradient(135deg, var(--fgv-blue-med) 0%, var(--fgv-blue-dark) 100%);
-    color: #ffffff;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 700;
-    box-shadow: 0 4px 14px rgba(0, 58, 121, 0.3);
-    transition: all 0.25s ease;
-}
-
-.btn-download-all:hover {
-    background: linear-gradient(135deg, var(--fgv-blue-light) 0%, var(--fgv-blue-med) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 139, 201, 0.4);
-}
-
-.btn-download-all .btn-icon-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-}
-
-.btn-download-all .btn-text-group {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-}
-
-.btn-download-all .btn-main-text {
-    font-size: 15px;
-    line-height: 1.2;
-}
-
-.btn-download-all .btn-sub-text {
-    font-size: 11px;
-    font-weight: 500;
-    opacity: 0.9;
-    margin-top: 2px;
-}
-
-.repo-stat-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.repo-stat-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 8px;
-    background: #f1f5f9;
-    color: var(--fgv-blue-med);
-}
-
-html[data-theme="dark"] .repo-stat-icon {
-    background: var(--dk-surface-2);
-    color: var(--fgv-blue-sky);
-}
-
-.repo-stat-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.repo-stat-val {
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--fgv-blue-navy);
-}
-
-html[data-theme="dark"] .repo-stat-val {
-    color: var(--dk-text-strong);
-}
-
-.repo-stat-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--fgv-gray-med);
-}
-
-html[data-theme="dark"] .repo-stat-label {
-    color: var(--dk-text-muted);
 }
 
 /* ==========================================================================
@@ -612,7 +510,7 @@ html[data-theme="dark"] .repo-file-card:hover {
 
 .file-card-left {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 16px;
     flex: 1;
     min-width: 0;
@@ -817,36 +715,49 @@ html[data-theme="dark"] .repo-empty-state {
    RESPONSIVE BREAKPOINTS
    ========================================================================== */
 @media (max-width: 1024px) {
-    .brand-header { padding: 15px 20px; }
-}
-
-@media (max-width: 768px) {
+    .brand-header { padding: 12px 20px; }
     .header-content {
+        display: grid;
         grid-template-columns: repeat(2, 1fr);
         grid-template-areas: 
             "logo actions"
             "title title";
         gap: 10px 0;
+        align-items: center;
         text-align: center;
     }
 
     .logo-wrapper { 
         grid-area: logo;
         justify-self: start; 
+        margin-bottom: 0;
     }
     
     .brand-title { 
+        position: static;
+        transform: none;
         grid-area: title;
         justify-self: center;
-        margin-top: 0;
+        margin-top: 8px;
+        align-items: center;
+        width: 100%;
+        max-width: 100%;
     }
 
     .header-actions {
         grid-area: actions;
         justify-self: end;
+        align-self: center;
         gap: 8px;
     }
 
+    .brand-header { padding: 12px 18px; }
+    .logo-dint { height: 42px; }
+    .brand-title h1 { font-size: 18px; }
+    .subtitle { font-size: 11px; margin-top: 2px; }
+}
+
+@media (max-width: 768px) {
     .brand-header { padding: 10px 15px; }
     .logo-dint { height: 40px; }
     .brand-title h1 { font-size: 16px; }
@@ -862,20 +773,6 @@ html[data-theme="dark"] .repo-empty-state {
 
     .repo-hero-title {
         font-size: 24px;
-    }
-
-    .repo-hero-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-
-    .repo-zip-card {
-        justify-self: stretch;
-    }
-
-    .btn-download-all {
-        width: 100%;
-        justify-content: center;
     }
 
     .repo-toolbar {
@@ -902,5 +799,43 @@ html[data-theme="dark"] .repo-empty-state {
     .btn-download-file {
         width: 100%;
         justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-header {
+        padding: 10px 15px;
+    }
+
+    .logo-dint {
+        height: 36px;
+    }
+
+    .brand-title h1 {
+        font-size: 15px;
+    }
+
+    .subtitle {
+        font-size: 9.5px;
+        letter-spacing: 0.5px;
+        max-height: 36px;
+    }
+
+    .theme-toggle,
+    .header-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    .lang-dropdown-wrapper {
+        min-width: 70px;
+    }
+
+    .lang-dropdown-wrapper .choices__inner {
+        padding-right: 20px !important;
+    }
+
+    .lang-dropdown-wrapper .choices[data-type*="select-one"]::after {
+        right: 8px !important;
     }
 }

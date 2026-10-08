@@ -305,9 +305,7 @@ function renderFileList() {
         if (!SEARCH_QUERY) return true;
         const q = SEARCH_QUERY.toLowerCase();
         const fname = file.filename.toLowerCase();
-        const title = (t(file.titleKey) || "").toLowerCase();
-        const desc = (t(file.descKey) || "").toLowerCase();
-        return fname.includes(q) || title.includes(q) || desc.includes(q);
+        return fname.includes(q);
     });
 
     if (filtered.length === 0) {
@@ -323,8 +321,6 @@ function renderFileList() {
 
     container.innerHTML = filtered.map(file => {
         const categoryLabel = t(CATEGORY_NAMES[file.category]) || file.category;
-        const fileTitle = t(file.titleKey) || file.filename;
-        const fileDesc = t(file.descKey) || "";
         const downloadBtnText = t("repo_btn_download") || "Baixar";
 
         return `
@@ -339,8 +335,6 @@ function renderFileList() {
                             <span class="file-category-badge">${escapeHtml(categoryLabel)}</span>
                             <span class="file-size-badge">${escapeHtml(file.size)}</span>
                         </div>
-                        <h3 class="file-title">${escapeHtml(fileTitle)}</h3>
-                        <p class="file-desc">${escapeHtml(fileDesc)}</p>
                     </div>
                 </div>
                 <div class="file-card-right">
