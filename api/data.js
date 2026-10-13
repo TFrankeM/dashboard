@@ -476,8 +476,7 @@ async function getNewsList(request) {
 
     const countResult = await sql.query(`SELECT COUNT(*) AS total_count ${joinClause} ${whereClause};`, params);
     const totalCount = parseInt(countResult.rows[0].total_count, 10);
-    const limitVal = parseInt(limit, 10) || 50;
-    const offsetVal = parseInt(offset, 10) || 0;
+    const paginationClause = limit === "all" ? "" : `LIMIT ${parseInt(limit, 10) || 50} OFFSET ${parseInt(offset, 10) || 0}`;
 
     const query = `
         SELECT na.id, na.publication_date as date, na.headline, na.summary,
@@ -485,7 +484,7 @@ async function getNewsList(request) {
                c.slug as category, a.grade, a.analysis_text as analysis,
                te_evaluator.slug as evaluator_entity, te_evaluated.slug as evaluated_entity
         ${joinClause} ${whereClause} ${orderClause}
-        LIMIT ${limitVal} OFFSET ${offsetVal};`;
+        ${paginationClause};`;
     const { rows } = await sql.query(query, params);
     return { total_count: totalCount, data: rows };
 }

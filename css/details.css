@@ -974,6 +974,27 @@ tr:hover {
     text-decoration: underline;
 }
 
+/* Headline full display & link */
+.col-headline-cell {
+    min-width: 260px;
+    max-width: 500px;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.45;
+}
+.col-headline-link {
+    color: #1e40af;
+    text-decoration: underline;
+    text-decoration-color: rgba(30, 64, 175, 0.4);
+    text-underline-offset: 2px;
+    font-weight: 500;
+    transition: color 0.15s, text-decoration-color 0.15s;
+}
+.col-headline-link:hover {
+    color: #2563eb;
+    text-decoration-color: #2563eb;
+}
+
 
         /* SKELETON LOADER */
 .loading-state {
@@ -1397,6 +1418,14 @@ html[data-theme="dark"] .expandable.expanded {
 }
 html[data-theme="dark"] tr:hover { background-color: var(--dk-surface-2); }
 html[data-theme="dark"] .table-link { color: var(--fgv-blue-sky); }
+html[data-theme="dark"] .col-headline-link { 
+    color: var(--fgv-blue-sky); 
+    text-decoration-color: rgba(115, 191, 232, 0.4); 
+}
+html[data-theme="dark"] .col-headline-link:hover { 
+    color: #93c5fd; 
+    text-decoration-color: #93c5fd; 
+}
 html[data-theme="dark"] .state-message,
 html[data-theme="dark"] .loading-text { color: var(--dk-text-muted); }
 

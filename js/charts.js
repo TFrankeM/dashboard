@@ -932,6 +932,58 @@ const verticalLinePlugin = {
     }
 };
 
+// Plugin de fundo semafórico (vermelho embaixo, amarelo no centro irradiando do 4, verde no topo)
+const trafficLightBackgroundPlugin = {
+    id: "trafficLightBackground",
+    beforeDraw: (chart) => {
+        if (!chart.chartArea || !chart.scales.y) return;
+        const ctx = chart.ctx;
+        const { left, top, width, height } = chart.chartArea;
+        const yScale = chart.scales.y;
+
+        // No gráfico de evolução do IIPEx, o eixo Y vai de 1 (base) a 7 (topo), com o centro neutro exatamente em 4
+        const yTop = yScale.getPixelForValue(7);
+        const yCenter = yScale.getPixelForValue(4);
+        const yBottom = yScale.getPixelForValue(1);
+
+        const dark = isDarkTheme();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(left, top, width, height);
+        ctx.clip();
+
+        // Gradiente vertical do topo (7) até a base (1)
+        const grad = ctx.createLinearGradient(0, yTop, 0, yBottom);
+
+        // Divisão em 3 partes com cores mais vivas e visíveis:
+        // - Superior: verde-sinal
+        // - Centro: amarelo-sinal, partindo do 4 para cima e do 4 para baixo
+        // - Inferior: vermelho-sinal
+        if (dark) {
+            grad.addColorStop(0.00, "rgba(34, 197, 94, 0.26)");   // Verde-sinal no topo (7)
+            grad.addColorStop(0.20, "rgba(34, 197, 94, 0.16)");   // Verde suavizando
+            grad.addColorStop(0.35, "rgba(234, 179, 8, 0.14)");   // Transição para o amarelo subindo
+            grad.addColorStop(0.50, "rgba(234, 179, 8, 0.28)");   // Amarelo-sinal no centro (4)
+            grad.addColorStop(0.65, "rgba(234, 179, 8, 0.14)");   // Transição do amarelo descendo
+            grad.addColorStop(0.80, "rgba(239, 68, 68, 0.16)");   // Vermelho suavizando
+            grad.addColorStop(1.00, "rgba(239, 68, 68, 0.26)");   // Vermelho-sinal na base (1)
+        } else {
+            grad.addColorStop(0.00, "rgba(34, 197, 94, 0.22)");   // Verde-sinal no topo (7)
+            grad.addColorStop(0.20, "rgba(34, 197, 94, 0.13)");   // Verde suavizando
+            grad.addColorStop(0.35, "rgba(245, 158, 11, 0.13)");  // Transição para o amarelo subindo
+            grad.addColorStop(0.50, "rgba(245, 158, 11, 0.25)");  // Amarelo-sinal no centro (4)
+            grad.addColorStop(0.65, "rgba(245, 158, 11, 0.13)");  // Transição do amarelo descendo
+            grad.addColorStop(0.80, "rgba(239, 68, 68, 0.13)");   // Vermelho suavizando
+            grad.addColorStop(1.00, "rgba(239, 68, 68, 0.22)");   // Vermelho-sinal na base (1)
+        }
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(left, top, width, height);
+        ctx.restore();
+    }
+};
+
 
 const POLITICAL_COLORS = {
     "Democratas": "#2563eb",
@@ -1145,15 +1197,9 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
             clip: 5
         };
     });
-    // Single-series view gets a soft gradient under the line; with multiple
-    // series the fills would stack and hurt readability.
-    if (styledDatasets.length === 1) {
-        const grad = ctx.createLinearGradient(0, 0, 0, canvasElement.height || 400);
-        grad.addColorStop(0, isDarkTheme() ? "rgba(115, 191, 232, 0.22)" : "rgba(0, 58, 121, 0.12)");
-        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
-        styledDatasets[0].fill = true;
-        styledDatasets[0].backgroundColor = grad;
-    }
+    // Fills disabled so the traffic light background gradient (red/yellow/green)
+    // remains completely legible and unobstructed across the entire chart area.
+    styledDatasets.forEach(ds => { ds.fill = false; });
 
     const config = {
         type: "line",
@@ -1290,7 +1336,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                 verticalLine: true
             }
         },
-        plugins: [verticalLinePlugin]
+        plugins: [verticalLinePlugin, trafficLightBackgroundPlugin]
     };
 
     // Update in place so the line morphs from the old series to the new one
@@ -1302,6 +1348,10 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
         lineInstance.data.labels = labels;
         lineInstance.data.datasets = styledDatasets;
         lineInstance.options = config.options;
+        if (!lineInstance.config.plugins) lineInstance.config.plugins = [];
+        if (!lineInstance.config.plugins.includes(trafficLightBackgroundPlugin)) {
+            lineInstance.config.plugins.push(trafficLightBackgroundPlugin);
+        }
         lineInstance.update(animationsEnabled && !REDUCED_MOTION ? undefined : "none");
         if (linePinnedKey) setLineSeriesHighlight(null);   // re-assert the pin
         return;

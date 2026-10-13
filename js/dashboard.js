@@ -1625,6 +1625,10 @@ function detailsUrlParams() {
     p.append("startDate", currentClickedDate.startDate);
     p.append("endDate", currentClickedDate.endDate);
     p.append("aggregation", appState.aggregation);
+    p.append("fromPoint", "1");
+    p.append("limit", "all");
+    p.append("sort_by", "date");
+    p.append("sort_dir", "asc");
     const meta = clickedLayerMeta();
     if (meta?.combos) {
         meta.combos.forEach(c => p.append("combo", c));

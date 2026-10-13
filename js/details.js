@@ -37,7 +37,7 @@ CREATE INDEX idx_noticias_summary ON noticias(summary);
 
 const COLUMNS = [
     { key: "date", labelKey: "col_date", type: "date", expandable: false, sortable: true},
-    { key: "headline", labelKey: "col_headline", expandable: true, sortable: false },
+    { key: "headline", labelKey: "col_headline", expandable: false, sortable: false },
     { key: "summary", labelKey: "col_summary", expandable: true, sortable: false },
     { key: "article_text", labelKey: "col_article_text", expandable: true , sortable: false },
     { key: "source", labelKey: "col_source", expandable: true , sortable: true },
@@ -46,7 +46,6 @@ const COLUMNS = [
     { key: "evaluated_entity", labelKey: "col_evaluated", expandable: false, sortable: true },
     { key: "analysis", labelKey: "col_analysis", type: "analysis", expandable: false, sortable: false },
     { key: "grade", labelKey: "col_grade", type: "number", expandable: false, sortable: true },
-    { key: "url", labelKey: "col_link", type: "link", expandable: false, sortable: false },
 ];
 
 let visibleColumns = {
@@ -61,7 +60,7 @@ let visibleColumns = {
     evaluated_entity: false,
     grade: true, 
     analysis: true, 
-    url: true,
+    url: false,
 };
 
 let RELATIONSHIPS = {};
@@ -692,7 +691,7 @@ function renderLimitOptions() {
     
     if (limitSelector && limitLabel) {
         limitSelector.innerHTML = '';
-        limitLabel.textContent = currentLimit.toString();
+        limitLabel.textContent = currentLimit === "all" ? "Todas" : currentLimit.toString();
 
         const limits = [50, 100, 500, 1000];
         limits.forEach(val => {
@@ -714,6 +713,22 @@ function renderLimitOptions() {
             
             limitSelector.appendChild(opt);
         });
+
+        const optAll = document.createElement("div");
+        optAll.className = "col-option";
+        if (currentLimit === "all") {
+            optAll.classList.add("selected");
+        }
+        optAll.setAttribute("data-val", "all");
+        optAll.textContent = "Todas";
+        optAll.addEventListener("click", () => {
+            currentLimit = "all";
+            currentOffset = 0;
+            renderLimitOptions();
+            fetchData(new URLSearchParams(window.location.search));
+            limitSelector.parentElement.classList.remove('is-open');
+        });
+        limitSelector.appendChild(optAll);
     }
 }
 
@@ -724,11 +739,13 @@ function initPaginationSelectors() {
 
     // range selector
     document.getElementById("prev-page").addEventListener("click", () => {
+        if (currentLimit === "all") return;
         currentOffset = Math.max(0, currentOffset - currentLimit);
         fetchData(new URLSearchParams(window.location.search));
     });
 
     document.getElementById("next-page").addEventListener("click", () => {
+        if (currentLimit === "all") return;
         currentOffset += currentLimit;
         fetchData(new URLSearchParams(window.location.search));
     });
@@ -742,9 +759,21 @@ function updatePaginationUI(totalItems) {
     if (totalCountElement) {
         totalCountElement.textContent = totalItems.toLocaleString(CURRENT_LANG);
     }
-    const totalPages = Math.ceil(totalItems / currentLimit);
     const rangeSelector = document.getElementById("page-range-selector");
     const rangeLabel = document.getElementById("page-range-label");
+
+    if (currentLimit === "all") {
+        if (rangeSelector && rangeLabel) {
+            rangeSelector.innerHTML = "";
+            rangeLabel.textContent = totalItems > 0 ? `1 - ${totalItems}` : "0 - 0";
+            rangeSelector.disabled = true;
+            document.getElementById("prev-page").disabled = true;
+            document.getElementById("next-page").disabled = true;
+        }
+        return;
+    }
+
+    const totalPages = Math.ceil(totalItems / currentLimit);
 
     if (rangeSelector && rangeLabel) {
         rangeSelector.innerHTML = "";
@@ -919,6 +948,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     initThemeToggle();
     
     const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("fromPoint") === "1" || urlParams.get("limit") === "all") {
+        currentLimit = "all";
+        currentSortColumn = "date";
+        currentSortDirection = "asc";
+    } else {
+        if (urlParams.get("sort_by")) currentSortColumn = urlParams.get("sort_by");
+        if (urlParams.get("sort_dir")) currentSortDirection = urlParams.get("sort_dir").toLowerCase();
+    }
     
     // Initialize filters first so search inputs exist before translateUI
     await initializeFilters(urlParams);
@@ -1118,7 +1155,15 @@ function renderTableBody(data) {
                 const td = document.createElement("td");
                 const value = row[col.key];
 
-                if (col.expandable) {
+                if (col.key === "headline") {
+                    td.className = "col-headline-cell";
+                    const safeHref = safeUrl(row.url);
+                    if (safeHref) {
+                        td.innerHTML = `<a href="${escapeHtml(safeHref)}" target="_blank" rel="noopener" class="col-headline-link">${escapeHtml(value || "-")}</a>`;
+                    } else {
+                        td.textContent = value || "-";
+                    }
+                } else if (col.expandable) {
                     td.className = "expandable";
                     td.textContent = value || "-";
                     td.title = t("click_to_expand");
