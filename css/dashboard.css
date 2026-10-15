@@ -108,13 +108,13 @@ body {
 /* HEADER */
 .brand-header {
     background-color: #f3f4f6;
-    padding: 14px 40px;
+    padding: 12px 40px;
     border-bottom: 1px solid var(--fgv-blue-dark);
     transition: padding 0.25s ease;
 }
 
 .brand-header.compact {
-    padding: 8px 40px;
+    padding: 6px 40px;
 }
 
 .brand-header.compact .subtitle {
@@ -387,7 +387,7 @@ data-type* means any type that contains select-one, like select-one-groups */
     top: 0;
     background-color: var(--fgv-blue-dark);
     color: white;
-    padding: 20px 40px;
+    padding: 16px 40px;
     box-shadow: var(--shadow-sm);
     z-index: var(--z-sticky);
     transition: padding 0.25s ease;
@@ -395,7 +395,7 @@ data-type* means any type that contains select-one, like select-one-groups */
 }
 
 .sticky-filters.compact {
-    padding: 10px 40px;
+    padding: 8px 40px;
     background-color: var(--fgv-blue-dark);
     backdrop-filter: blur(5px);
 }
@@ -1092,7 +1092,7 @@ input:checked + .slider:before {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
     gap: 20px;
-    padding: 18px 40px;
+    padding: 16px 40px;
 }
 
 .card {
