@@ -1216,7 +1216,7 @@ export function drawLineChart(canvasElement, labels, datasets, onPointClicked, t
                 intersect: false,
             },
             layout: {
-                padding: smallScreen ? { top: 15, bottom: 15, left: 5, right: 5 } : { top: 15, bottom: 15, left: 10, right: 10 }
+                padding: smallScreen ? { top: 6, bottom: 6, left: 5, right: 5 } : { top: 6, bottom: 6, left: 10, right: 10 }
             },
             scales: {
                 y: { 
