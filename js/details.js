@@ -752,6 +752,17 @@ function initPaginationSelectors() {
 }
 
 
+// A single page leaves nothing to pick: the range dropdown stops opening on
+// hover/click and reads as disabled.
+function setRangeDropdownInert(rangeSelector, inert) {
+    const dropdown = rangeSelector.closest(".dropdown");
+    if (!dropdown) return;
+    dropdown.classList.toggle("is-inert", inert);
+    dropdown.classList.remove("is-open");
+    const btn = dropdown.querySelector(".btn-outline");
+    if (btn) btn.disabled = inert;
+}
+
 function updatePaginationUI(totalItems) {
     /* Updates the pagination controls based on the total number of items returned by 
     the API and the current limit and offset. */
@@ -766,7 +777,7 @@ function updatePaginationUI(totalItems) {
         if (rangeSelector && rangeLabel) {
             rangeSelector.innerHTML = "";
             rangeLabel.textContent = totalItems > 0 ? `1 - ${totalItems}` : "0 - 0";
-            rangeSelector.disabled = true;
+            setRangeDropdownInert(rangeSelector, true);
             document.getElementById("prev-page").disabled = true;
             document.getElementById("next-page").disabled = true;
         }
@@ -780,13 +791,13 @@ function updatePaginationUI(totalItems) {
 
         if (totalPages === 0) {
             rangeLabel.textContent = "0 - 0";
-            rangeSelector.disabled = true;
+            setRangeDropdownInert(rangeSelector, true);
             document.getElementById("prev-page").disabled = true;
             document.getElementById("next-page").disabled = true;
             return;
         } else {
             let activeLabel = "";
-            rangeSelector.disabled = false;
+            setRangeDropdownInert(rangeSelector, totalPages === 1);
 
             for (let i = 0; i < totalPages; i++) {
                 const startItem = (i * currentLimit) + 1;
