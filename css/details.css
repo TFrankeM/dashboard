@@ -942,10 +942,11 @@ tr:hover {
 }
 
 /* Column widths: text columns share one width per breakpoint, date and grade
-   shrink to their content, analysis takes the remaining space. */
-.table-container { --col-text-w: 200px; }
-@media (max-width: 1600px) { .table-container { --col-text-w: 170px; } }
-@media (max-width: 1280px) { .table-container { --col-text-w: 150px; } }
+   shrink to their content, analysis takes the remaining space. Values exclude
+   the 12px cell padding on each side (rendered: 200 / 170 / 150px). */
+.table-container { --col-text-w: 176px; }
+@media (max-width: 1600px) { .table-container { --col-text-w: 146px; } }
+@media (max-width: 1280px) { .table-container { --col-text-w: 126px; } }
 
 #news-table .col-date,
 #news-table .col-grade {
