@@ -77,7 +77,7 @@ const DEFAULT_CONFIG = {
     // widgets. Period/aggregation are global.
     layers: [{ triples: [{ ev: "argentina", ed: "brasil", cat: "include_all" }] }],
     principalIndex: 0,
-    aggregation: 3
+    aggregation: 6
 };
 let appState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let pendingState = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
