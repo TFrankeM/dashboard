@@ -929,13 +929,32 @@ tr:hover {
     font-family: monospace;
     font-weight: bold;
 }
-.grade-negative { color: #ef4444; }
-.grade-positive { color: #10b981; }
 
-/* Analysis column: full text with comfortable reading width */
+/* Column widths: text columns share one width per breakpoint, date and grade
+   shrink to their content, analysis takes the remaining space. */
+.table-container { --col-text-w: 200px; }
+@media (max-width: 1600px) { .table-container { --col-text-w: 170px; } }
+@media (max-width: 1280px) { .table-container { --col-text-w: 150px; } }
+
+#news-table .col-date,
+#news-table .col-grade {
+    width: 1%;
+    white-space: nowrap;
+}
+
+#news-table .col-headline,
+#news-table .col-summary,
+#news-table .col-article_text,
+#news-table .col-source,
+#news-table .col-category,
+#news-table .col-evaluator_entity,
+#news-table .col-evaluated_entity {
+    width: var(--col-text-w);
+    max-width: var(--col-text-w);
+}
+
 .col-analysis-cell {
     min-width: 380px;
-    max-width: 600px;
     white-space: normal;
     line-height: 1.55;
     color: #334155;
@@ -944,7 +963,6 @@ tr:hover {
 
 /* expandable cell */
 .expandable {
-    max-width: 200px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -954,7 +972,6 @@ tr:hover {
 
 .expandable.expanded {
     white-space: normal;
-    max-width: none;
     background-color: #f0f7ff;
     color: #0f2942;
     border-radius: 4px;
@@ -976,8 +993,6 @@ tr:hover {
 
 /* Headline full display & link */
 .col-headline-cell {
-    min-width: 260px;
-    max-width: 500px;
     white-space: normal;
     word-break: break-word;
     line-height: 1.45;

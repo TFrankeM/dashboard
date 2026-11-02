@@ -1092,6 +1092,7 @@ function renderTableHeaders() {
     COLUMNS.forEach(col => {
         if (visibleColumns[col.key]) {
             const th = document.createElement("th");
+            th.classList.add(`col-${col.key}`);
             if (col.sortable) {
                 th.classList.add("sortable-header");
                 th.style.cursor = "pointer";
@@ -1179,11 +1180,6 @@ function renderTableBody(data) {
                 } else if (col.type === "number") {
                     td.textContent = value ? parseFloat(value).toFixed(2) : "-";
                     td.className = "font-mono font-bold";
-                    if (value < 3.5) {
-                        td.style.color = "#ef4444";
-                    } else if (value > 5.5) {
-                        td.style.color = "#10b981";
-                    }
                 } else if (col.type === "analysis") {
                     td.className = "col-analysis-cell";
                     td.textContent = value || "-";
@@ -1196,7 +1192,8 @@ function renderTableBody(data) {
                         td.textContent = value || "-";
                     }
                 }
-                
+
+                td.classList.add(`col-${col.key}`);
                 tr.appendChild(td);
             }
         });

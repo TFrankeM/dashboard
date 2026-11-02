@@ -37,7 +37,7 @@ let stats = [
     { value: 1957973, key: "stat_total_analyses" },
     { value: 14967,   key: "stat_total_sources" },
     { value: 61,      key: "stat_total_languages" },
-    { value: 18,      key: "stat_total_categories" },
+    { value: 17,      key: "stat_total_categories" },
     { value: 504,     key: "stat_coverage_days" }
 ];
 
