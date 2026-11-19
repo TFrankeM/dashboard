@@ -1,5 +1,7 @@
-// Admin panel: gallery + free-placement editor for the page layouts
-// (/api/layouts). Cards live on a 12-column grid as {id, x, y, w, h}; the
+// Admin panel, one tab per public screen. Painel: gallery + free-placement
+// editor for the page layouts (/api/layouts). Repositório: the document
+// catalog (/api/repository). Início and Detalhes are placeholders.
+// Layout cards live on a 12-column grid as {id, x, y, w, h}; the
 // editor lets them be dropped anywhere, moved and stretched (drop on another
 // card is invalid), with per-module minimum sizes mirrored from the API.
 // Nothing renders before the admin token is validated against the server; the
@@ -7,7 +9,7 @@
 
 const LAYOUTS_ENDPOINT = "/api/layouts";
 
-const metaEl = document.getElementById("admin-meta");
+const metaEl = document.getElementById("layouts-meta");
 const gateEl = document.getElementById("auth-gate");
 const authFormEl = document.getElementById("auth-form");
 const authSubmitEl = document.getElementById("auth-submit");
@@ -146,16 +148,14 @@ function feedback(message, isError = false) {
     feedbackTimer = setTimeout(() => feedbackEl.classList.remove("show"), 5000);
 }
 
+// Only abnormal states are worth a line under the gallery (the header no
+// longer carries source/live info).
 function renderMeta() {
     if (!layoutState) return;
-    const { source, writable, degraded, active, layouts } = layoutState;
-    const liveLabel = active && layouts?.[active]
-        ? `"${layouts[active].label || active}"`
-        : "página estática";
-    metaEl.textContent = `Fonte: ${SOURCE_LABELS[source] || source}` +
-        (degraded ? " — indisponível" : "") +
-        (writable ? "" : " — somente leitura") +
-        ` · No ar: ${liveLabel}`;
+    const { source, writable, degraded } = layoutState;
+    metaEl.textContent = degraded
+        ? "Fonte indisponível: exibindo os layouts padrão do código (somente leitura)."
+        : writable ? "" : `Fonte ${SOURCE_LABELS[source] || source}: somente leitura.`;
 }
 
 /* ---- Auth gate ---- */
@@ -184,6 +184,8 @@ authFormEl.addEventListener("submit", async event => {
         mainEl.hidden = false;
         renderMeta();
         renderGallery();
+        restorePanel();
+        loadCatalog();
     } catch (error) {
         authErrorEl.textContent = `Não foi possível validar o token: ${error.message}`;
     } finally {
@@ -773,6 +775,547 @@ document.getElementById("editor-preview").addEventListener("click", () => {
         .replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
     window.open(`dashboard.html?draft=${b64}`, "_blank", "noopener");
 });
+
+/* ---- Screen tabs: one per public page ---- */
+
+const NAV_STORAGE_KEY = "iipex_admin_panel";
+const navTabs = [...document.querySelectorAll(".admin-nav-tab")];
+const panels = [...document.querySelectorAll(".admin-panel")];
+
+function showPanel(id) {
+    if (!panels.some(panel => panel.id === `panel-${id}`)) id = "dashboard";
+    navTabs.forEach(tab => tab.classList.toggle("is-active", tab.dataset.panel === id));
+    panels.forEach(panel => { panel.hidden = panel.id !== `panel-${id}`; });
+    try { sessionStorage.setItem(NAV_STORAGE_KEY, id); } catch { /* storage blocked */ }
+}
+
+navTabs.forEach(tab => tab.addEventListener("click", () => showPanel(tab.dataset.panel)));
+
+// ?tab=repository deep-links a screen; otherwise the last one opened wins.
+function restorePanel() {
+    let id = new URLSearchParams(location.search).get("tab");
+    if (!id) {
+        try { id = sessionStorage.getItem(NAV_STORAGE_KEY); } catch { id = null; }
+    }
+    showPanel(id || "dashboard");
+}
+
+/* ---- Repository: document catalog (/api/repository) ---- */
+
+const REPOSITORY_ENDPOINT = "/api/repository";
+const GITHUB_REPO = "TFrankeM/dashboard";
+const GITHUB_FOLDER = "repository";
+const GITHUB_UI_LIMIT_MB = 25;
+
+const CATEGORY_LABELS = {
+    data: "Bases de dados",
+    benchmarks: "Resultados & benchmarks",
+    scripts: "Scripts Python",
+    prompts: "Prompts de LLM",
+    docs: "Documentação",
+};
+
+// Mirror of api/_lib/repository.js ICONS (the API is the authority).
+const DOC_ICONS = [
+    "database", "table", "file-spreadsheet", "file-text", "file-json", "file-archive",
+    "bar-chart-3", "pie-chart", "line-chart", "code", "terminal", "braces",
+    "list-checks", "message-square-text", "book-open", "file-check", "quote",
+    "shield", "scroll-text", "globe", "link", "image", "package", "notebook-pen",
+];
+
+const PUBLISH_POLL_MS = 5000;
+const PUBLISH_POLL_MAX = 24;   // 2 minutes
+
+const docListEl = document.getElementById("doc-list");
+const docAddEl = document.getElementById("doc-add");
+const docEditorEl = document.getElementById("doc-editor");
+const docEditorTitleEl = document.getElementById("doc-editor-title");
+const docOriginFieldEl = document.getElementById("doc-origin-field");
+const originButtons = [...document.querySelectorAll("#doc-origin .seg-btn")];
+const sizeGuideEl = document.getElementById("size-guide");
+const docUploadFieldEl = document.getElementById("doc-upload-field");
+const docUploadDropEl = document.getElementById("doc-upload-drop");
+const docUploadTextEl = document.getElementById("doc-upload-text");
+const docUploadEl = document.getElementById("doc-upload");
+const docUploadHintEl = document.getElementById("doc-upload-hint");
+const docGithubFieldEl = document.getElementById("doc-github-field");
+const docGithubListEl = document.getElementById("doc-github-list");
+const docGithubHintEl = document.getElementById("doc-github-hint");
+const docNameEl = document.getElementById("doc-name");
+const docExtNameFieldEl = document.getElementById("doc-ext-name-field");
+const docExtNameEl = document.getElementById("doc-ext-name");
+const docUrlFieldEl = document.getElementById("doc-url-field");
+const docUrlEl = document.getElementById("doc-url");
+const docFixedFieldEl = document.getElementById("doc-fixed-field");
+const docFixedNameEl = document.getElementById("doc-fixed-name");
+const docCategoryEl = document.getElementById("doc-category");
+const docIconsEl = document.getElementById("doc-icons");
+const docsMetaEl = document.getElementById("docs-meta");
+
+document.getElementById("doc-github-link").href =
+    `https://github.com/${GITHUB_REPO}/tree/main/${GITHUB_FOLDER}`;
+
+let catalogState = null;      // { source, writable, docs, degraded? }
+let docDraft = null;          // editor state: { file|null, source, pick, icon, category, url? }
+let docBusy = false;
+let githubFiles = null;       // [{ name, size }] once listed; [] when it failed
+let githubListingFailed = false;
+let armedRemoval = null;      // file whose ✕ was clicked (awaiting confirmation)
+
+// Decimal units, same formatting as the public page; "—" when unknown.
+function formatBytes(bytes) {
+    if (bytes === null || bytes === undefined) return "—";
+    const n = Number(bytes) || 0;
+    if (n < 1000) return `${n} B`;
+    if (n < 1e6) return `${(n / 1e3).toFixed(1)} KB`;
+    if (n < 1e9) return `${(n / 1e6).toFixed(1)} MB`;
+    return `${(n / 1e9).toFixed(1)} GB`;
+}
+
+function refreshIcons() {
+    if (window.lucide) lucide.createIcons();
+}
+
+function lucideIcon(name) {
+    const i = document.createElement("i");
+    i.setAttribute("data-lucide", name);
+    return i;
+}
+
+function renderDocsMeta() {
+    if (!catalogState) return;
+    const { source, writable, degraded } = catalogState;
+    docsMetaEl.textContent = degraded
+        ? "Fonte indisponível: exibindo a lista padrão do código (somente leitura)."
+        : writable ? "" : `Fonte ${SOURCE_LABELS[source] || source}: somente leitura.`;
+}
+
+async function loadCatalog() {
+    try {
+        const res = await fetch(REPOSITORY_ENDPOINT, {
+            cache: "no-store",
+            headers: { "Authorization": `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(`GET → ${res.status}`);
+        catalogState = await res.json();
+    } catch (error) {
+        catalogState = { source: "defaults", writable: false, docs: [], degraded: true };
+        feedback(`Não foi possível carregar o catálogo: ${error.message}`, true);
+    }
+    renderDocsMeta();
+    renderDocList();
+}
+
+async function catalogRequest(method, body, successMessage) {
+    docBusy = true;
+    renderDocList();
+    try {
+        const res = await fetch(REPOSITORY_ENDPOINT, {
+            method,
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(body),
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(payload.error || `${method} → ${res.status}`);
+        catalogState = payload;
+        renderDocsMeta();
+        feedback(successMessage);
+        return true;
+    } catch (error) {
+        feedback(error.message, true);
+        return false;
+    } finally {
+        docBusy = false;
+        renderDocList();
+    }
+}
+
+function docButton(label, onClick, className = "btn-ghost") {
+    const btn = plainButton(label, onClick, className);
+    btn.disabled = docBusy;
+    return btn;
+}
+
+function docRow(doc, writable) {
+    const row = document.createElement("div");
+    row.className = `doc-row cat-${doc.category}` + (armedRemoval === doc.file ? " is-armed" : "");
+
+    const icon = document.createElement("span");
+    icon.className = "doc-icon";
+    icon.append(lucideIcon(doc.icon));
+
+    const name = document.createElement("span");
+    name.className = "doc-name";
+    name.textContent = doc.file;
+
+    const badge = document.createElement("span");
+    badge.className = "doc-badge";
+    badge.textContent = CATEGORY_LABELS[doc.category] || doc.category;
+
+    row.append(icon, name, badge);
+    if (doc.bytes !== null && doc.bytes !== undefined) {
+        const size = document.createElement("span");
+        size.className = "doc-size";
+        size.textContent = formatBytes(doc.bytes);
+        row.append(size);
+    }
+
+    if (doc.url) {
+        const ext = document.createElement("a");
+        ext.className = "doc-ext";
+        ext.href = doc.url;
+        ext.target = "_blank";
+        ext.rel = "noopener";
+        ext.title = doc.url;
+        ext.textContent = "link externo ↗";
+        row.append(ext);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "doc-actions";
+    if (armedRemoval === doc.file) {
+        // The ✕ was clicked: swap the row's controls for an explicit
+        // confirmation. A file kept in repository/ is deleted along with its
+        // entry when this environment can write to GitHub.
+        const deleteFile = !doc.url && Boolean(catalogState.uploads?.enabled);
+        actions.append(docButton(deleteFile ? "Apagar arquivo e remover" : "Confirmar remoção",
+            () => removeDoc(doc.file, deleteFile), "btn-danger"));
+        actions.append(docButton("Cancelar", () => { armedRemoval = null; renderDocList(); }));
+    } else {
+        actions.append(docButton("Editar", () => openDocEditor(doc)));
+        if (writable) {
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "doc-remove";
+            remove.textContent = "✕";
+            remove.title = `Remover "${doc.file}" da lista`;
+            remove.setAttribute("aria-label", remove.title);
+            remove.disabled = docBusy;
+            remove.addEventListener("click", () => { armedRemoval = doc.file; renderDocList(); });
+            actions.append(remove);
+        }
+    }
+    row.append(actions);
+    return row;
+}
+
+function renderDocList() {
+    if (!catalogState) return;
+    const { docs, writable } = catalogState;
+    docListEl.replaceChildren(...docs.map(doc => docRow(doc, writable)));
+    docAddEl.hidden = !writable;
+    docAddEl.disabled = docBusy;
+    refreshIcons();
+}
+
+async function removeDoc(file, deleteFile) {
+    armedRemoval = null;
+    const ok = await catalogRequest("DELETE", { file, deleteFile }, deleteFile
+        ? `"${file}" removido da lista e apagado do GitHub; some do site em cerca de 20 s.`
+        : `"${file}" removido da lista. Se o arquivo existir na pasta do GitHub, ele continua lá.`);
+    if (ok && deleteFile && catalogState.fileRemoved === false) {
+        feedback(`"${file}" removido da lista; o arquivo não estava na pasta do GitHub.`);
+    }
+}
+
+// After an upload commits to GitHub the site redeploys; poll the public
+// path until it answers so the admin knows when the download is live.
+async function waitForPublish(file) {
+    const path = `repository/${encodeURIComponent(file)}`;
+    for (let attempt = 1; attempt <= PUBLISH_POLL_MAX; attempt++) {
+        feedback(`"${file}" enviado ao GitHub. Publicando… (${attempt * PUBLISH_POLL_MS / 1000} s)`);
+        await new Promise(resolve => setTimeout(resolve, PUBLISH_POLL_MS));
+        try {
+            const res = await fetch(path, { method: "HEAD", cache: "no-store" });
+            if (res.ok) return feedback(`"${file}" publicado — já pode ser baixado na página Repositório.`);
+        } catch { /* keep polling */ }
+    }
+    feedback(`"${file}" foi enviado, mas ainda não aparece no site. Verifique o deploy na Vercel.`, true);
+}
+
+/* ---- Repository: document editor ---- */
+
+const GITHUB_UI_LIMIT_BYTES = GITHUB_UI_LIMIT_MB * 1e6;
+const GIT_FILE_LIMIT_BYTES = 100e6;
+
+function uploadMax() { return catalogState?.uploads?.maxBytes ?? 0; }
+function uploadMaxLabel() { return `${Math.round(uploadMax() / 1e6)} MB`; }
+function uploadsEnabled() { return Boolean(catalogState?.uploads?.enabled); }
+
+// Public listing of the GitHub folder (no token: the repo is public). Gives
+// the names and sizes of the files Marlos already uploaded.
+async function fetchGithubFiles() {
+    if (githubFiles) return githubFiles;
+    try {
+        const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FOLDER}`, {
+            headers: { "Accept": "application/vnd.github+json" },
+        });
+        if (!res.ok) throw new Error(`GitHub → ${res.status}`);
+        const items = await res.json();
+        githubFiles = items.filter(item => item.type === "file")
+            .map(item => ({ name: item.name, size: item.size }));
+        githubListingFailed = false;
+    } catch (error) {
+        console.warn("GitHub listing:", error);
+        githubFiles = [];
+        githubListingFailed = true;
+    }
+    return githubFiles;
+}
+
+function segButton(label, active, onClick, className = "") {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `seg-btn ${className}` + (active ? " is-active" : "");
+    btn.setAttribute("role", "radio");
+    btn.setAttribute("aria-checked", String(active));
+    btn.textContent = label;
+    btn.addEventListener("click", onClick);
+    return btn;
+}
+
+function setOrigin(source) {
+    docDraft.source = source;
+    originButtons.forEach(btn => {
+        const on = btn.dataset.source === source;
+        btn.classList.toggle("is-active", on);
+        btn.setAttribute("aria-checked", String(on));
+    });
+    syncSourceFields();
+}
+
+// Shows the fields of the chosen origin (or the fixed-name block when
+// editing) and keeps the size ladder in step.
+function syncSourceFields() {
+    const existing = Boolean(docDraft?.file);
+    const source = existing ? null : docDraft.source;
+    docOriginFieldEl.hidden = existing;
+    docFixedFieldEl.hidden = !existing;
+    docUploadFieldEl.hidden = source !== "upload";
+    docGithubFieldEl.hidden = source !== "github";
+    docExtNameFieldEl.hidden = source !== "external";
+    docUrlFieldEl.hidden = !(source === "external" || (existing && docDraft.url));
+    if (existing) docFixedNameEl.textContent = docDraft.file;
+    syncUploadHint();
+    highlightTier();
+}
+
+function tierForBytes(bytes) {
+    if (bytes <= uploadMax()) return "upload";
+    if (bytes <= GITHUB_UI_LIMIT_BYTES) return "github";
+    if (bytes <= GIT_FILE_LIMIT_BYTES) return "terminal";
+    return "external";
+}
+
+// The ladder highlights the chosen origin's tier; once a file is picked for
+// upload, its real size decides (so an oversized pick points at the way out).
+function highlightTier() {
+    const editingNew = Boolean(docDraft && !docDraft.file);
+    sizeGuideEl.hidden = !editingNew;
+    let tier = null;
+    if (editingNew) {
+        const chosen = docDraft.source === "upload" ? docUploadEl.files?.[0] : null;
+        tier = chosen ? tierForBytes(chosen.size) : docDraft.source;
+    }
+    sizeGuideEl.querySelectorAll("li").forEach(li =>
+        li.classList.toggle("is-active", li.dataset.tier === tier));
+}
+
+function syncUploadHint() {
+    const chosen = docUploadEl.files?.[0];
+    const max = uploadMax();
+    docUploadDropEl.classList.remove("has-file", "is-too-big");
+    if (!chosen) {
+        docUploadTextEl.textContent = `Clique para escolher um arquivo (até ${uploadMaxLabel()})`;
+        docUploadHintEl.textContent = "";
+        return;
+    }
+    const tooBig = chosen.size > max;
+    docUploadTextEl.textContent = `${chosen.name} · ${formatBytes(chosen.size)}`;
+    docUploadDropEl.classList.toggle("has-file", !tooBig);
+    docUploadDropEl.classList.toggle("is-too-big", tooBig);
+    docUploadHintEl.textContent = tooBig
+        ? `Acima de ${uploadMaxLabel()}: siga o caminho destacado no guia.`
+        : `Será publicado como repository/${chosen.name}.`;
+}
+
+function renderGithubList() {
+    const cataloged = new Set(catalogState.docs.map(doc => doc.file));
+    const free = (githubFiles || []).filter(file => !cataloged.has(file.name));
+    docGithubListEl.replaceChildren(...free.map(file => {
+        const selected = docDraft.pick === file.name;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pick-item" + (selected ? " is-selected" : "");
+        btn.setAttribute("role", "radio");
+        btn.setAttribute("aria-checked", String(selected));
+        const name = document.createElement("span");
+        name.className = "pick-name";
+        name.textContent = file.name;
+        const size = document.createElement("span");
+        size.className = "pick-size";
+        size.textContent = formatBytes(file.size);
+        btn.append(name, size);
+        btn.addEventListener("click", () => {
+            docDraft.pick = selected ? null : file.name;
+            if (docDraft.pick) docNameEl.value = "";
+            renderGithubList();
+        });
+        return btn;
+    }));
+    docGithubHintEl.textContent = githubListingFailed
+        ? "Não foi possível consultar a pasta no GitHub agora. Digite o nome do arquivo abaixo."
+        : free.length ? "" : "Todos os arquivos da pasta já estão na lista. Para um arquivo recém-enviado, digite o nome abaixo.";
+}
+
+function renderCategorySeg() {
+    docCategoryEl.replaceChildren(...Object.entries(CATEGORY_LABELS).map(([value, label]) =>
+        segButton(label, docDraft.category === value, () => {
+            docDraft.category = value;
+            renderCategorySeg();
+            renderIconPicker();
+        }, `cat-${value}`)));
+}
+
+function renderIconPicker() {
+    docIconsEl.className = `doc-icons cat-${docDraft.category}`;
+    docIconsEl.replaceChildren(...DOC_ICONS.map(name => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "doc-icon" + (name === docDraft.icon ? " is-selected" : "");
+        btn.title = name;
+        btn.setAttribute("role", "radio");
+        btn.setAttribute("aria-checked", String(name === docDraft.icon));
+        btn.append(lucideIcon(name));
+        btn.addEventListener("click", () => { docDraft.icon = name; renderIconPicker(); });
+        return btn;
+    }));
+    refreshIcons();
+}
+
+async function openDocEditor(existing = null) {
+    docDraft = existing
+        ? { ...existing }
+        : { file: null, source: uploadsEnabled() ? "upload" : "github", pick: null, icon: "file-text", category: "docs" };
+    armedRemoval = null;
+    renderDocList();
+
+    docEditorTitleEl.textContent = existing ? "Editar documento" : "Novo documento";
+    docNameEl.value = "";
+    docExtNameEl.value = "";
+    docUrlEl.value = existing?.url || "";
+    docUploadEl.value = "";
+    originButtons.forEach(btn => { btn.hidden = btn.dataset.source === "upload" && !uploadsEnabled(); });
+    // The ladder's first two tiers quote the upload ceiling.
+    document.getElementById("size-guide-upload-max").textContent = `até ${uploadMaxLabel()}`;
+    document.getElementById("size-guide-upload-max-2").textContent = String(Math.round(uploadMax() / 1e6));
+    docEditorEl.hidden = false;
+    docEditorEl.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    renderCategorySeg();
+    renderIconPicker();
+    if (existing) {
+        syncSourceFields();
+        return;
+    }
+    setOrigin(docDraft.source);
+    docGithubHintEl.textContent = "Consultando a pasta no GitHub…";
+    await fetchGithubFiles();
+    if (!docDraft || docDraft.file) return;   // editor closed or switched meanwhile
+    renderGithubList();
+}
+
+function closeDocEditor() {
+    docDraft = null;
+    delete docEditorEl.dataset.confirmReplace;
+    docEditorEl.hidden = true;
+}
+
+originButtons.forEach(btn => btn.addEventListener("click", () => docDraft && setOrigin(btn.dataset.source)));
+docUploadEl.addEventListener("change", () => { syncUploadHint(); highlightTier(); });
+docNameEl.addEventListener("input", () => {
+    if (docDraft && docNameEl.value && docDraft.pick) {
+        docDraft.pick = null;
+        renderGithubList();
+    }
+});
+docAddEl.addEventListener("click", () => openDocEditor());
+document.getElementById("doc-cancel").addEventListener("click", closeDocEditor);
+
+docEditorEl.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!docDraft || docBusy) return;
+    const existing = Boolean(docDraft.file);
+
+    let file;
+    let url;
+    let upload = null;
+    if (existing) {
+        file = docDraft.file;
+        if (docDraft.url) url = docUrlEl.value.trim();
+    } else if (docDraft.source === "upload") {
+        upload = docUploadEl.files?.[0] || null;
+        if (!upload) return feedback("Escolha um arquivo do computador.", true);
+        if (upload.size > uploadMax()) {
+            return feedback(`"${upload.name}" tem ${formatBytes(upload.size)}; por aqui vão até ${uploadMaxLabel()}.`, true);
+        }
+        file = upload.name;
+    } else if (docDraft.source === "github") {
+        file = docDraft.pick || docNameEl.value.trim();
+        if (!file) return feedback("Escolha um arquivo da lista ou digite o nome.", true);
+    } else {
+        file = docExtNameEl.value.trim();
+        url = docUrlEl.value.trim();
+        if (!file) return feedback("Dê um nome ao documento.", true);
+    }
+    if (!existing && !upload && catalogState.docs.some(doc => doc.file === file)) {
+        return feedback(`"${file}" já está na lista.`, true);
+    }
+    if (url !== undefined && !url) return feedback("Informe a URL do arquivo.", true);
+
+    const doc = { file, category: docDraft.category, icon: docDraft.icon };
+    if (url) doc.url = url;
+
+    if (upload) {
+        const replacing = catalogState.docs.some(d => d.file === file);
+        if (replacing && !docEditorEl.dataset.confirmReplace) {
+            docEditorEl.dataset.confirmReplace = "1";
+            return feedback(`"${file}" já existe: clique em Salvar de novo para substituí-lo.`, true);
+        }
+        delete docEditorEl.dataset.confirmReplace;
+        const content = await fileToBase64(upload);
+        const ok = await catalogRequest("POST", { doc, content }, `"${file}" enviado.`);
+        if (!ok) return;
+        closeDocEditor();
+        if (catalogState.uploads?.source === "github") {
+            if (catalogState.fileAction === "replaced") {
+                feedback(`"${file}" substituído no GitHub; a nova versão fica disponível em cerca de 20 s.`);
+            } else {
+                waitForPublish(file);
+            }
+        } else {
+            feedback(`"${file}" salvo em repository/ — já aparece na página Repositório.`);
+        }
+        return;
+    }
+
+    const ok = await catalogRequest("PUT", { doc }, existing
+        ? `"${file}" atualizado.`
+        : `"${file}" adicionado — já aparece na página Repositório.`);
+    if (ok) closeDocEditor();
+});
+
+function fileToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",", 2)[1] || "");
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+    });
+}
 
 /* ---- Boot ---- */
 

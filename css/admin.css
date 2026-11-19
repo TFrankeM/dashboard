@@ -803,3 +803,506 @@ body.is-dragging .editor-tray li { cursor: grabbing; }
 .layout-fav:hover { color: var(--fgv-aux-yellow); }
 .layout-fav.is-fav { color: var(--fgv-aux-yellow); }
 .layout-fav:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---- Screen tabs (one per public page) ---- */
+
+.admin-nav {
+    display: flex;
+    gap: 4px;
+    margin: -8px 0 -16px;
+    border-bottom: 1px solid var(--dk-border);
+}
+
+.admin-nav-tab {
+    padding: 10px 18px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: transparent;
+    color: var(--dk-text-muted);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-nav-tab:hover { color: var(--dk-text-strong); }
+
+.admin-nav-tab.is-active {
+    color: var(--fgv-blue-sky);
+    border-bottom-color: var(--fgv-blue-light);
+}
+
+.admin-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+}
+
+.section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.panel-open {
+    font-size: 0.8rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.panel-open:hover { text-decoration: underline; }
+
+.admin-meta:empty { display: none; }
+
+.panel-wip {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 28px 24px;
+    border: 2px dashed var(--dk-border-strong);
+    border-radius: 12px;
+    color: var(--fgv-gray-med);
+    font-size: 0.9rem;
+}
+
+.panel-wip strong { color: var(--dk-text-body); }
+
+/* ---- Repository: document list ---- */
+
+.doc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.doc-list:empty::after {
+    content: "Nenhum documento cadastrado.";
+    display: block;
+    padding: 18px;
+    color: var(--fgv-gray-med);
+    font-size: 0.88rem;
+}
+
+.doc-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--dk-border);
+    border-radius: 10px;
+    background: var(--dk-surface);
+    transition: border-color 0.15s ease;
+}
+
+.doc-row:hover { border-color: var(--dk-border-strong); }
+
+.doc-row.is-armed { border-color: rgba(239, 68, 68, 0.5); }
+
+.doc-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: var(--dk-surface-2);
+    color: var(--fgv-blue-sky);
+}
+
+.doc-icon svg { width: 20px; height: 20px; }
+
+/* Category accents: same palette as repository.css (dark theme). */
+.cat-data .doc-icon       { background: rgba(115, 191, 232, 0.15); color: var(--fgv-blue-sky); }
+.cat-benchmarks .doc-icon { background: rgba(240, 191, 120, 0.15); color: var(--fgv-aux-yellow); }
+.cat-scripts .doc-icon    { background: rgba(0, 225, 172, 0.15);   color: var(--fgv-vib-green); }
+.cat-prompts .doc-icon    { background: rgba(160, 43, 173, 0.2);   color: #d88bf0; }
+.cat-docs .doc-icon       { background: rgba(175, 174, 180, 0.15); color: var(--fgv-gray-light); }
+
+.doc-name {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--dk-text-strong);
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.doc-badge,
+.doc-size {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.doc-badge {
+    border: 1px solid var(--dk-border);
+    background: var(--dk-chrome);
+    color: var(--dk-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.doc-size {
+    background: var(--dk-surface-2);
+    color: var(--dk-text-body);
+}
+
+.doc-ext {
+    font-size: 0.75rem;
+    color: var(--fgv-blue-sky);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.doc-ext:hover { text-decoration: underline; }
+
+.doc-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* The "✕" at the right edge: quiet until hovered. */
+.doc-remove {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--dk-text-muted);
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.doc-remove:hover {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.doc-remove:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* "+" row, same language as the layout gallery's add tile. */
+.doc-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 14px;
+    border: 2px dashed var(--dk-border-strong);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--fgv-gray-med);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.doc-add:hover {
+    border-color: var(--fgv-blue-light);
+    color: var(--fgv-blue-light);
+}
+
+.doc-add:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.doc-add-plus {
+    font-size: 1.4rem;
+    font-weight: 400;
+    line-height: 1;
+}
+
+/* ---- Repository: document editor ---- */
+
+.doc-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px 24px;
+    border: 1px solid var(--dk-border-strong);
+    border-radius: 14px;
+    background: var(--dk-surface);
+}
+
+.doc-editor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: 16px 24px;
+}
+
+.doc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.doc-field label,
+.doc-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--dk-text-muted);
+}
+
+.admin-hint-inline {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.doc-field input,
+.doc-field select {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--dk-border-strong);
+    background: var(--dk-surface-2);
+    color: var(--dk-text-strong);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.doc-field input:focus,
+.doc-field select:focus {
+    outline: 2px solid var(--fgv-blue-light);
+    outline-offset: 1px;
+}
+
+.doc-field input:disabled,
+.doc-field select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.doc-field-wide { grid-column: 1 / -1; }
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* Segmented control (origin, category): one pill per option. */
+.seg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.seg-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--dk-border-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--dk-text-body);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.seg-btn svg { width: 16px; height: 16px; }
+
+.seg-btn:hover { border-color: var(--fgv-blue-light); color: var(--dk-text-strong); }
+
+.seg-btn.is-active {
+    border-color: var(--fgv-blue-light);
+    background: rgba(0, 139, 201, 0.18);
+    color: var(--dk-text-strong);
+}
+
+/* Category pills take the category accent when active. */
+.seg-cat .seg-btn.cat-data.is-active       { border-color: var(--fgv-blue-sky);   background: rgba(115, 191, 232, 0.15); color: var(--fgv-blue-sky); }
+.seg-cat .seg-btn.cat-benchmarks.is-active { border-color: var(--fgv-aux-yellow); background: rgba(240, 191, 120, 0.15); color: var(--fgv-aux-yellow); }
+.seg-cat .seg-btn.cat-scripts.is-active    { border-color: var(--fgv-vib-green);  background: rgba(0, 225, 172, 0.15);   color: var(--fgv-vib-green); }
+.seg-cat .seg-btn.cat-prompts.is-active    { border-color: #d88bf0;               background: rgba(160, 43, 173, 0.2);   color: #d88bf0; }
+.seg-cat .seg-btn.cat-docs.is-active       { border-color: var(--fgv-gray-light); background: rgba(175, 174, 180, 0.15); color: var(--fgv-gray-light); }
+
+/* Size ladder: four tiers, the relevant one lit. */
+.size-guide {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: tier;
+}
+
+.size-guide li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px 10px 14px;
+    border: 1px solid var(--dk-border);
+    border-left-width: 3px;
+    border-radius: 8px;
+    background: var(--dk-surface-2);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--dk-text-muted);
+    opacity: 0.7;
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.size-guide li strong {
+    font-size: 0.8rem;
+    color: var(--dk-text-body);
+}
+
+.size-guide li.is-active {
+    opacity: 1;
+    border-color: var(--fgv-blue-light);
+    color: var(--dk-text-body);
+}
+
+.size-guide li.is-active strong { color: var(--fgv-blue-sky); }
+
+/* Upload target: a dashed box that turns into the chosen file's label. */
+.file-drop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 64px;
+    padding: 14px;
+    border: 2px dashed var(--dk-border-strong);
+    border-radius: 10px;
+    color: var(--fgv-gray-med);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+/* It is a <label>, but not a field caption: undo the caption styling. */
+.doc-field label.file-drop {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.88rem;
+    color: var(--fgv-gray-med);
+}
+
+.file-drop svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+.file-drop:hover,
+#doc-upload:focus-visible + .file-drop {
+    border-color: var(--fgv-blue-light);
+    color: var(--fgv-blue-light);
+}
+
+.file-drop.has-file {
+    border-style: solid;
+    border-color: var(--fgv-vib-green);
+    color: var(--fgv-vib-green);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.82rem;
+}
+
+.file-drop.is-too-big {
+    border-style: solid;
+    border-color: #ef4444;
+    color: #f87171;
+}
+
+/* Files already in the GitHub folder: one selectable row each. */
+.pick-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pick-list:empty { display: none; }
+
+.pick-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 12px;
+    border: 1px solid var(--dk-border);
+    border-radius: 8px;
+    background: var(--dk-surface-2);
+    color: var(--dk-text-body);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pick-item:hover { border-color: var(--fgv-blue-light); }
+
+.pick-item.is-selected {
+    border-color: var(--fgv-blue-light);
+    background: rgba(0, 139, 201, 0.18);
+    color: var(--dk-text-strong);
+}
+
+.pick-name {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.pick-size {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--dk-text-muted);
+}
+
+.doc-fixed-name {
+    align-self: flex-start;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--dk-surface-2);
+    color: var(--dk-text-strong);
+    font-size: 0.85rem;
+}
+
+.doc-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.doc-icons .doc-icon {
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.doc-icons .doc-icon:hover { transform: translateY(-1px); }
+
+.doc-icons .doc-icon.is-selected {
+    border-color: currentColor;
+    box-shadow: 0 0 0 2px var(--dk-surface);
+}
+
+@media (max-width: 820px) {
+    .doc-row { flex-wrap: wrap; }
+    .doc-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
+}

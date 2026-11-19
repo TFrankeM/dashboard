@@ -8,15 +8,15 @@
     <link rel="icon" href="assets/favicon.png" type="image/png">
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/admin.css">
+    <script src="https://unpkg.com/lucide@1.23.0" defer></script>
     <script type="module" src="js/admin.js" defer></script>
 </head>
 <body>
     <header class="admin-topbar">
         <div class="admin-brand">
-            <h1>FGV IIPEx <span>· Administração</span></h1>
-            <p id="admin-meta">Layouts do dashboard</p>
+            <h1>FGV IIPEx <span>| Administração</span></h1>
         </div>
-        <a class="admin-back" href="dashboard.html">Ver dashboard →</a>
+        <a class="admin-back" href="index.html">Ver site →</a>
     </header>
 
     <section class="auth-gate" id="auth-gate" aria-label="Autenticação">
@@ -32,63 +32,222 @@
     </section>
 
     <main class="admin-main" id="admin-main" hidden>
-        <section aria-label="Layouts">
+        <!-- One tab per public screen. -->
+        <nav class="admin-nav" aria-label="Telas do site">
+            <button type="button" class="admin-nav-tab" data-panel="index">Início</button>
+            <button type="button" class="admin-nav-tab is-active" data-panel="dashboard">Painel</button>
+            <button type="button" class="admin-nav-tab" data-panel="details">Detalhes</button>
+            <button type="button" class="admin-nav-tab" data-panel="repository">Repositório</button>
+        </nav>
+
+        <!-- Início -->
+        <section class="admin-panel" id="panel-index" hidden aria-label="Início">
             <div class="section-head">
-                <h2>Layouts</h2>
+                <h2>Início</h2>
+                <a class="panel-open" href="index.html" target="_blank" rel="noopener">Abrir página
+                    <span class="ext-arrow" aria-hidden="true">↗</span></a>
+            </div>
+            <div class="panel-wip">
+                <strong>Em construção.</strong>
+                <span>A tela inicial ainda não tem opções de administração.</span>
+            </div>
+        </section>
+
+        <!-- Painel (dashboard): biblioteca de layouts + editor -->
+        <section class="admin-panel" id="panel-dashboard" aria-label="Painel">
+            <section aria-label="Layouts">
+                <div class="section-head">
+                    <h2>Layouts</h2>
+                    <a class="panel-open" href="dashboard.html" target="_blank" rel="noopener">Abrir página
+                        <span class="ext-arrow" aria-hidden="true">↗</span></a>
+                </div>
                 <p class="admin-hint">Salvar, duplicar e excluir só mexem na biblioteca.
                    <strong>Ativar</strong> muda o que os visitantes veem no site.
                    A prévia abre qualquer layout sem ativá-lo.</p>
-            </div>
-            <div class="layout-gallery" id="layout-gallery"></div>
+                <p class="admin-hint admin-meta" id="layouts-meta"></p>
+                <div class="layout-gallery" id="layout-gallery"></div>
+            </section>
+
+            <section class="admin-editor" id="layout-editor" hidden aria-label="Editor de layout">
+                <div class="section-head">
+                    <h2 id="editor-title">Novo layout</h2>
+                </div>
+                <div class="editor-name">
+                    <label for="editor-label">Nome</label>
+                    <input type="text" id="editor-label" maxlength="40" autocomplete="off"
+                           placeholder="Ex.: Compacto sem banca">
+                    <p class="admin-hint">Identificador: <code id="editor-slug">—</code></p>
+                </div>
+                <div class="editor-columns">
+                    <aside>
+                        <h3>Inventário</h3>
+                        <input type="search" id="tray-search" autocomplete="off"
+                               placeholder="Buscar por nome…" aria-label="Buscar item do inventário">
+                        <ul class="editor-tray" id="editor-tray"></ul>
+                    </aside>
+                    <div class="editor-page-pane">
+                        <h3>Página</h3>
+                        <div class="editor-filters-strip" title="A barra de filtros é obrigatória e fica sempre no topo">
+                            <svg viewBox="0 0 64 12" aria-hidden="true">
+                                <path d="M4 2 L14 2 L10.5 7 L10.5 10 L7.5 10 L7.5 7 Z" fill="currentColor" opacity="0.8"/>
+                                <rect x="19" y="3" width="12" height="6" rx="2" fill="none" stroke="currentColor" opacity="0.55"/>
+                                <rect x="34" y="3" width="12" height="6" rx="2" fill="none" stroke="currentColor" opacity="0.55"/>
+                                <rect x="49" y="3" width="12" height="6" rx="2" fill="none" stroke="currentColor" opacity="0.55"/>
+                            </svg>
+                            <span>Barra de filtros</span>
+                            <span class="strip-badge">fixa no topo</span>
+                        </div>
+                        <div class="editor-canvas" id="editor-canvas"
+                             aria-label="Página: grade de 24 colunas"></div>
+                        <p class="admin-hint">Clique num item do inventário para colocá-lo no
+                           primeiro espaço livre, ou arraste-o direto para a posição desejada.
+                           Arraste um card para reposicionar e use as alças das bordas
+                           (esquerda, direita, base e canto) para esticar — cada gráfico tem
+                           um tamanho mínimo de legibilidade, mas nenhum máximo. Soltar sobre
+                           outro card é inválido (contorno vermelho). Áreas sem card ficam
+                           simplesmente vazias no dashboard. A prévia abre o rascunho em outra
+                           aba sem salvar nada.</p>
+                    </div>
+                </div>
+                <div class="editor-actions">
+                    <button type="button" id="editor-save" class="btn-primary">Salvar layout</button>
+                    <button type="button" id="editor-preview" class="btn-ghost">Prévia
+                        <span class="ext-arrow" aria-hidden="true">↗</span></button>
+                    <button type="button" id="editor-cancel" class="btn-ghost">Cancelar</button>
+                </div>
+            </section>
         </section>
 
-        <section class="admin-editor" id="layout-editor" hidden aria-label="Editor de layout">
+        <!-- Detalhes -->
+        <section class="admin-panel" id="panel-details" hidden aria-label="Detalhes">
             <div class="section-head">
-                <h2 id="editor-title">Novo layout</h2>
+                <h2>Detalhes</h2>
+                <a class="panel-open" href="details.html" target="_blank" rel="noopener">Abrir página
+                    <span class="ext-arrow" aria-hidden="true">↗</span></a>
             </div>
-            <div class="editor-name">
-                <label for="editor-label">Nome</label>
-                <input type="text" id="editor-label" maxlength="40" autocomplete="off"
-                       placeholder="Ex.: Compacto sem banca">
-                <p class="admin-hint">Identificador: <code id="editor-slug">—</code></p>
+            <div class="panel-wip">
+                <strong>Em construção.</strong>
+                <span>A tabela de notícias ainda não tem opções de administração.</span>
             </div>
-            <div class="editor-columns">
-                <aside>
-                    <h3>Inventário</h3>
-                    <input type="search" id="tray-search" autocomplete="off"
-                           placeholder="Buscar por nome…" aria-label="Buscar item do inventário">
-                    <ul class="editor-tray" id="editor-tray"></ul>
-                </aside>
-                <div class="editor-page-pane">
-                    <h3>Página</h3>
-                    <div class="editor-filters-strip" title="A barra de filtros é obrigatória e fica sempre no topo">
-                        <svg viewBox="0 0 64 12" aria-hidden="true">
-                            <path d="M4 2 L14 2 L10.5 7 L10.5 10 L7.5 10 L7.5 7 Z" fill="currentColor" opacity="0.8"/>
-                            <rect x="19" y="3" width="12" height="6" rx="2" fill="none" stroke="currentColor" opacity="0.55"/>
-                            <rect x="34" y="3" width="12" height="6" rx="2" fill="none" stroke="currentColor" opacity="0.55"/>
-                            <rect x="49" y="3" width="12" height="6" rx="2" fill="none" stroke="currentColor" opacity="0.55"/>
-                        </svg>
-                        <span>Barra de filtros</span>
-                        <span class="strip-badge">fixa no topo</span>
-                    </div>
-                    <div class="editor-canvas" id="editor-canvas"
-                         aria-label="Página: grade de 24 colunas"></div>
-                    <p class="admin-hint">Clique num item do inventário para colocá-lo no
-                       primeiro espaço livre, ou arraste-o direto para a posição desejada.
-                       Arraste um card para reposicionar e use as alças das bordas
-                       (esquerda, direita, base e canto) para esticar — cada gráfico tem
-                       um tamanho mínimo de legibilidade, mas nenhum máximo. Soltar sobre
-                       outro card é inválido (contorno vermelho). Áreas sem card ficam
-                       simplesmente vazias no dashboard. A prévia abre o rascunho em outra
-                       aba sem salvar nada.</p>
+        </section>
+
+        <!-- Repositório: catálogo de documentos -->
+        <section class="admin-panel" id="panel-repository" hidden aria-label="Repositório">
+            <div class="section-head">
+                <h2>Documentos</h2>
+                <a class="panel-open" href="repository.html" target="_blank" rel="noopener">Abrir página
+                    <span class="ext-arrow" aria-hidden="true">↗</span></a>
+            </div>
+            <p class="admin-hint">Esta lista é o que aparece na página Repositório. Os arquivos ficam
+               na pasta <code>repository/</code> do GitHub
+               (<a id="doc-github-link" href="#" target="_blank" rel="noopener">abrir pasta no GitHub ↗</a>):
+               envie-os aqui mesmo ou por lá e cadastre-os nesta lista. Mudanças na lista valem na hora;
+               um arquivo novo leva cerca de 20 segundos para ficar disponível para download.</p>
+            <p class="admin-hint admin-meta" id="docs-meta"></p>
+
+            <button type="button" class="doc-add" id="doc-add">
+                <span class="doc-add-plus" aria-hidden="true">+</span>
+                <span>Adicionar documento</span>
+            </button>
+
+            <form class="doc-editor" id="doc-editor" hidden aria-label="Editor de documento">
+                <div class="section-head">
+                    <h2 id="doc-editor-title">Novo documento</h2>
                 </div>
-            </div>
-            <div class="editor-actions">
-                <button type="button" id="editor-save" class="btn-primary">Salvar layout</button>
-                <button type="button" id="editor-preview" class="btn-ghost">Prévia
-                    <span class="ext-arrow" aria-hidden="true">↗</span></button>
-                <button type="button" id="editor-cancel" class="btn-ghost">Cancelar</button>
-            </div>
+
+                <!-- Where the file comes from; decides which fields show below. -->
+                <div class="doc-field" id="doc-origin-field">
+                    <span class="doc-label">Origem</span>
+                    <div class="seg" id="doc-origin" role="radiogroup" aria-label="Origem do arquivo">
+                        <button type="button" class="seg-btn" data-source="upload">
+                            <i data-lucide="upload"></i><span>Enviar do computador</span></button>
+                        <button type="button" class="seg-btn" data-source="github">
+                            <i data-lucide="github"></i><span>Já está no GitHub</span></button>
+                        <button type="button" class="seg-btn" data-source="external">
+                            <i data-lucide="link"></i><span>Link externo</span></button>
+                    </div>
+                </div>
+
+                <!-- Size ladder: the tier that matches the chosen origin (or the
+                     chosen file's size) is highlighted. -->
+                <ol class="size-guide" id="size-guide" aria-label="Qual caminho usar, pelo tamanho do arquivo">
+                    <li data-tier="upload">
+                        <strong id="size-guide-upload-max">até 3 MB</strong>
+                        <span>Envie aqui. Fica pronto em um passo.</span>
+                    </li>
+                    <li data-tier="github">
+                        <strong><span id="size-guide-upload-max-2">3</span> a 25 MB</strong>
+                        <span>Suba pela pasta no GitHub e depois cadastre aqui, em "Já está no GitHub".</span>
+                    </li>
+                    <li data-tier="terminal">
+                        <strong>25 a 100 MB</strong>
+                        <span>Peça ao Thiago: só sobe pelo terminal.</span>
+                    </li>
+                    <li data-tier="external">
+                        <strong>mais de 100 MB</strong>
+                        <span>Não cabe no GitHub. Divida o arquivo ou hospede na nuvem e cadastre só o link.</span>
+                    </li>
+                </ol>
+
+                <div class="doc-editor-grid">
+                    <!-- Enviar do computador -->
+                    <div class="doc-field doc-field-wide" id="doc-upload-field" hidden>
+                        <span class="doc-label">Arquivo do computador</span>
+                        <label class="file-drop" for="doc-upload" id="doc-upload-drop">
+                            <i data-lucide="upload-cloud"></i>
+                            <span id="doc-upload-text">Clique para escolher um arquivo</span>
+                        </label>
+                        <input type="file" id="doc-upload" class="visually-hidden">
+                        <p class="admin-hint" id="doc-upload-hint"></p>
+                    </div>
+
+                    <!-- Já está no GitHub -->
+                    <div class="doc-field doc-field-wide" id="doc-github-field" hidden>
+                        <span class="doc-label">Arquivos na pasta que ainda não estão na lista</span>
+                        <div class="pick-list" id="doc-github-list" role="radiogroup" aria-label="Arquivo da pasta repository/"></div>
+                        <p class="admin-hint" id="doc-github-hint"></p>
+                        <input type="text" id="doc-name" maxlength="120" autocomplete="off"
+                               placeholder="…ou digite o nome do arquivo, se ele não aparecer acima">
+                    </div>
+
+                    <!-- Link externo -->
+                    <div class="doc-field" id="doc-ext-name-field" hidden>
+                        <label for="doc-ext-name">Nome exibido</label>
+                        <input type="text" id="doc-ext-name" maxlength="120" autocomplete="off"
+                               placeholder="Ex.: dados_noticias_2026.csv">
+                    </div>
+                    <div class="doc-field" id="doc-url-field" hidden>
+                        <label for="doc-url">URL do arquivo</label>
+                        <input type="url" id="doc-url" maxlength="400" autocomplete="off"
+                               placeholder="https://zenodo.org/records/…/files/….csv">
+                        <p class="admin-hint">Use o link direto do arquivo: o tamanho é lido dele.</p>
+                    </div>
+
+                    <!-- Editing an existing entry: the name is fixed. -->
+                    <div class="doc-field doc-field-wide" id="doc-fixed-field" hidden>
+                        <span class="doc-label">Arquivo</span>
+                        <code class="doc-fixed-name" id="doc-fixed-name"></code>
+                        <p class="admin-hint">O nome não muda: para renomear, remova e cadastre de novo.
+                           O tamanho é recalculado ao salvar.</p>
+                    </div>
+
+                    <div class="doc-field doc-field-wide">
+                        <span class="doc-label">Categoria</span>
+                        <div class="seg seg-cat" id="doc-category" role="radiogroup" aria-label="Categoria"></div>
+                    </div>
+
+                    <div class="doc-field doc-field-wide">
+                        <span class="doc-label">Ícone <span class="admin-hint-inline">(a cor segue a categoria)</span></span>
+                        <div class="doc-icons" id="doc-icons" role="radiogroup" aria-label="Ícone do documento"></div>
+                    </div>
+                </div>
+                <div class="editor-actions">
+                    <button type="submit" id="doc-save" class="btn-primary">Salvar</button>
+                    <button type="button" id="doc-cancel" class="btn-ghost">Cancelar</button>
+                </div>
+            </form>
+
+            <div class="doc-list" id="doc-list" aria-live="polite"></div>
         </section>
     </main>
 

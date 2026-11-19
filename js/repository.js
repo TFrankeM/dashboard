@@ -9,144 +9,54 @@ let choicesLanguage = null;
 const LANG_STORAGE_KEY = "iipex_lang";
 const THEME_STORAGE_KEY = "iipex_theme";
 
-// Files catalog
-const REPO_FILES = [
-    {
-        filename: "dados_noticias_2025.csv",
-        category: "data",
-        size: "84.4 MB",
-        icon: "database",
-        titleKey: "repo_file_dados_noticias_title",
-        descKey: "repo_file_dados_noticias_desc",
-        url: "repository/dados_noticias_2025.csv"
-    },
-    {
-        filename: "dados_dicionario.csv",
-        category: "data",
-        size: "4.3 KB",
-        icon: "table",
-        titleKey: "repo_file_dados_dicionario_title",
-        descKey: "repo_file_dados_dicionario_desc",
-        url: "repository/dados_dicionario.csv"
-    },
-    {
-        filename: "dados_LEIA-ME.txt",
-        category: "data",
-        size: "974 B",
-        icon: "file-text",
-        titleKey: "repo_file_dados_leiame_title",
-        descKey: "repo_file_dados_leiame_desc",
-        url: "repository/dados_LEIA-ME.txt"
-    },
-    {
-        filename: "resultados_esperados_categorias_2025.csv",
-        category: "benchmarks",
-        size: "918 B",
-        icon: "bar-chart-3",
-        titleKey: "repo_file_res_categorias_title",
-        descKey: "repo_file_res_categorias_desc",
-        url: "repository/resultados_esperados_categorias_2025.csv"
-    },
-    {
-        filename: "resultados_esperados_concentracao_veiculos.csv",
-        category: "benchmarks",
-        size: "208 B",
-        icon: "pie-chart",
-        titleKey: "repo_file_res_veiculos_title",
-        descKey: "repo_file_res_veiculos_desc",
-        url: "repository/resultados_esperados_concentracao_veiculos.csv"
-    },
-    {
-        filename: "codigo_p2_classificacao_tematica.py",
-        category: "scripts",
-        size: "5.1 KB",
-        icon: "code",
-        titleKey: "repo_file_cod_p2_title",
-        descKey: "repo_file_cod_p2_desc",
-        url: "repository/codigo_p2_classificacao_tematica.py"
-    },
-    {
-        filename: "codigo_p3_analise_sentimento.py",
-        category: "scripts",
-        size: "12.0 KB",
-        icon: "code",
-        titleKey: "repo_file_cod_p3_title",
-        descKey: "repo_file_cod_p3_desc",
-        url: "repository/codigo_p3_analise_sentimento.py"
-    },
-    {
-        filename: "codigo_prompts_iipex.py",
-        category: "scripts",
-        size: "8.5 KB",
-        icon: "code",
-        titleKey: "repo_file_cod_prompts_title",
-        descKey: "repo_file_cod_prompts_desc",
-        url: "repository/codigo_prompts_iipex.py"
-    },
-    {
-        filename: "prompts_requirements.txt",
-        category: "scripts",
-        size: "455 B",
-        icon: "list-checks",
-        titleKey: "repo_file_requirements_title",
-        descKey: "repo_file_requirements_desc",
-        url: "repository/prompts_requirements.txt"
-    },
-    {
-        filename: "prompts_P2_prompt_classificacao_tematica.txt",
-        category: "prompts",
-        size: "620 B",
-        icon: "message-square-text",
-        titleKey: "repo_file_prompt_p2_title",
-        descKey: "repo_file_prompt_p2_desc",
-        url: "repository/prompts_P2_prompt_classificacao_tematica.txt"
-    },
-    {
-        filename: "prompts_P3_prompt_analise_sentimento.txt",
-        category: "prompts",
-        size: "3.1 KB",
-        icon: "message-square-text",
-        titleKey: "repo_file_prompt_p3_title",
-        descKey: "repo_file_prompt_p3_desc",
-        url: "repository/prompts_P3_prompt_analise_sentimento.txt"
-    },
-    {
-        filename: "prompts_README.md.txt",
-        category: "prompts",
-        size: "3.5 KB",
-        icon: "book-open",
-        titleKey: "repo_file_prompt_readme_title",
-        descKey: "repo_file_prompt_readme_desc",
-        url: "repository/prompts_README.md.txt"
-    },
-    {
-        filename: "Guia_de_Replicacao_IIPEx.docx",
-        category: "docs",
-        size: "38.0 KB",
-        icon: "file-check",
-        titleKey: "repo_file_guia_title",
-        descKey: "repo_file_guia_desc",
-        url: "repository/Guia_de_Replicacao_IIPEx.docx"
-    },
-    {
-        filename: "CITATION.cff",
-        category: "docs",
-        size: "1.3 KB",
-        icon: "quote",
-        titleKey: "repo_file_citation_title",
-        descKey: "repo_file_citation_desc",
-        url: "repository/CITATION.cff"
-    },
-    {
-        filename: "LICENSE",
-        category: "docs",
-        size: "2.0 KB",
-        icon: "shield",
-        titleKey: "repo_file_license_title",
-        descKey: "repo_file_license_desc",
-        url: "repository/LICENSE"
+// Files catalog: served by /api/repository (edited in admin.html). Each
+// entry is { filename, category, size, icon, url }; "size" is preformatted.
+let REPO_FILES = [];
+let CATALOG_ERROR = false;
+
+const CATALOG_ENDPOINT = "/api/repository";
+
+// Decimal units (1 MB = 1,000,000 B), one decimal above bytes.
+function formatBytes(bytes) {
+    const n = Number(bytes) || 0;
+    if (n < 1000) return `${n} B`;
+    if (n < 1e6) return `${(n / 1e3).toFixed(1)} KB`;
+    if (n < 1e9) return `${(n / 1e6).toFixed(1)} MB`;
+    return `${(n / 1e9).toFixed(1)} GB`;
+}
+
+async function loadCatalog() {
+    try {
+        const res = await fetch(CATALOG_ENDPOINT, { cache: "no-store" });
+        if (!res.ok) throw new Error(`GET ${CATALOG_ENDPOINT} → ${res.status}`);
+        const payload = await res.json();
+        REPO_FILES = (payload.docs || []).map(doc => ({
+            filename: doc.file,
+            category: doc.category,
+            size: doc.bytes === null || doc.bytes === undefined ? "" : formatBytes(doc.bytes),
+            icon: doc.icon,
+            url: doc.url || `repository/${encodeURIComponent(doc.file)}`,
+        }));
+        CATALOG_ERROR = false;
+    } catch (error) {
+        console.error("repository catalog:", error);
+        REPO_FILES = [];
+        CATALOG_ERROR = true;
     }
-];
+    renderTabCounts();
+    renderFileList();
+}
+
+function renderTabCounts() {
+    document.querySelectorAll(".repo-tab").forEach(tab => {
+        const category = tab.getAttribute("data-category") || "all";
+        const count = category === "all"
+            ? REPO_FILES.length
+            : REPO_FILES.filter(file => file.category === category).length;
+        const badge = tab.querySelector(".repo-tab-count");
+        if (badge) badge.textContent = String(count);
+    });
+}
 
 const CATEGORY_NAMES = {
     data: "repo_tab_data",
@@ -312,7 +222,7 @@ function renderFileList() {
         container.innerHTML = `
             <div class="repo-empty-state">
                 <i data-lucide="search-x" style="width: 36px; height: 36px; margin: 0 auto 12px auto; display: block; opacity: 0.5;"></i>
-                <p>${escapeHtml(t("no_data_found") || "Nenhum arquivo encontrado")}</p>
+                <p>${escapeHtml(CATALOG_ERROR ? (t("repo_catalog_error") || "Catálogo indisponível") : (t("no_data_found") || "Nenhum arquivo encontrado"))}</p>
             </div>
         `;
         if (window.lucide) lucide.createIcons();
@@ -333,7 +243,7 @@ function renderFileList() {
                         <div class="file-header-row">
                             <span class="file-name-code">${escapeHtml(file.filename)}</span>
                             <span class="file-category-badge">${escapeHtml(categoryLabel)}</span>
-                            <span class="file-size-badge">${escapeHtml(file.size)}</span>
+                            ${file.size ? `<span class="file-size-badge">${escapeHtml(file.size)}</span>` : ""}
                         </div>
                     </div>
                 </div>
@@ -381,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initTabs();
     initSearch();
     translateUI();
-    renderFileList();
+    loadCatalog();
 
     if (window.lucide) {
         lucide.createIcons();

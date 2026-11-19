@@ -13,7 +13,8 @@ const DEV_STORE_URL = new URL("../../.dev-layouts.json", import.meta.url);
 const LIBRARY_KEY = "layouts_library";
 const ACTIVE_KEY = "layouts_active";
 
-async function edgeConfigUpsert(key, value) {
+// Shared by the other Edge Config backed stores (repository-store.js).
+export async function edgeConfigUpsert(key, value) {
     const { id } = parseEdgeConfig(process.env.EDGE_CONFIG);
     const teamId = process.env.VERCEL_TEAM_ID;
     const url = `https://api.vercel.com/v1/edge-config/${id}/items${teamId ? `?teamId=${teamId}` : ""}`;

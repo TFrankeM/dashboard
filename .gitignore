@@ -49,6 +49,7 @@ js/index copy.js
 # Flags locais de desenvolvimento (feature flags sem Edge Config)
 .dev-flags.json
 .dev-layouts.json
+.dev-repository.json
 .env*
 
 # Registros internos de decisões e solicitações do chefe (registro paralelo local, não versionar no GitHub)
