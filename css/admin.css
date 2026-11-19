@@ -1221,6 +1221,27 @@ body.is-dragging .editor-tray li { cursor: grabbing; }
     font-size: 0.82rem;
 }
 
+.file-drop { position: relative; overflow: hidden; }
+
+.file-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.file-progress-bar {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--fgv-blue-light);
+    transition: width 0.2s ease;
+}
+
+.file-drop.is-busy { cursor: progress; }
+
 .file-drop.is-too-big {
     border-style: solid;
     border-color: #ef4444;

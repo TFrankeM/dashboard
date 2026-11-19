@@ -171,22 +171,7 @@
                 <!-- Size ladder: the tier that matches the chosen origin (or the
                      chosen file's size) is highlighted. -->
                 <ol class="size-guide" id="size-guide" aria-label="Qual caminho usar, pelo tamanho do arquivo">
-                    <li data-tier="upload">
-                        <strong id="size-guide-upload-max">até 3 MB</strong>
-                        <span>Envie aqui. Fica pronto em um passo.</span>
-                    </li>
-                    <li data-tier="github">
-                        <strong><span id="size-guide-upload-max-2">3</span> a 25 MB</strong>
-                        <span>Suba pela pasta no GitHub e depois cadastre aqui, em "Já está no GitHub".</span>
-                    </li>
-                    <li data-tier="terminal">
-                        <strong>25 a 100 MB</strong>
-                        <span>Peça ao Thiago: só sobe pelo terminal.</span>
-                    </li>
-                    <li data-tier="external">
-                        <strong>mais de 100 MB</strong>
-                        <span>Não cabe no GitHub. Divida o arquivo ou hospede na nuvem e cadastre só o link.</span>
-                    </li>
+                    <!-- Rendered by js/admin.js: the tiers depend on the upload mode. -->
                 </ol>
 
                 <div class="doc-editor-grid">
@@ -196,6 +181,9 @@
                         <label class="file-drop" for="doc-upload" id="doc-upload-drop">
                             <i data-lucide="upload-cloud"></i>
                             <span id="doc-upload-text">Clique para escolher um arquivo</span>
+                            <span class="file-progress" id="doc-upload-progress" hidden>
+                                <span class="file-progress-bar" id="doc-upload-progress-bar"></span>
+                            </span>
                         </label>
                         <input type="file" id="doc-upload" class="visually-hidden">
                         <p class="admin-hint" id="doc-upload-hint"></p>

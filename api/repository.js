@@ -2,13 +2,20 @@ import { stat } from "node:fs/promises";
 import { authorized } from "./_lib/auth.js";
 import { SEED_CATALOG, MAX_DOCS, normalizeDocInput } from "./_lib/repository.js";
 import { getRepositoryStore, resolveCatalog } from "./_lib/repository-store.js";
-import { getFileStore, GITHUB_REPO, GITHUB_BRANCH, FOLDER, MAX_UPLOAD_BYTES } from "./_lib/files-store.js";
+import { head, del } from "@vercel/blob";
+import {
+    getFileStore, uploadCapabilities, isReleaseUrl, GITHUB_REPO, GITHUB_BRANCH, FOLDER,
+    DIRECT_MAX_BYTES, MAX_UPLOAD_BYTES,
+} from "./_lib/files-store.js";
 
 // GET    /api/repository                      -> catalog (public)
 // PUT    /api/repository { doc }              -> add a document, or update the
 //                                                one with the same file name
-// POST   /api/repository { doc, content }     -> upload the file (base64, up to
-//                                                MAX_UPLOAD_BYTES) and catalog it
+// POST   /api/repository { doc, blobUrl }     -> move a file staged in Vercel
+//                                                Blob (see api/upload.js) to
+//                                                GitHub and catalog it
+// POST   /api/repository { doc, content }     -> same, with the file base64
+//                                                in the body (up to 3 MB)
 // DELETE /api/repository { file, deleteFile } -> remove a document; with
 //                                                deleteFile, also delete the
 //                                                file from repository/
@@ -27,7 +34,7 @@ async function state(store, fileStore) {
         source: store.name,
         writable: store.writable,
         docs: await resolveCatalog(store),
-        uploads: { enabled: fileStore.writable, source: fileStore.name, maxBytes: MAX_UPLOAD_BYTES },
+        uploads: uploadCapabilities(fileStore),
     };
 }
 
@@ -83,6 +90,21 @@ async function resolveBytes(doc) {
     return doc.url ? sizeFromUrl(doc.url) : sizeFromFolder(doc.file);
 }
 
+// A staged upload must be one of ours: head() only answers for blobs in the
+// store the token belongs to, and the host check keeps the fetch off any
+// other origin.
+async function stagedBlob(url) {
+    let parsed;
+    try { parsed = new URL(url); } catch { return null; }
+    if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(".blob.vercel-storage.com")) return null;
+    try {
+        return await head(url);
+    } catch (error) {
+        console.warn("staged blob lookup:", error.message);
+        return null;
+    }
+}
+
 function upsert(docs, doc) {
     const index = docs.findIndex(d => d.file === doc.file);
     if (index >= 0) {
@@ -116,7 +138,7 @@ export default async function handler(request, response) {
                 source: "defaults",
                 writable: false,
                 docs: SEED_CATALOG,
-                uploads: { enabled: false, source: "none", maxBytes: MAX_UPLOAD_BYTES },
+                uploads: { enabled: false, source: "none", mode: "direct", maxBytes: 0, folderMaxBytes: 0 },
                 degraded: true,
                 authorized: auth,
             });
@@ -154,20 +176,42 @@ export default async function handler(request, response) {
             }
             const { doc, problem } = normalizeDocInput({ ...request.body?.doc, url: undefined, bytes: undefined });
             if (problem) return response.status(400).json({ error: problem });
-            const content = request.body?.content;
-            if (typeof content !== "string" || !content) {
-                return response.status(400).json({ error: "Conteúdo do arquivo ausente." });
+            const { blobUrl, content } = request.body ?? {};
+            let written;
+            if (typeof blobUrl === "string" && blobUrl) {
+                const staged = await stagedBlob(blobUrl);
+                if (!staged) return response.status(400).json({ error: "Arquivo enviado não encontrado no Blob." });
+                if (staged.size > MAX_UPLOAD_BYTES) {
+                    return response.status(413).json({ error: `Arquivo acima de ${Math.round(MAX_UPLOAD_BYTES / 1e9)} GB.` });
+                }
+                const res = await fetch(blobUrl);
+                if (!res.ok || !res.body) throw new Error(`Blob download failed (${res.status})`);
+                try {
+                    written = await fileStore.write(doc.file, { stream: res.body, size: staged.size }, staged.contentType);
+                } finally {
+                    del(blobUrl).catch(error => console.warn("staging blob cleanup:", error));
+                }
+            } else {
+                if (typeof content !== "string" || !content) {
+                    return response.status(400).json({ error: "Conteúdo do arquivo ausente." });
+                }
+                const buffer = Buffer.from(content, "base64");
+                if (!buffer.length) return response.status(400).json({ error: "Arquivo vazio." });
+                const cap = process.env.VERCEL ? DIRECT_MAX_BYTES : MAX_UPLOAD_BYTES;
+                if (buffer.length > cap) {
+                    return response.status(413).json({ error: `Arquivo acima de ${Math.round(cap / 1e6)} MB para envio direto.` });
+                }
+                written = await fileStore.write(doc.file, { buffer });
             }
-            const buffer = Buffer.from(content, "base64");
-            if (!buffer.length) return response.status(400).json({ error: "Arquivo vazio." });
-            if (buffer.length > MAX_UPLOAD_BYTES) {
-                return response.status(413).json({ error: `Arquivo acima de ${Math.round(MAX_UPLOAD_BYTES / 1e6)} MB; use a interface do GitHub.` });
-            }
-            const { replaced } = await fileStore.write(doc.file, buffer);
-            doc.bytes = buffer.length;
+            doc.bytes = written.bytes;
+            if (written.url) doc.url = written.url;
             upsert(docs, doc);
             await store.write(docs);
-            return response.status(200).json({ ...await state(store, fileStore), fileAction: replaced ? "replaced" : "created" });
+            return response.status(200).json({
+                ...await state(store, fileStore),
+                fileAction: written.replaced ? "replaced" : "created",
+                destination: written.destination,
+            });
         }
 
         // DELETE
@@ -177,12 +221,15 @@ export default async function handler(request, response) {
         }
         const index = docs.findIndex(d => d.file === file);
         if (index < 0) return response.status(404).json({ error: `Documento "${file}" não encontrado.` });
+        // Deletable: files in repository/ (no url) and our own release assets;
+        // genuinely external links are only ever dropped from the list.
         let fileRemoved = false;
-        if (deleteFile && !docs[index].url) {
+        const { url } = docs[index];
+        if (deleteFile && (!url || isReleaseUrl(url))) {
             if (!fileStore.writable) {
                 return response.status(503).json({ error: "Exclusão de arquivos desativada neste ambiente (sem GITHUB_TOKEN)." });
             }
-            ({ removed: fileRemoved } = await fileStore.remove(file));
+            ({ removed: fileRemoved } = await fileStore.remove(file, url));
         }
         docs.splice(index, 1);
         await store.write(docs);

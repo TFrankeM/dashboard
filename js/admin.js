@@ -806,6 +806,9 @@ const REPOSITORY_ENDPOINT = "/api/repository";
 const GITHUB_REPO = "TFrankeM/dashboard";
 const GITHUB_FOLDER = "repository";
 const GITHUB_UI_LIMIT_MB = 25;
+const BLOB_CLIENT_URL = "https://cdn.jsdelivr.net/npm/@vercel/blob@2.9.0/client/+esm";
+const UPLOAD_HANDLER_URL = "/api/upload";
+const RELEASE_DOWNLOAD_PREFIX = `https://github.com/${GITHUB_REPO}/releases/download/`;
 
 const CATEGORY_LABELS = {
     data: "Bases de dados",
@@ -838,6 +841,9 @@ const docUploadDropEl = document.getElementById("doc-upload-drop");
 const docUploadTextEl = document.getElementById("doc-upload-text");
 const docUploadEl = document.getElementById("doc-upload");
 const docUploadHintEl = document.getElementById("doc-upload-hint");
+const docUploadProgressEl = document.getElementById("doc-upload-progress");
+const docUploadProgressBarEl = document.getElementById("doc-upload-progress-bar");
+const docSaveEl = document.getElementById("doc-save");
 const docGithubFieldEl = document.getElementById("doc-github-field");
 const docGithubListEl = document.getElementById("doc-github-list");
 const docGithubHintEl = document.getElementById("doc-github-hint");
@@ -970,7 +976,7 @@ function docRow(doc, writable) {
         ext.target = "_blank";
         ext.rel = "noopener";
         ext.title = doc.url;
-        ext.textContent = "link externo ↗";
+        ext.textContent = isReleaseUrl(doc.url) ? "Release do GitHub ↗" : "link externo ↗";
         row.append(ext);
     }
 
@@ -980,7 +986,7 @@ function docRow(doc, writable) {
         // The ✕ was clicked: swap the row's controls for an explicit
         // confirmation. A file kept in repository/ is deleted along with its
         // entry when this environment can write to GitHub.
-        const deleteFile = !doc.url && Boolean(catalogState.uploads?.enabled);
+        const deleteFile = (!doc.url || isReleaseUrl(doc.url)) && Boolean(catalogState.uploads?.enabled);
         actions.append(docButton(deleteFile ? "Apagar arquivo e remover" : "Confirmar remoção",
             () => removeDoc(doc.file, deleteFile), "btn-danger"));
         actions.append(docButton("Cancelar", () => { armedRemoval = null; renderDocList(); }));
@@ -1042,7 +1048,51 @@ const GITHUB_UI_LIMIT_BYTES = GITHUB_UI_LIMIT_MB * 1e6;
 const GIT_FILE_LIMIT_BYTES = 100e6;
 
 function uploadMax() { return catalogState?.uploads?.maxBytes ?? 0; }
-function uploadMaxLabel() { return `${Math.round(uploadMax() / 1e6)} MB`; }
+function uploadMode() { return catalogState?.uploads?.mode ?? "direct"; }
+function folderMax() { return catalogState?.uploads?.folderMaxBytes ?? GITHUB_UI_LIMIT_MB * 1e6; }
+function isReleaseUrl(url) { return typeof url === "string" && url.startsWith(RELEASE_DOWNLOAD_PREFIX); }
+
+function roundLabel(bytes) {
+    return bytes >= 1e9 ? `${Math.round(bytes / 1e9)} GB` : `${Math.round(bytes / 1e6)} MB`;
+}
+function uploadMaxLabel() { return roundLabel(uploadMax()); }
+
+// Whether the admin takes files of any size (Vercel Blob staging, or the dev
+// server) or only what fits in a request body (3 MB on Vercel).
+function anySizeUploads() { return uploadMax() > folderMax(); }
+
+// The ladder depends on that: with any-size uploads the server routes by
+// size (folder vs. Release); otherwise the user has to pick the route.
+function sizeTiers() {
+    const max = uploadMaxLabel();
+    const folder = roundLabel(folderMax());
+    if (anySizeUploads()) {
+        return [
+            { tier: "upload", range: `até ${folder}`, text: "Envie aqui. Vai para a pasta do repositório no GitHub." },
+            { tier: "release", range: `${folder} a ${max}`, text: "Envie aqui. Vai para um Release do GitHub e entra na lista com o link. Arquivos grandes levam alguns minutos." },
+            { tier: "external", range: `mais de ${max}`, text: "Divida o arquivo ou hospede na nuvem e cadastre só o link." },
+        ];
+    }
+    return [
+        { tier: "upload", range: `até ${max}`, text: "Envie aqui. Fica pronto em um passo." },
+        { tier: "github", range: `${max} a ${folder}`, text: "Suba pela pasta no GitHub e depois cadastre aqui, em \"Já está no GitHub\"." },
+        { tier: "terminal", range: `${folder} a 100 MB`, text: "Peça ao Thiago: só sobe pelo terminal." },
+        { tier: "external", range: "mais de 100 MB", text: "Não cabe no GitHub. Divida o arquivo ou hospede na nuvem e cadastre só o link." },
+    ];
+}
+
+function renderSizeGuide() {
+    sizeGuideEl.replaceChildren(...sizeTiers().map(({ tier, range, text }) => {
+        const li = document.createElement("li");
+        li.dataset.tier = tier;
+        const strong = document.createElement("strong");
+        strong.textContent = range;
+        const span = document.createElement("span");
+        span.textContent = text;
+        li.append(strong, span);
+        return li;
+    }));
+}
 function uploadsEnabled() { return Boolean(catalogState?.uploads?.enabled); }
 
 // Public listing of the GitHub folder (no token: the repo is public). Gives
@@ -1104,10 +1154,22 @@ function syncSourceFields() {
 }
 
 function tierForBytes(bytes) {
+    if (anySizeUploads()) {
+        if (bytes <= folderMax()) return "upload";
+        if (bytes <= uploadMax()) return "release";
+        return "external";
+    }
     if (bytes <= uploadMax()) return "upload";
     if (bytes <= GITHUB_UI_LIMIT_BYTES) return "github";
     if (bytes <= GIT_FILE_LIMIT_BYTES) return "terminal";
     return "external";
+}
+
+// "Já está no GitHub" and "Link externo" map onto the ladder too.
+function tierForSource(source) {
+    if (source === "external") return "external";
+    if (source === "github") return anySizeUploads() ? "upload" : "github";
+    return "upload";
 }
 
 // The ladder highlights the chosen origin's tier; once a file is picked for
@@ -1118,7 +1180,7 @@ function highlightTier() {
     let tier = null;
     if (editingNew) {
         const chosen = docDraft.source === "upload" ? docUploadEl.files?.[0] : null;
-        tier = chosen ? tierForBytes(chosen.size) : docDraft.source;
+        tier = chosen ? tierForBytes(chosen.size) : tierForSource(docDraft.source);
     }
     sizeGuideEl.querySelectorAll("li").forEach(li =>
         li.classList.toggle("is-active", li.dataset.tier === tier));
@@ -1209,9 +1271,8 @@ async function openDocEditor(existing = null) {
     docUrlEl.value = existing?.url || "";
     docUploadEl.value = "";
     originButtons.forEach(btn => { btn.hidden = btn.dataset.source === "upload" && !uploadsEnabled(); });
-    // The ladder's first two tiers quote the upload ceiling.
-    document.getElementById("size-guide-upload-max").textContent = `até ${uploadMaxLabel()}`;
-    document.getElementById("size-guide-upload-max-2").textContent = String(Math.round(uploadMax() / 1e6));
+    renderSizeGuide();
+    setUploadProgress(null);
     docEditorEl.hidden = false;
     docEditorEl.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -1226,6 +1287,33 @@ async function openDocEditor(existing = null) {
     await fetchGithubFiles();
     if (!docDraft || docDraft.file) return;   // editor closed or switched meanwhile
     renderGithubList();
+}
+
+// null hides the bar; 0..100 shows it. Text goes to the drop box label.
+function setUploadProgress(percentage, text) {
+    docUploadProgressEl.hidden = percentage === null;
+    docUploadDropEl.classList.toggle("is-busy", percentage !== null);
+    if (percentage !== null) docUploadProgressBarEl.style.width = `${Math.max(0, Math.min(100, percentage))}%`;
+    if (text) docUploadTextEl.textContent = text;
+    docSaveEl.disabled = percentage !== null;
+}
+
+// Browser → Vercel Blob, straight, with the admin token on the token
+// request. Resolves to the staging blob url the API then moves to GitHub.
+async function uploadToBlob(file) {
+    const { upload } = await import(BLOB_CLIENT_URL);
+    const result = await upload(`staging/${file.name}`, file, {
+        access: "public",
+        handleUploadUrl: UPLOAD_HANDLER_URL,
+        headers: { "Authorization": `Bearer ${token}` },
+        multipart: file.size > 50e6,
+        contentType: file.type || "application/octet-stream",
+        onUploadProgress: ({ loaded, total, percentage }) => {
+            setUploadProgress(percentage,
+                `Enviando ${file.name}… ${Math.round(percentage)}% (${formatBytes(loaded)} de ${formatBytes(total)})`);
+        },
+    });
+    return result.url;
 }
 
 function closeDocEditor() {
@@ -1286,18 +1374,35 @@ docEditorEl.addEventListener("submit", async event => {
             return feedback(`"${file}" já existe: clique em Salvar de novo para substituí-lo.`, true);
         }
         delete docEditorEl.dataset.confirmReplace;
-        const content = await fileToBase64(upload);
-        const ok = await catalogRequest("POST", { doc, content }, `"${file}" enviado.`);
-        if (!ok) return;
-        closeDocEditor();
-        if (catalogState.uploads?.source === "github") {
-            if (catalogState.fileAction === "replaced") {
-                feedback(`"${file}" substituído no GitHub; a nova versão fica disponível em cerca de 20 s.`);
-            } else {
-                waitForPublish(file);
+        let body;
+        if (uploadMode() === "blob") {
+            setUploadProgress(0, `Enviando ${file}…`);
+            try {
+                body = { doc, blobUrl: await uploadToBlob(upload) };
+            } catch (error) {
+                setUploadProgress(null);
+                syncUploadHint();
+                return feedback(`Falha no envio: ${error.message}`, true);
             }
+            setUploadProgress(100, upload.size > folderMax()
+                ? `Gravando ${file} no Release do GitHub… (pode levar alguns minutos)`
+                : `Gravando ${file} no GitHub…`);
         } else {
+            setUploadProgress(50, `Enviando ${file}…`);
+            body = { doc, content: await fileToBase64(upload) };
+        }
+        const ok = await catalogRequest("POST", body, `"${file}" enviado.`);
+        setUploadProgress(null);
+        if (!ok) { syncUploadHint(); return; }
+        closeDocEditor();
+        if (catalogState.uploads?.source !== "github") {
             feedback(`"${file}" salvo em repository/ — já aparece na página Repositório.`);
+        } else if (catalogState.destination === "release") {
+            feedback(`"${file}" publicado no Release do GitHub — já pode ser baixado pela página Repositório.`);
+        } else if (catalogState.fileAction === "replaced") {
+            feedback(`"${file}" substituído no GitHub; a nova versão fica disponível em cerca de 20 s.`);
+        } else {
+            waitForPublish(file);
         }
         return;
     }

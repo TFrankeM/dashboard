@@ -23,19 +23,41 @@ O tamanho é calculado pelo servidor, nunca digitado:
   exemplo, a página de um registro no Zenodo em vez do arquivo), o tamanho
   fica desconhecido e a página não mostra o selo.
 
-## Limites por caminho
+## Como o arquivo chega ao GitHub
 
-| Tamanho | Caminho |
-|---|---|
-| até 3 MB | envio pelo próprio admin (limite de 4,5 MB do corpo das funções Vercel, com base64) |
-| até 25 MB | interface web do GitHub, pasta `repository/` |
-| 25 MB a 100 MB | `git push` pelo terminal (limite por arquivo do GitHub) |
-| acima de 100 MB | dividir o arquivo ou hospedar fora (Zenodo, GitHub Releases) e cadastrar só o link |
+| Tamanho | Destino | Como |
+|---|---|---|
+| até 25 MB | pasta `repository/` (commit) | `POST /api/repository` grava pela API de conteúdo; o push dispara o deploy (~20 s) |
+| 25 MB a 2 GB | asset do Release `repositorio-arquivos` | enviado ao Release pela API; o catálogo guarda o link `github.com/…/releases/download/…` |
+| acima de 2 GB | fora do GitHub | dividir o arquivo ou hospedar na nuvem e cadastrar só o link |
 
-## Variável de ambiente: `GITHUB_TOKEN`
+Arquivos grandes não entram no histórico do Git: cada versão substituída
+ficaria para sempre no clone. O Release é criado na primeira vez que for
+preciso (tag `repositorio-arquivos`, apontando para `main`). Um asset com o
+mesmo nome é substituído.
+
+### Caminho do envio
+
+- **Com `BLOB_READ_WRITE_TOKEN`** (modo `blob`): o navegador envia o arquivo
+  direto para o Vercel Blob, sem passar pela função (`POST /api/upload` só
+  emite a autorização, com o token do admin). Terminado o envio, o admin
+  chama `POST /api/repository { doc, blobUrl }`; a função lê o blob, grava no
+  GitHub e apaga a cópia. Blobs de passagem expiram sozinhos em 1 dia. Até
+  256 MB a função guarda o arquivo em memória; acima, transmite em fluxo.
+- **Sem o token** (modo `direct`): o arquivo vai em base64 no corpo da
+  requisição, que a Vercel limita a 4,5 MB, ou seja, 3 MB de arquivo. A tela
+  do admin mostra então o guia de quatro faixas (admin, interface do GitHub,
+  terminal, nuvem).
+
+`vercel.json` dá 300 s à função `api/repository.js` (máximo do plano Hobby):
+um arquivo de 2 GB precisa de cerca de 7 MB/s entre Blob e GitHub para caber.
+
+## Variáveis de ambiente
+
+### `GITHUB_TOKEN`
 
 Sem ela, o admin continua administrando o catálogo, mas o envio e a exclusão
-de arquivos ficam desativados (a opção "Enviar arquivo do computador" some e o
+de arquivos ficam desativados (a opção "Enviar do computador" some e o
 ✕ remove só da lista).
 
 Criar um token **fine-grained** em GitHub → Settings → Developer settings →
@@ -43,7 +65,7 @@ Personal access tokens → Fine-grained tokens:
 
 - *Repository access*: Only select repositories → `TFrankeM/dashboard`;
 - *Permissions* → *Repository permissions* → **Contents: Read and write**
-  (nenhuma outra);
+  (cobre a pasta e os Releases; nenhuma outra);
 - validade: o máximo permitido (1 ano); anotar a data para renovar.
 
 Depois:
@@ -56,12 +78,21 @@ Os commits feitos pelo admin saem com autor "IIPEx Admin" e mensagem
 `Repositório: adiciona/atualiza/remove <arquivo> (via admin)`, para
 distingui-los dos commits feitos à mão.
 
-Opcionais: `GITHUB_REPO` (padrão `TFrankeM/dashboard`) e `GITHUB_BRANCH`
-(padrão `main`).
+### `BLOB_READ_WRITE_TOKEN`
+
+Libera o envio de qualquer tamanho. No painel da Vercel: projeto `iibex` →
+Storage → Create → Blob; ao conectar o store ao projeto a variável é criada
+sozinha. Gratuito no plano Hobby (1 GB guardado, 10 GB transferidos por
+mês); como o uso é só de passagem, cada envio consome cerca de duas vezes o
+tamanho do arquivo e nada fica guardado.
+
+Opcionais: `GITHUB_REPO` (padrão `TFrankeM/dashboard`), `GITHUB_BRANCH`
+(padrão `main`) e `GITHUB_RELEASE_TAG` (padrão `repositorio-arquivos`).
 
 ## Desenvolvimento local
 
 `.claude/dev-server.mjs` sobe o site com as funções de `api/` em
-`http://localhost:3000`, sem `EDGE_CONFIG` nem `GITHUB_TOKEN`: o catálogo vai
-para `.dev-repository.json` e os envios gravam direto na pasta `repository/`
-do disco. Nada toca a produção.
+`http://localhost:3000`, sem `EDGE_CONFIG`, `GITHUB_TOKEN` nem Blob: o
+catálogo vai para `.dev-repository.json` e os envios, de qualquer tamanho,
+gravam direto na pasta `repository/` do disco (modo `direct`, sem o limite
+de corpo da Vercel). Nada toca a produção.
